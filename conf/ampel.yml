@@ -1,0 +1,3 @@
+unit:
+  - airgn.ampel.t2.T2CalculateChi2
+  - airgn.ampel.t2.T2CalculateChi2Stacked

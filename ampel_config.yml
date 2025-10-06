@@ -1,0 +1,1586 @@
+build:
+  date: 06/10/2025
+  time: '11:39:49'
+  by: jannisnecker
+  conda: airgn
+  stop_on_errors: 0
+  config_validator: null
+  skip_default_processes: true
+  json_serializable: true
+  pwds: false
+  ext_resource: false
+  get_unit_env: true
+  ignore_channels: false
+  ignore_processes: false
+  ampel-interface: 0.10.5a4
+  ampel-core: 0.10.6a11
+  ampel-plot: 0.9.1
+  ampel-alerts: 0.10.3a5
+  airgn: 0.1.0
+  ampel-photometry: 0.10.1
+  timewise: 1.0.0a1
+mongo:
+  ingest:
+    stock: MongoStockIngester
+    t0: MongoT0Ingester
+    t1: MongoT1Ingester
+    t2: MongoT2Ingester
+    t3: MongoT3Ingester
+  databases:
+  - name: data
+    collections:
+    - name: stock
+      indexes:
+      - index:
+        - field: stock
+        - field: channel
+        args:
+          unique: true
+    - name: t0
+      indexes:
+      - field: id
+        args:
+          unique: true
+      - field: stock
+        args:
+          sparse: true
+    - name: t1
+      indexes:
+      - index:
+        - field: stock
+        - field: link
+        args:
+          unique: true
+      - field: channel
+      - field: code
+        args:
+          sparse: true
+    - name: t2
+      indexes:
+      - index:
+        - field: stock
+        - field: link
+      - field: channel
+      - field: code
+      - field: meta.ts
+    - name: t3
+      indexes:
+      - field: process
+      - field: meta.ts
+    - name: t4
+      indexes:
+      - field: process
+      - field: meta.ts
+    - name: plot
+      indexes:
+      - field: tag
+    role:
+      r: logger
+      w: writer
+  - name: ext
+    collections:
+    - name: conf
+    - name: trace
+    - name: job
+    - name: counter
+    role:
+      r: logger
+      w: logger
+  - name: var
+    collections:
+    - name: log
+      indexes:
+      - field: r
+      - field: s
+        args:
+          sparse: true
+      - field: c
+        args:
+          sparse: true
+      args:
+        storageEngine:
+          wiredTiger:
+            configString: block_compressor=zlib
+    - name: event
+      indexes: null
+    - name: beacon
+      indexes: null
+    - name: trouble
+      indexes: null
+    role:
+      r: logger
+      w: logger
+  prefix: Ampel
+logging:
+  default:
+    console:
+      std_stream: stdout
+      datefmt: '%Y-%m-%d %H:%M:%S'
+      level: 1024
+      aggregate_interval: 1.0
+      density: default
+      terminator: '
+
+        '
+      log_sep: '
+
+        '
+      prefix: null
+      provenance: true
+    db:
+      level: 1024
+  compact:
+    console:
+      level: 1024
+      density: compact
+      log_sep: ''
+    db:
+      level: 1024
+  headerless:
+    console:
+      level: 1024
+      density: headerless
+    db:
+      level: 1024
+  prod:
+    console:
+      std_stream: stderr
+      level: 2048
+    db:
+      level: 1024
+  verbose:
+    console:
+      std_stream: stdout
+      level: 512
+    db:
+      level: 512
+  debug:
+    console:
+      std_stream: stdout
+      level: 256
+    db:
+      level: 256
+  silent: {}
+  console_quiet:
+    console:
+      level: 2048
+  console_info:
+    console:
+      level: 1024
+  console_verbose:
+    console:
+      level: 512
+  console_debug:
+    console:
+      level: 256
+channel: {}
+unit:
+  DefaultProcessController:
+    fqn: ampel.core.DefaultProcessController
+    base:
+    - DefaultProcessController
+    - AbsProcessController
+    xxh64: 17993874106171356461
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - schedule
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  AlertConsumer:
+    fqn: ampel.alert.AlertConsumer
+    base:
+    - AlertConsumer
+    - AbsEventUnit
+    - ContextUnit
+    - AlertConsumerModel
+    - AmpelBaseModel
+    xxh64: 8872217729468029895
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  DemoProcessor:
+    fqn: ampel.demo.DemoProcessor
+    base:
+    - DemoProcessor
+    - AbsEventUnit
+    - ContextUnit
+    xxh64: 14039346026301366629
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  OpsProcessor:
+    fqn: ampel.ops.OpsProcessor
+    base:
+    - OpsProcessor
+    - AbsEventUnit
+    - ContextUnit
+    xxh64: 15234424918224562521
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T2Worker:
+    fqn: ampel.t2.T2Worker
+    base:
+    - T2Worker
+    - AbsWorker
+    - AbsEventUnit
+    - ContextUnit
+    xxh64: 3441158353947450388
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3Processor:
+    fqn: ampel.t3.T3Processor
+    base:
+    - T3Processor
+    - AbsEventUnit
+    - ContextUnit
+    xxh64: 5725603746595064425
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T4Processor:
+    fqn: ampel.t4.T4Processor
+    base:
+    - T4Processor
+    - AbsEventUnit
+    - DocBuilder
+    - ContextUnit
+    xxh64: 3484536855557385397
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  AmpelPlotAdapter:
+    fqn: ampel.core.adapter.AmpelPlotAdapter
+    base:
+    - AmpelPlotAdapter
+    - AbsUnitResultAdapter
+    - ContextUnit
+    xxh64: 17851584950358449338
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-plot
+    version: 0.9.1
+    source: conf/ampel-plot/ampel.yml
+  ChainedT0Muxer:
+    fqn: ampel.ingest.ChainedT0Muxer
+    base:
+    - ChainedT0Muxer
+    - AbsT0Muxer
+    - ContextUnit
+    xxh64: 13469996781310191021
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoIngester:
+    fqn: ampel.mongo.update.MongoIngester
+    base:
+    - MongoIngester
+    - AbsIngester
+    - AbsContextManager
+    - ContextUnit
+    xxh64: 2696271208645805844
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoStockDeleter:
+    fqn: ampel.mongo.purge.MongoStockDeleter
+    base:
+    - MongoStockDeleter
+    - AbsOpsUnit
+    - ContextUnit
+    xxh64: 10019230342611180891
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  QueueIngester:
+    fqn: ampel.queue.QueueIngester
+    base:
+    - QueueIngester
+    - AbsIngester
+    - AbsContextManager
+    - ContextUnit
+    xxh64: 17676777544441014234
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  SimpleT2BasedSupplier:
+    fqn: ampel.t3.supply.SimpleT2BasedSupplier
+    base:
+    - SimpleT2BasedSupplier
+    - AbsT3Supplier
+    - ContextUnit
+    xxh64: 5862946897053559896
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3AdaptativeStager:
+    fqn: ampel.t3.stage.T3AdaptativeStager
+    base:
+    - T3AdaptativeStager
+    - T3ThreadedStager
+    - T3BaseStager
+    - AbsT3Stager
+    - DocBuilder
+    - ContextUnit
+    xxh64: 10607718304059557294
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3AggregatingStager:
+    fqn: ampel.t3.stage.T3AggregatingStager
+    base:
+    - T3AggregatingStager
+    - T3SequentialStager
+    - T3BaseStager
+    - AbsT3Stager
+    - DocBuilder
+    - ContextUnit
+    xxh64: 7373035002102867516
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3BufferExporterStager:
+    fqn: ampel.cli.T3BufferExporterStager
+    base:
+    - T3BufferExporterStager
+    - AbsT3Stager
+    - ContextUnit
+    xxh64: 9176224965497852118
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3ChannelStager:
+    fqn: ampel.t3.stage.T3ChannelStager
+    base:
+    - T3ChannelStager
+    - AbsT3Stager
+    - ContextUnit
+    xxh64: 15040241164370441086
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3DefaultBufferSupplier:
+    fqn: ampel.t3.supply.T3DefaultBufferSupplier
+    base:
+    - T3DefaultBufferSupplier
+    - AbsT3Supplier
+    - ContextUnit
+    xxh64: 177029996330832417
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3DistributiveStager:
+    fqn: ampel.t3.stage.T3DistributiveStager
+    base:
+    - T3DistributiveStager
+    - T3ThreadedStager
+    - T3BaseStager
+    - AbsT3Stager
+    - DocBuilder
+    - ContextUnit
+    xxh64: 16168460460362787531
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3ExtJournalAppender:
+    fqn: ampel.t3.supply.complement.T3ExtJournalAppender
+    base:
+    - T3ExtJournalAppender
+    - AbsBufferComplement
+    - ContextUnit
+    xxh64: 10303600697083878147
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3FilteringStockSelector:
+    fqn: ampel.t3.supply.select.T3FilteringStockSelector
+    base:
+    - T3FilteringStockSelector
+    - T3StockSelector
+    - AbsT3Selector
+    - ContextUnit
+    xxh64: 736117426726534081
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3LatestStateDataLoader:
+    fqn: ampel.t3.supply.load.T3LatestStateDataLoader
+    base:
+    - T3LatestStateDataLoader
+    - AbsT3Loader
+    - ContextUnit
+    xxh64: 10184423948152998266
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3LogsAppender:
+    fqn: ampel.t3.supply.complement.T3LogsAppender
+    base:
+    - T3LogsAppender
+    - AbsBufferComplement
+    - ContextUnit
+    xxh64: 17778272485979734196
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3ProjectingStager:
+    fqn: ampel.t3.stage.T3ProjectingStager
+    base:
+    - T3ProjectingStager
+    - T3ThreadedStager
+    - T3BaseStager
+    - AbsT3Stager
+    - DocBuilder
+    - ContextUnit
+    xxh64: 4286998017656554040
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3RandIntAppender:
+    fqn: ampel.t3.supply.complement.T3RandIntAppender
+    base:
+    - T3RandIntAppender
+    - AbsBufferComplement
+    - ContextUnit
+    xxh64: 11897013099886386240
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3SequentialStager:
+    fqn: ampel.t3.stage.T3SequentialStager
+    base:
+    - T3SequentialStager
+    - T3BaseStager
+    - AbsT3Stager
+    - DocBuilder
+    - ContextUnit
+    xxh64: 13265330298836740119
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3SessionAlertsNumber:
+    fqn: ampel.t3.include.session.T3SessionAlertsNumber
+    base:
+    - T3SessionAlertsNumber
+    - AbsT3Supplier
+    - ContextUnit
+    xxh64: 17466276394845956675
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3SessionLastRunTime:
+    fqn: ampel.t3.include.session.T3SessionLastRunTime
+    base:
+    - T3SessionLastRunTime
+    - AbsT3Supplier
+    - ContextUnit
+    xxh64: 11546630926444517843
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3SimpleDataLoader:
+    fqn: ampel.t3.supply.load.T3SimpleDataLoader
+    base:
+    - T3SimpleDataLoader
+    - AbsT3Loader
+    - ContextUnit
+    xxh64: 12110161669031221840
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3SimpleStager:
+    fqn: ampel.t3.stage.T3SimpleStager
+    base:
+    - T3SimpleStager
+    - T3ThreadedStager
+    - T3BaseStager
+    - AbsT3Stager
+    - DocBuilder
+    - ContextUnit
+    xxh64: 7318515918128220137
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3StockSelector:
+    fqn: ampel.t3.supply.select.T3StockSelector
+    base:
+    - T3StockSelector
+    - AbsT3Selector
+    - ContextUnit
+    xxh64: 9297652542317218040
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T4RunTimeContextUpdater:
+    fqn: ampel.t4.T4RunTimeContextUpdater
+    base:
+    - T4RunTimeContextUpdater
+    - AbsT4ControlUnit
+    - DocBuilder
+    - ContextUnit
+    xxh64: 1775541189944708244
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  TiMongoMuxer:
+    fqn: ampel.timewise.ingest.TiMongoMuxer
+    base:
+    - TiMongoMuxer
+    - AbsT0Muxer
+    - ContextUnit
+    xxh64: 2863188374152607125
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  BasicMultiFilter:
+    fqn: ampel.alert.filter.BasicMultiFilter
+    base:
+    - BasicMultiFilter
+    - AbsAlertFilter
+    - LogicalUnit
+    xxh64: 4487991822848981023
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  DemoEvery3PhotoPointT2Unit:
+    fqn: ampel.demo.DemoEvery3PhotoPointT2Unit
+    base:
+    - DemoEvery3PhotoPointT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 10275094544994393265
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  DemoEvery4PhotoPointT2Unit:
+    fqn: ampel.demo.DemoEvery4PhotoPointT2Unit
+    base:
+    - DemoEvery4PhotoPointT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 15834034892967678205
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  DemoFirstPhotoPointT2Unit:
+    fqn: ampel.demo.DemoFirstPhotoPointT2Unit
+    base:
+    - DemoFirstPhotoPointT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 18261100048493182099
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  DemoFirstPointT2Unit:
+    fqn: ampel.demo.DemoFirstPointT2Unit
+    base:
+    - DemoFirstPointT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 7789688983394735263
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  DemoFirstUpperLimitT2Unit:
+    fqn: ampel.demo.DemoFirstUpperLimitT2Unit
+    base:
+    - DemoFirstUpperLimitT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 6237716572958995913
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  DemoLightCurveT2Unit:
+    fqn: ampel.demo.DemoLightCurveT2Unit
+    base:
+    - DemoLightCurveT2Unit
+    - AbsLightCurveT2Unit
+    - AbsCustomStateT2Unit
+    - LogicalUnit
+    xxh64: 8659477288901994311
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  DemoPhotoPointT2Unit:
+    fqn: ampel.demo.DemoPhotoPointT2Unit
+    base:
+    - DemoPhotoPointT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 8226141124148689158
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  DemoPointT2Unit:
+    fqn: ampel.demo.DemoPointT2Unit
+    base:
+    - DemoPointT2Unit
+    - AbsPointT2Unit
+    - LogicalUnit
+    xxh64: 7114215102973709426
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  DemoT3Unit:
+    fqn: ampel.demo.DemoT3Unit
+    base:
+    - DemoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 17905373686009613727
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  DemoT4RunTimeAliasGenerator:
+    fqn: ampel.demo.DemoT4RunTimeAliasGenerator
+    base:
+    - DemoT4RunTimeAliasGenerator
+    - AbsT4Unit
+    - LogicalUnit
+    xxh64: 3832456297883784904
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  DemoTiedLightCurveT2Unit:
+    fqn: ampel.demo.DemoTiedLightCurveT2Unit
+    base:
+    - DemoTiedLightCurveT2Unit
+    - AbsTiedLightCurveT2Unit
+    - AbsTiedCustomStateT2Unit
+    - AbsTiedT2Unit
+    - LogicalUnit
+    xxh64: 15762448067506162659
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  NoShaper:
+    fqn: ampel.dev.NoShaper
+    base:
+    - NoShaper
+    - AbsT0Unit
+    - LogicalUnit
+    xxh64: 12652575467920327962
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T1HDBSCAN:
+    fqn: ampel.timewise.t1.T1HDBSCAN
+    base:
+    - T1HDBSCAN
+    - AbsT1CombineUnit
+    - LogicalUnit
+    xxh64: 3828785282785109956
+    dependencies:
+    - annotated_types
+    - astropy
+    - backoff
+    - charset_normalizer
+    - cycler
+    - defusedxml
+    - idna
+    - joblib
+    - kiwisolver
+    - matplotlib
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - pyvo
+    - requests
+    - scipy
+    - threadpoolctl
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  T1SimpleCombiner:
+    fqn: ampel.t1.T1SimpleCombiner
+    base:
+    - T1SimpleCombiner
+    - AbsT1CombineUnit
+    - LogicalUnit
+    xxh64: 11619157323309951187
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T1SimpleRetroCombiner:
+    fqn: ampel.t1.T1SimpleRetroCombiner
+    base:
+    - T1SimpleRetroCombiner
+    - AbsT1CombineUnit
+    - LogicalUnit
+    xxh64: 13219416922985581374
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T2CalculateChi2:
+    fqn: airgn.ampel.t2.T2CalculateChi2
+    base:
+    - T2CalculateChi2
+    - AbsLightCurveT2Unit
+    - AbsCustomStateT2Unit
+    - LogicalUnit
+    xxh64: 2320205032952052908
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
+  T2CalculateChi2Stacked:
+    fqn: airgn.ampel.t2.T2CalculateChi2Stacked
+    base:
+    - T2CalculateChi2Stacked
+    - AbsTiedLightCurveT2Unit
+    - AbsTiedCustomStateT2Unit
+    - AbsTiedT2Unit
+    - LogicalUnit
+    xxh64: 11009859450448240515
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
+  T2StackVisits:
+    fqn: ampel.timewise.t2.T2StackVisits
+    base:
+    - T2StackVisits
+    - AbsLightCurveT2Unit
+    - AbsCustomStateT2Unit
+    - LogicalUnit
+    xxh64: 8821254734293482667
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - scipy
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  T3BufferExporterUnit:
+    fqn: ampel.cli.T3BufferExporterUnit
+    base:
+    - T3BufferExporterUnit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 10052295788148574761
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3LogAggregatedStocks:
+    fqn: ampel.t3.unit.T3LogAggregatedStocks
+    base:
+    - T3LogAggregatedStocks
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 8340787247250073059
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T4DemoSavePlot:
+    fqn: ampel.demo.T4DemoSavePlot
+    base:
+    - T4DemoSavePlot
+    - AbsT4Unit
+    - LogicalUnit
+    xxh64: 9578976539086271401
+    dependencies:
+    - annotated_types
+    - cycler
+    - defusedxml
+    - kiwisolver
+    - matplotlib
+    - numpy
+    - packaging
+    - pydantic_core
+    - pyparsing
+    - typing_inspection
+    distrib: ampel-plot
+    version: 0.9.1
+    source: conf/ampel-plot/ampel.yml
+  TiDataPointShaper:
+    fqn: ampel.timewise.ingest.TiDataPointShaper
+    base:
+    - TiDataPointShaper
+    - TiDataPointShaperBase
+    - AbsT0Unit
+    - LogicalUnit
+    xxh64: 5449865156791677248
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  TimewiseFilter:
+    fqn: ampel.timewise.t1.TimewiseFilter
+    base:
+    - TimewiseFilter
+    - AbsAlertFilter
+    - LogicalUnit
+    xxh64: 8807013584505065222
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  NullProducer:
+    fqn: ampel.queue.NullProducer
+    base:
+    - NullProducer
+    - AbsProducer
+    - AbsContextManager
+    xxh64: 1645124090423176433
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  SimpleTagFilter:
+    fqn: ampel.aux.SimpleTagFilter
+    base:
+    - SimpleTagFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 451348699836474112
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  SimpleDictArrayFilter:
+    fqn: ampel.aux.filter.SimpleDictArrayFilter
+    base:
+    - SimpleDictArrayFilter
+    - AbsLogicOperatorFilter[~T]
+    - AbsLogicOperatorFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 1426938542812635099
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  FlatDictArrayFilter:
+    fqn: ampel.aux.filter.FlatDictArrayFilter
+    base:
+    - FlatDictArrayFilter
+    - AbsLogicOperatorFilter[MutableMapping]
+    - AbsLogicOperatorFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 10136069419375369432
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3ChannelProjector:
+    fqn: ampel.t3.stage.project.T3ChannelProjector
+    base:
+    - T3ChannelProjector
+    - T3BaseProjector
+    - AbsT3Projector
+    xxh64: 4953766797552088987
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  T3AmpelBufferFilter:
+    fqn: ampel.t3.stage.filter.T3AmpelBufferFilter
+    base:
+    - T3AmpelBufferFilter
+    - AbsT3Filter
+    xxh64: 4639632822238168426
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoStockIngester:
+    fqn: ampel.mongo.update.MongoStockIngester
+    base:
+    - MongoStockIngester
+    - AbsDocIngester[StockDocument]
+    - AbsDocIngester
+    - HasUpdatesBuffer
+    - AmpelBaseModel
+    xxh64: 4399267697217271257
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoT0Ingester:
+    fqn: ampel.mongo.update.MongoT0Ingester
+    base:
+    - MongoT0Ingester
+    - AbsDocIngester[DataPoint]
+    - AbsDocIngester
+    - HasUpdatesBuffer
+    - AmpelBaseModel
+    xxh64: 664119635459602987
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoT1Ingester:
+    fqn: ampel.mongo.update.MongoT1Ingester
+    base:
+    - MongoT1Ingester
+    - AbsDocIngester[T1Document]
+    - AbsDocIngester
+    - HasUpdatesBuffer
+    - AmpelBaseModel
+    xxh64: 11155546142519187491
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoT2Ingester:
+    fqn: ampel.mongo.update.MongoT2Ingester
+    base:
+    - MongoT2Ingester
+    - AbsDocIngester[T2Document]
+    - AbsDocIngester
+    - HasUpdatesBuffer
+    - AmpelBaseModel
+    xxh64: 16489823956637273251
+    dependencies:
+    - annotated_types
+    - prometheus_client
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  MongoT3Ingester:
+    fqn: ampel.mongo.update.MongoT3Ingester
+    base:
+    - MongoT3Ingester
+    - AbsDocIngester[T3Document]
+    - AbsDocIngester
+    - AmpelBaseModel
+    xxh64: 10260522449276161475
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a11
+    source: conf/ampel-core/ampel.yaml
+  FilteringAlertSupplier:
+    fqn: ampel.alert.FilteringAlertSupplier
+    base:
+    - FilteringAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 16923665551712057840
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  UnitTestAlertSupplier:
+    fqn: ampel.dev.UnitTestAlertSupplier
+    base:
+    - UnitTestAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 13729016972229493520
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  TarAlertLoader:
+    fqn: ampel.alert.load.TarAlertLoader
+    base:
+    - TarAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 8928970892179404415
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  FileAlertLoader:
+    fqn: ampel.alert.load.FileAlertLoader
+    base:
+    - FileAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 11924022877541862841
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  DirAlertLoader:
+    fqn: ampel.alert.load.DirAlertLoader
+    base:
+    - DirAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 12752333415903872986
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  DirFileNamesLoader:
+    fqn: ampel.alert.load.DirFileNamesLoader
+    base:
+    - DirFileNamesLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 8599448184043280499
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  DirTaggedAlertLoader:
+    fqn: ampel.alert.load.DirTaggedAlertLoader
+    base:
+    - DirTaggedAlertLoader
+    - DirAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 9278748089013175870
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.3a5
+    source: conf/ampel-alerts/ampel.yml
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
+    base:
+    - PPSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 252807104807642313
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
+    base:
+    - ULSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 14523103307642547590
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.1
+    source: conf/ampel-photometry/ampel.yaml
+  TimewiseFileLoader:
+    fqn: ampel.timewise.alert.load.TimewiseFileLoader
+    base:
+    - TimewiseFileLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 15646653822015632743
+    dependencies:
+    - annotated_types
+    - astropy
+    - backoff
+    - charset_normalizer
+    - idna
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - pyvo
+    - requests
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  TimewiseAlertSupplier:
+    fqn: ampel.timewise.alert.TimewiseAlertSupplier
+    base:
+    - TimewiseAlertSupplier
+    - BaseAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 14546637254637804634
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - pydantic_core
+    - pytz
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  TiCompilerOptions:
+    fqn: ampel.timewise.ingest.TiCompilerOptions
+    base:
+    - TiCompilerOptions
+    - CompilerOptions
+    - AuxAliasableModel
+    - AmpelBaseModel
+    xxh64: 7990843592410393256
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+  AuxDiagnosticPlotter:
+    fqn: ampel.timewise.util.AuxDiagnosticPlotter
+    base:
+    - AuxDiagnosticPlotter
+    - AmpelBaseModel
+    xxh64: 6525781300683110228
+    dependencies:
+    - annotated_types
+    - astropy
+    - backoff
+    - charset_normalizer
+    - cycler
+    - defusedxml
+    - idna
+    - kiwisolver
+    - matplotlib
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - pyvo
+    - requests
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a1
+    source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
+process:
+  t0: {}
+  t1: {}
+  t2: {}
+  t3: {}
+  ops:
+    ExceptionPublisher:
+      name: ExceptionPublisher
+      version: 0.10.6a11
+      active: true
+      tier: null
+      schedule:
+      - every(10).minutes
+      channel: null
+      distrib: ampel-core
+      source: conf/ampel-core/ampel.yaml
+      isolate: true
+      multiplier: 1
+      log: null
+      controller:
+        unit: DefaultProcessController
+        config: null
+        secrets: null
+        override: null
+      processor:
+        unit: OpsProcessor
+        config:
+          execute:
+            unit: AmpelExceptionPublisher
+        secrets: null
+        override: null
+alias:
+  t0: {}
+  t1: {}
+  t2: {}
+  t3:
+    '%TRANSIENT':
+      col: stock
+    '%STOCK':
+      col: stock
+    '%DATAPOINT':
+      col: t0
+    '%T0':
+      col: t0
+    '%COMPOUND':
+      col: t1
+    '%T1':
+      col: t1
+    '%T2DOC':
+      col: t2
+    '%T2DOC_WITH_CONF':
+      col: t2
+      resolve_config: true
+    '%T2':
+      col: t2
+    '%T2RECORD':
+      col: t2
+    '%PHOTOPOINT':
+      col: t0
+      query_complement:
+        _id:
+          $gt: 0
+    '%UPPERLIMIT':
+      col: t0
+      query_complement:
+        _id:
+          $lt: 0
+    '%PHOTOMETRY':
+      col: t0
+resource:
+  mongo: mongodb://localhost:27017
+  extcats: mongodb://localhost:27017
+environment:
+  conda_airgn:
+    annotated_types: 0.7.0
+    prometheus_client: 0.23.1
+    pydantic_core: 2.33.2
+    schedule: 1.2.2
+    typing_inspection: 0.4.2
+    astropy: 5.3.4
+    backoff: 2.2.1
+    charset_normalizer: 3.4.3
+    idna: '3.10'
+    numpy: 1.26.4
+    packaging: '25.0'
+    pandas: 2.3.3
+    platformdirs: 4.4.0
+    psutil: 6.1.1
+    pytz: '2025.2'
+    pyvo: '1.7'
+    requests: 2.32.5
+    urllib3: 1.26.15
+    scipy: 1.16.2
+    cycler: 0.12.1
+    defusedxml: 0.7.1
+    joblib: 1.5.2
+    kiwisolver: 1.4.9
+    matplotlib: 3.10.6
+    pyparsing: 3.2.5
+    threadpoolctl: 3.6.0
+template:
+  hash_t2_config: ampel.config.alter.HashT2Config
+  resolve_run_time_aliases: ampel.config.alter.ResolveRunTimeAliases
+  ingest_alerts: ampel.template.EasyAlertConsumerTemplate
+confid: {}

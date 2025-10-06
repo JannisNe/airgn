@@ -1,0 +1,22 @@
+[project]
+name = "airgn"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Jannis Necker",email = "jannis.necker@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "timewise @ file:///Users/jannisnecker/Software/timewise",
+    "jupyterlab (>=4.4.6,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+timewise = {develop = true}
