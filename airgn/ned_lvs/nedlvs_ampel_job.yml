@@ -6,7 +6,7 @@ channel:
   version: 0
 mongo:
   prefix: nedlvs_ampel
-  reset: true
+  reset: false
 name: timewise
 task:
 - config:
@@ -27,7 +27,7 @@ task:
                 - unit: T2StackVisits
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 10000
+    iter_max: 100000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -51,3 +51,31 @@ task:
   multiplier: 1
   title: t2
   unit: T2Worker
+- title: PlotChi2
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - DATAPOINT
+            channel: "wise"
+    stage:
+      unit: T3SimpleStager
+      config:
+        execute:
+          - unit: PlotChi2Distribution
+            config:
+              path: /Users/jannisnecker/Software/airgn/plots/nedlvs_chi2_full.pdf
+              input_mongodb_name: nedlvs
+              plot_dir: /Users/jannisnecker/Software/airgn/plots/nedlvs_chi2/
+              chi2_thresh_to_plot: 20

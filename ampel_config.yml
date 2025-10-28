@@ -1,6 +1,6 @@
 build:
-  date: 06/10/2025
-  time: '11:39:49'
+  date: 28/10/2025
+  time: '15:09:16'
   by: jannisnecker
   conda: airgn
   stop_on_errors: 0
@@ -14,11 +14,11 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a4
   ampel-core: 0.10.6a11
-  ampel-plot: 0.9.1
-  ampel-alerts: 0.10.3a5
-  airgn: 0.1.0
   ampel-photometry: 0.10.1
-  timewise: 1.0.0a1
+  ampel-plot: 0.9.1
+  airgn: 0.1.0
+  timewise: 1.0.0a6
+  ampel-alerts: 0.10.3a5
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -688,7 +688,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   BasicMultiFilter:
     fqn: ampel.alert.filter.BasicMultiFilter
@@ -875,6 +875,29 @@ unit:
     distrib: ampel-core
     version: 0.10.6a11
     source: conf/ampel-core/ampel.yaml
+  PlotChi2Distribution:
+    fqn: airgn.ampel.t3.PlotChi2Distribution
+    base:
+    - PlotChi2Distribution
+    - AbsPhotoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 7674924477614847163
+    dependencies:
+    - annotated_types
+    - cycler
+    - defusedxml
+    - kiwisolver
+    - matplotlib
+    - numpy
+    - packaging
+    - pydantic_core
+    - pyparsing
+    - scipy
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
   T1HDBSCAN:
     fqn: ampel.timewise.t1.T1HDBSCAN
     base:
@@ -909,7 +932,7 @@ unit:
     - typing_inspection
     - urllib3
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   T1SimpleCombiner:
     fqn: ampel.t1.T1SimpleCombiner
@@ -946,7 +969,7 @@ unit:
     - AbsLightCurveT2Unit
     - AbsCustomStateT2Unit
     - LogicalUnit
-    xxh64: 2320205032952052908
+    xxh64: 8680353943071378279
     dependencies:
     - annotated_types
     - numpy
@@ -968,7 +991,7 @@ unit:
     - AbsTiedCustomStateT2Unit
     - AbsTiedT2Unit
     - LogicalUnit
-    xxh64: 11009859450448240515
+    xxh64: 7820217488773939106
     dependencies:
     - annotated_types
     - numpy
@@ -989,7 +1012,7 @@ unit:
     - AbsLightCurveT2Unit
     - AbsCustomStateT2Unit
     - LogicalUnit
-    xxh64: 8821254734293482667
+    xxh64: 15454745280137557068
     dependencies:
     - annotated_types
     - numpy
@@ -1002,7 +1025,7 @@ unit:
     - scipy
     - typing_inspection
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   T3BufferExporterUnit:
     fqn: ampel.cli.T3BufferExporterUnit
@@ -1067,7 +1090,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   TimewiseFilter:
     fqn: ampel.timewise.t1.TimewiseFilter
@@ -1087,7 +1110,7 @@ unit:
     - pytz
     - typing_inspection
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   NullProducer:
     fqn: ampel.queue.NullProducer
@@ -1412,7 +1435,7 @@ unit:
     - typing_inspection
     - urllib3
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   TimewiseAlertSupplier:
     fqn: ampel.timewise.alert.TimewiseAlertSupplier
@@ -1430,7 +1453,7 @@ unit:
     - pytz
     - typing_inspection
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   TiCompilerOptions:
     fqn: ampel.timewise.ingest.TiCompilerOptions
@@ -1445,7 +1468,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
   AuxDiagnosticPlotter:
     fqn: ampel.timewise.util.AuxDiagnosticPlotter
@@ -1477,7 +1500,7 @@ unit:
     - typing_inspection
     - urllib3
     distrib: timewise
-    version: 1.0.0a1
+    version: 1.0.0a6
     source: /Users/jannisnecker/Software/timewise/conf/timewise/ampel.yml
 process:
   t0: {}
@@ -1558,26 +1581,26 @@ environment:
     pydantic_core: 2.33.2
     schedule: 1.2.2
     typing_inspection: 0.4.2
-    astropy: 5.3.4
-    backoff: 2.2.1
-    charset_normalizer: 3.4.3
-    idna: '3.10'
     numpy: 1.26.4
-    packaging: '25.0'
     pandas: 2.3.3
     platformdirs: 4.4.0
     psutil: 6.1.1
     pytz: '2025.2'
-    pyvo: '1.7'
-    requests: 2.32.5
-    urllib3: 1.26.15
-    scipy: 1.16.2
     cycler: 0.12.1
     defusedxml: 0.7.1
-    joblib: 1.5.2
     kiwisolver: 1.4.9
     matplotlib: 3.10.6
+    packaging: '25.0'
     pyparsing: 3.2.5
+    scipy: 1.16.2
+    astropy: 5.3.4
+    backoff: 2.2.1
+    charset_normalizer: 3.4.3
+    idna: '3.10'
+    pyvo: '1.7'
+    requests: 2.32.5
+    urllib3: 2.5.0
+    joblib: 1.5.2
     threadpoolctl: 3.6.0
 template:
   hash_t2_config: ampel.config.alter.HashT2Config
