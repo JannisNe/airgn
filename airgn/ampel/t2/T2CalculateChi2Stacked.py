@@ -13,7 +13,6 @@ from timewise.process import keys
 
 
 class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
-    clean_outliers: bool = True
     t2_dependency: Sequence[StateT2Dependency[Literal["T2StackVisits"]]]
 
     def process(

@@ -9,8 +9,6 @@ from timewise.process import keys
 
 
 class T2CalculateChi2(AbsLightCurveT2Unit):
-    clean_outliers: bool = True
-
     def process(self, light_curve: LightCurve) -> UBson | UnitResult:
         columns = [
             "ra",
