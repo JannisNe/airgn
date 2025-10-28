@@ -18,8 +18,8 @@ class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
     def process(
         self, light_curve: LightCurve, t2_views: Sequence[T2DocView]
     ) -> UBson | UnitResult:
-        records = [r.body[0] for r in t2_views]
-        stacked_lightcurve = pd.DataFrame(records)
+        records = [r.body[0] for r in t2_views][0]
+        stacked_lightcurve = pd.DataFrame.from_records(records)
 
         res = {}
         for i in range(1, 3):
