@@ -31,6 +31,7 @@ def chi2_hist(config_path: Path, outfile: Path, stacked: bool):
         ax.set_xlim(0, 6)
         x = np.linspace(*ax.get_xlim(), 1000)
         n = df[f"npoints_w{i}"].median()
+        print(f"Median number of datapoints: {n} for w{i}")
         y = chi2(n - 1, 0, 1 / (n - 1)).pdf(x)
         ax.plot(x, y)
 
