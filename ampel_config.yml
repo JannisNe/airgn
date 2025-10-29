@@ -1,6 +1,6 @@
 build:
-  date: 28/10/2025
-  time: '15:09:16'
+  date: 29/10/2025
+  time: '10:16:57'
   by: jannisnecker
   conda: airgn
   stop_on_errors: 0
@@ -15,9 +15,9 @@ build:
   ampel-interface: 0.10.5a4
   ampel-core: 0.10.6a11
   ampel-photometry: 0.10.1
+  timewise: 1.0.0a6
   ampel-plot: 0.9.1
   airgn: 0.1.0
-  timewise: 1.0.0a6
   ampel-alerts: 0.10.3a5
 mongo:
   ingest:
@@ -875,6 +875,39 @@ unit:
     distrib: ampel-core
     version: 0.10.6a11
     source: conf/ampel-core/ampel.yaml
+  PlotAllWISEvsNEOWISE:
+    fqn: airgn.ampel.t3.PlotAllWISEvsNEOWISE
+    base:
+    - PlotAllWISEvsNEOWISE
+    - AbsPhotoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 14873014501545816745
+    dependencies:
+    - annotated_types
+    - astropy
+    - backoff
+    - charset_normalizer
+    - cycler
+    - defusedxml
+    - idna
+    - kiwisolver
+    - matplotlib
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - requests
+    - typing_inspection
+    - urllib3
+    distrib: airgn
+    version: 0.1.0
+    source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
   PlotChi2Distribution:
     fqn: airgn.ampel.t3.PlotChi2Distribution
     base:
@@ -882,19 +915,30 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 7674924477614847163
+    xxh64: 4942276672527253908
     dependencies:
     - annotated_types
+    - astropy
+    - backoff
+    - charset_normalizer
     - cycler
     - defusedxml
+    - idna
     - kiwisolver
     - matplotlib
     - numpy
     - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
     - pydantic_core
     - pyparsing
+    - pytz
+    - requests
     - scipy
     - typing_inspection
+    - urllib3
     distrib: airgn
     version: 0.1.0
     source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
@@ -992,6 +1036,27 @@ unit:
     - AbsTiedT2Unit
     - LogicalUnit
     xxh64: 7820217488773939106
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
+  T2CalculateMedians:
+    fqn: airgn.ampel.t2.T2CalculateMedians
+    base:
+    - T2CalculateMedians
+    - AbsLightCurveT2Unit
+    - AbsCustomStateT2Unit
+    - LogicalUnit
+    xxh64: 4995415571433295204
     dependencies:
     - annotated_types
     - numpy
@@ -1586,20 +1651,20 @@ environment:
     platformdirs: 4.4.0
     psutil: 6.1.1
     pytz: '2025.2'
+    astropy: 5.3.4
+    backoff: 2.2.1
+    charset_normalizer: 3.4.3
     cycler: 0.12.1
     defusedxml: 0.7.1
+    idna: '3.10'
     kiwisolver: 1.4.9
     matplotlib: 3.10.6
     packaging: '25.0'
     pyparsing: 3.2.5
-    scipy: 1.16.2
-    astropy: 5.3.4
-    backoff: 2.2.1
-    charset_normalizer: 3.4.3
-    idna: '3.10'
-    pyvo: '1.7'
     requests: 2.32.5
-    urllib3: 2.5.0
+    scipy: 1.16.2
+    urllib3: 1.26.15
+    pyvo: '1.7'
     joblib: 1.5.2
     threadpoolctl: 3.6.0
 template:

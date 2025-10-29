@@ -1,4 +1,6 @@
 unit:
   - airgn.ampel.t2.T2CalculateChi2
   - airgn.ampel.t2.T2CalculateChi2Stacked
+  - airgn.ampel.t2.T2CalculateMedians
   - airgn.ampel.t3.PlotChi2Distribution
+  - airgn.ampel.t3.PlotAllWISEvsNEOWISE

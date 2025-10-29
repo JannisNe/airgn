@@ -25,6 +25,10 @@ task:
               config:
                 t2_dependency:
                 - unit: T2StackVisits
+            - unit: T2CalculateMedians
+              config:
+                t2_dependency:
+                  - unit: T2StackVisits
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
     iter_max: 100000
@@ -46,11 +50,15 @@ task:
       - resolve_run_time_aliases
       - hash_t2_config
   unit: AlertConsumer
+
+
 - config:
     log_profile: default
   multiplier: 1
   title: t2
   unit: T2Worker
+
+
 - title: PlotChi2
   unit: T3Processor
   config:
@@ -79,3 +87,32 @@ task:
               input_mongodb_name: nedlvs
               plot_dir: /Users/jannisnecker/Software/airgn/plots/nedlvs_chi2/
               chi2_thresh_to_plot: 20
+
+
+- title: PlotAllWISEvsNEOWISE
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - DATAPOINT
+            channel: "wise"
+    stage:
+      unit: T3SimpleStager
+      config:
+        execute:
+          - unit: PlotAllWISEvsNEOWISE
+            config:
+              path: /Users/jannisnecker/Software/airgn/plots/nedlvs_allwise_vs_neowise.pdf
+              plot_dir: /Users/jannisnecker/Software/airgn/plots/nedlvs_allwise_neowise_ratio_selected/
+              thresh_to_plot: 20
