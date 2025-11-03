@@ -34,7 +34,7 @@ class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
                         stacked_lightcurve[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"]
                         - stacked_lightcurve[
                             f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"
-                        ].median()
+                        ].mean()
                     )
                     / stacked_lightcurve[f"w{i}{keys.FLUX_DENSITY_EXT}{keys.RMS}"]
                 )
@@ -42,7 +42,7 @@ class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
             )
             res[f"npoints_w{i}"] = sum(nan_msak)
             res[f"red_chi2_w{i}"] = (
-                res[f"chi2_w{i}"] / res[f"npoints_w{i}"]
+                res[f"chi2_w{i}"] / (res[f"npoints_w{i}"] - 1)
                 if res[f"npoints_w{i}"] > 0
                 else None
             )

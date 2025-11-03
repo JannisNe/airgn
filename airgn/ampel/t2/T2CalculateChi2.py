@@ -43,7 +43,7 @@ class T2CalculateChi2(AbsLightCurveT2Unit):
             )
             res[f"npoints_w{i}"] = sum(nan_msak)
             res[f"red_chi2_w{i}"] = (
-                res[f"chi2_w{i}"] / res[f"npoints_w{i}"]
+                res[f"chi2_w{i}"] / (res[f"npoints_w{i}"] - 1)
                 if res[f"npoints_w{i}"] > 0
                 else None
             )
