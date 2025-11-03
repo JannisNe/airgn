@@ -5,7 +5,7 @@ channel:
   policy: []
   version: 0
 mongo:
-  prefix: airgn2
+  prefix: airgn_milliquas
   reset: false
 name: timewise
 task:
@@ -21,6 +21,14 @@ task:
           - state_t2:
             - unit: T2StackVisits
             - unit: T2CalculateChi2
+            - unit: T2CalculateChi2Stacked
+              config:
+                t2_dependency:
+                - unit: T2StackVisits
+            - unit: T2CalculateMedians
+              config:
+                t2_dependency:
+                  - unit: T2StackVisits
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
     iter_max: 100000
@@ -42,8 +50,42 @@ task:
       - resolve_run_time_aliases
       - hash_t2_config
   unit: AlertConsumer
+
+
 - config:
     log_profile: default
-  multiplier: 1
+  multiplier: 5
   title: t2
   unit: T2Worker
+
+
+- title: PlotChi2
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+            channel: "wise"
+    stage:
+      unit: T3SimpleStager
+      config:
+        execute:
+          - unit: PlotChi2Distribution
+            config:
+              path: /Users/jannisnecker/Software/airgn/plots/milliquas_chi2_full.pdf
+              input_mongodb_name: nedlvs
+              cumulative: true
+              upper_lim: 15
+          - unit: PlotAllWISEvsNEOWISE
+            config:
+              path: /Users/jannisnecker/Software/airgn/plots/milliquas_allwise_vs_neowise.png
