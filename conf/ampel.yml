@@ -1,4 +1,5 @@
 unit:
+  - airgn.ampel.alert.load.TimewiseAlertSimulator
   - airgn.ampel.t2.T2CalculateChi2
   - airgn.ampel.t2.T2CalculateChi2Stacked
   - airgn.ampel.t2.T2CalculateMedians

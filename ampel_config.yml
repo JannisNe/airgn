@@ -1,6 +1,6 @@
 build:
-  date: 29/10/2025
-  time: '10:16:57'
+  date: 31/10/2025
+  time: '10:30:09'
   by: jannisnecker
   conda: airgn
   stop_on_errors: 0
@@ -14,11 +14,11 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a4
   ampel-core: 0.10.6a11
-  ampel-photometry: 0.10.1
-  timewise: 1.0.0a6
-  ampel-plot: 0.9.1
-  airgn: 0.1.0
   ampel-alerts: 0.10.3a5
+  timewise: 1.0.0a6
+  airgn: 0.1.0
+  ampel-plot: 0.9.1
+  ampel-photometry: 0.10.1
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -882,7 +882,7 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 14873014501545816745
+    xxh64: 513047080641963220
     dependencies:
     - annotated_types
     - astropy
@@ -915,7 +915,7 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 4942276672527253908
+    xxh64: 14410428057693170765
     dependencies:
     - annotated_types
     - astropy
@@ -1053,10 +1053,11 @@ unit:
     fqn: airgn.ampel.t2.T2CalculateMedians
     base:
     - T2CalculateMedians
-    - AbsLightCurveT2Unit
-    - AbsCustomStateT2Unit
+    - AbsTiedLightCurveT2Unit
+    - AbsTiedCustomStateT2Unit
+    - AbsTiedT2Unit
     - LogicalUnit
-    xxh64: 4995415571433295204
+    xxh64: 10389412612500825269
     dependencies:
     - annotated_types
     - numpy
@@ -1163,7 +1164,7 @@ unit:
     - TimewiseFilter
     - AbsAlertFilter
     - LogicalUnit
-    xxh64: 8807013584505065222
+    xxh64: 3143678810639488032
     dependencies:
     - annotated_types
     - numpy
@@ -1474,6 +1475,26 @@ unit:
     distrib: ampel-photometry
     version: 0.10.1
     source: conf/ampel-photometry/ampel.yaml
+  TimewiseAlertSimulator:
+    fqn: airgn.ampel.alert.load.TimewiseAlertSimulator
+    base:
+    - TimewiseAlertSimulator
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 3269181014795635632
+    dependencies:
+    - annotated_types
+    - numpy
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pydantic_core
+    - pytz
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /Users/jannisnecker/Software/airgn/conf/ampel.yml
   TimewiseFileLoader:
     fqn: ampel.timewise.alert.load.TimewiseFileLoader
     base:
