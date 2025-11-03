@@ -3,6 +3,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.T3Store import T3Store
@@ -14,13 +15,33 @@ from timewise.plot.lightcurve import plot_lightcurve
 from timewise.process import keys
 
 
+def fd2w1mag(flux_density: float) -> float:
+    """Convert flux density in microJy to magnitude"""
+    return -2.5 * np.log10(flux_density / 309540.0)
+
+
+def w1mag2fd(mag: float) -> float:
+    """Convert magnitude to flux density in microJy"""
+    return 309540.0 * 10 ** (-mag / 2.5)
+
+
+def fd2w2mag(flux_density: float) -> float:
+    """Convert flux density in microJy to magnitude"""
+    return -2.5 * np.log10(flux_density / 171787.0)
+
+
+def w2mag2fd(mag: float) -> float:
+    """Convert magnitude to flux density in microJy"""
+    return 171787.0 * 10 ** (-mag / 2.5)
+
+
 class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
     """
     Plot lightcurves of transients using matplotlib
     """
 
     path: str
-    thresh_to_plot: float = 5.0
+    thresh_to_plot: float | None = None
     plot_dir: str = "./"
 
     def process(
@@ -41,11 +62,12 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
         res = []
         for view in gen:
             t2res = view.get_t2_body(unit="T2CalculateMedians")
-            for b in ["w1", "w2"]:
+            if t2res:
                 res.append(t2res)
 
             if any(
-                t2res
+                self.thresh_to_plot is not None
+                and t2res
                 and (k := f"allwise_neowise_ratio_w{b}") in t2res
                 and t2res[k] > self.thresh_to_plot
                 for b in ["w1", "w2"]
@@ -80,6 +102,12 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
             ax.axhline(1.0, color="k", ls="--")
 
         axs[-1].set_xscale("log")
+        mag_ticks = [6, 8, 10, 12, 14, 16]
+        secax1 = axs[0].secondary_xaxis("top", functions=(fd2w1mag, w1mag2fd))
+        secax1.set_xlabel("Apparent Magnitude")
+        secax1.set_xticks(mag_ticks, labels=mag_ticks)
+        secax2 = axs[1].secondary_xaxis("top", functions=(fd2w2mag, w2mag2fd))
+        secax2.set_xticks(mag_ticks, labels=mag_ticks)
         axs[-1].set_xlabel("Median AllWISE Flux Density")
         fig.supylabel("AllWISE / NEOWISE Flux Density Ratio")
 
