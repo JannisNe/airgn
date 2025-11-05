@@ -1,7 +1,7 @@
 unit:
-  - airgn.ampel.alert.load.TimewiseAlertSimulator
-  - airgn.ampel.t2.T2CalculateChi2
-  - airgn.ampel.t2.T2CalculateChi2Stacked
-  - airgn.ampel.t2.T2CalculateMedians
-  - airgn.ampel.t3.PlotChi2Distribution
-  - airgn.ampel.t3.PlotAllWISEvsNEOWISE
+  - ampel.airgn.alert.load.TimewiseAlertSimulator
+  - ampel.airgn.t2.T2CalculateChi2
+  - ampel.airgn.t2.T2CalculateChi2Stacked
+  - ampel.airgn.t2.T2CalculateMedians
+  - ampel.airgn.t3.PlotChi2Distribution
+  - ampel.airgn.t3.PlotAllWISEvsNEOWISE

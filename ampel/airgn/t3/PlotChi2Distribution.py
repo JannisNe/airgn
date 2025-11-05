@@ -9,9 +9,10 @@ import pandas as pd
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.T3Store import T3Store
-from ampel.types import T3Send
 from ampel.view.TransientView import TransientView
 from ampel.timewise.util.pdutil import datapoints_to_dataframe
+from ampel.struct.UnitResult import UnitResult
+from ampel.types import T3Send, UBson
 
 from timewise.plot.lightcurve import plot_lightcurve
 from timewise.process import keys
@@ -23,19 +24,26 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
     """
 
     path: str
-    input_mongodb_name: str
+    input_mongodb_name: str | None = None
 
-    chi2_thresh_to_plot: float = 5.0
+    chi2_thresh_to_plot: float | None = None
     plot_dir: str = "./"
+    upper_lim: float = 6
+    cumulative: bool = False
+    n1: float = 10
+    n2: float = 8
 
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
-    ) -> None:
-        input_collection = MongoClient()[self.input_mongodb_name]["input"]
-        qso_ids = [
-            doc["orig_id"]
-            for doc in input_collection.find({"objtype": "b'QSO'"}, {"orig_id": 1})
-        ]
+    ) -> UBson | UnitResult:
+        if self.input_mongodb_name:
+            input_collection = MongoClient()[self.input_mongodb_name]["input"]
+            qso_ids = [
+                doc["orig_id"]
+                for doc in input_collection.find({"objtype": "b'QSO'"}, {"orig_id": 1})
+            ]
+        else:
+            qso_ids = []
 
         plot_dir = Path(self.plot_dir)
         plot_dir.mkdir(parents=True, exist_ok=True)
@@ -63,7 +71,8 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                             chi2_res[unit][b].append(t2res[k])
 
                 if any(
-                    t2res
+                    self.chi2_thresh_to_plot is not None
+                    and t2res
                     and (k := f"red_chi2_{b}") in t2res
                     and t2res[k] > self.chi2_thresh_to_plot
                     for b in ["w1", "w2"]
@@ -84,23 +93,44 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                     plt.close(fig)
 
         fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
-        bins = list(np.linspace(0, 6, 100)) + [1e9]
+        bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
+        x = np.linspace(0, self.upper_lim, 1000)
+
+        # method name of PDFs
+        method_name = "pdf" if not self.cumulative else "cdf"
+
+        # set up result structure
+        res = {}
+
         for i, (u, bres) in enumerate(chi2_res.items()):
             for ax, (b, chi2_dist) in zip(axs, bres.items()):
                 ax.hist(
                     chi2_dist,
                     density=True,
                     bins=bins,
-                    cumulative=False,
+                    cumulative=self.cumulative,
                     alpha=0.5,
                     label=u,
                     color=f"C{i}",
+                )
+                chi2_dist = np.array(chi2_dist)
+                m = ~np.isnan(chi2_dist) & np.isfinite(chi2_dist)
+                ffit = stats.f.fit(chi2_dist[m], self.n1, self.n2, floc=0)
+                key_base = f"{u}_{b}"
+                for p, p_name in zip(ffit, ["d1", "d2", "loc", "scale"]):
+                    res[f"{key_base}_{p_name}"] = p
+
+                ax.plot(
+                    x,
+                    stats.f(*ffit).__getattribute__(method_name)(x),
+                    color=f"C{i}",
+                    linestyle="dotted",
                 )
                 ax.hist(
                     chi2_qso_res[u][b],
                     density=True,
                     bins=bins,
-                    cumulative=False,
+                    cumulative=self.cumulative,
                     alpha=0.5,
                     histtype="step",
                     linestyle="dashed",
@@ -108,13 +138,26 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                 )
 
         for i, ax in enumerate(axs):
-            n1 = 10
-            n2 = 8
-            x = np.linspace(0, 6, 1000)
-            ax.plot(x, stats.chi2(n1 * n2 - 1, 0, 1 / (n1 * n2 - 1)).pdf(x), color="C1")
-            ax.plot(x, stats.chi2(n1 - 1, 0, 1 / (n1 - 1)).pdf(x), color="C0")
-            ax.plot(x, stats.f(n1 - 1, n2, 0).pdf(x), color="C0")
-            ax.set_xlim(0, 6)
+            ax.plot(
+                x,
+                stats.chi2(
+                    self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
+                ).__getattribute__(method_name)(x),
+                color="C1",
+            )
+            ax.plot(
+                x,
+                stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
+                    method_name
+                )(x),
+                color="C0",
+            )
+            ax.plot(
+                x,
+                stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(method_name)(x),
+                color="C2",
+            )
+            ax.set_xlim(0, self.upper_lim)
             ax.set_ylabel(f"w{i + 1}")
             ax.legend()
             ax.set_ylim(0, 1.2)
@@ -124,3 +167,5 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
 
         fig.savefig(self.path)
         plt.close()
+
+        return res
