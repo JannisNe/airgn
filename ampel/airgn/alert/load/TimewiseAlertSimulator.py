@@ -14,7 +14,11 @@ class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
     n_detections_per_visit: int
 
     mag_range: tuple[float, float] = (16.0, 13.0)
-    zeropoint_scatter: float = 0.03
+
+    zeropoint_w1: float = MAGNITUDE_ZEROPOINTS["w1"]
+    zeropoint_scatter_w1: float = 0.032
+    zeropoint_w2: float = MAGNITUDE_ZEROPOINTS["w2"]
+    zeropoint_scatter_w2: float = 0.037
 
     def simulate_alerts(self) -> Generator[pd.DataFrame, None, None]:
         n_dps = self.n_visits * self.n_detections_per_visit
@@ -36,8 +40,8 @@ class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
             for i in range(1, 3):
                 mag_mean = rnd.uniform(*sorted(self.mag_range))
                 zp = rnd.normal(
-                    loc=MAGNITUDE_ZEROPOINTS[f"w{i}"],
-                    scale=MAGNITUDE_ZEROPOINTS[f"w{i}"] * self.zeropoint_scatter,
+                    loc=self.__getattribute__(f"zeropoint_w{i}"),
+                    scale=self.__getattribute__(f"zeropoint_scatter_w{i}"),
                     size=n_dps,
                 )
                 flux_mean = 10 ** ((zp - mag_mean) / 2.5)
@@ -45,7 +49,7 @@ class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
                 fe = np.sqrt(f)
                 df[f"w{i}{keys.FLUX_EXT}"] = f
                 df[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"] = fe
-                df[f"w{i}{keys.MAG_EXT}"] = mag_mean
+                df[f"w{i}{keys.MAG_EXT}"] = zp - np.log10(f) * 2.5
                 df[f"w{i}{keys.ERROR_EXT}{keys.MAG_EXT}"] = (2.5 / np.log(10)) * (
                     fe / f
                 )
