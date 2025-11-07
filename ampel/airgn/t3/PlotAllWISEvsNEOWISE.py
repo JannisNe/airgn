@@ -100,6 +100,8 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
             )
             ax.set_ylabel(f"w{i}")
             ax.axhline(1.0, color="k", ls="--")
+            ylim = ax.get_ylim()
+            ax.set_ylim(max(0.2, ylim[0]), min(5.0, ylim[1]))
 
         axs[-1].set_xscale("log")
         mag_ticks = [6, 8, 10, 12, 14, 16]
