@@ -23,28 +23,27 @@ class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
 
         res = {}
         for i in range(1, 3):
-            nan_msak = (
-                stacked_lightcurve[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"].notna()
-                | stacked_lightcurve[f"w{i}{keys.FLUX_DENSITY_EXT}{keys.RMS}"].notna()
-            )
-            stacked_lightcurve = stacked_lightcurve[nan_msak]
-            res[f"chi2_w{i}"] = sum(
-                (
-                    (
-                        stacked_lightcurve[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"]
-                        - stacked_lightcurve[
-                            f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"
-                        ].mean()
-                    )
-                    / stacked_lightcurve[f"w{i}{keys.FLUX_DENSITY_EXT}{keys.RMS}"]
+            for key in [keys.FLUX_EXT, keys.FLUX_DENSITY_EXT]:
+                nan_msak = (
+                    stacked_lightcurve[f"w{i}{keys.MEAN}{key}"].notna()
+                    | stacked_lightcurve[f"w{i}{key}{keys.RMS}"].notna()
                 )
-                ** 2
-            )
-            res[f"npoints_w{i}"] = sum(nan_msak)
-            res[f"red_chi2_w{i}"] = (
-                res[f"chi2_w{i}"] / (res[f"npoints_w{i}"] - 1)
-                if res[f"npoints_w{i}"] > 0
-                else None
-            )
+                stacked_lightcurve = stacked_lightcurve[nan_msak]
+                res[f"chi2_w{i}_{key}"] = sum(
+                    (
+                        (
+                            stacked_lightcurve[f"w{i}{keys.MEAN}{key}"]
+                            - stacked_lightcurve[f"w{i}{keys.MEAN}{key}"].mean()
+                        )
+                        / stacked_lightcurve[f"w{i}{key}{keys.RMS}"]
+                    )
+                    ** 2
+                )
+                res[f"npoints_w{i}_{key}"] = sum(nan_msak)
+                res[f"red_chi2_w{i}_{key}"] = (
+                    res[f"chi2_w{i}_{key}"] / (res[f"npoints_w{i}_{key}"] - 1)
+                    if res[f"npoints_w{i}_{key}"] > 0
+                    else None
+                )
 
         return res

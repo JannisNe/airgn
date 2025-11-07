@@ -31,7 +31,7 @@ class T2CalculateChi2(AbsLightCurveT2Unit):
                 | data[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"].notna()
             )
             data = data[nan_msak]
-            res[f"chi2_w{i}"] = sum(
+            res[f"chi2_w{i}_{keys.FLUX_EXT}"] = sum(
                 (
                     (
                         data[f"w{i}{keys.FLUX_EXT}"]
@@ -41,10 +41,11 @@ class T2CalculateChi2(AbsLightCurveT2Unit):
                 )
                 ** 2
             )
-            res[f"npoints_w{i}"] = sum(nan_msak)
-            res[f"red_chi2_w{i}"] = (
-                res[f"chi2_w{i}"] / (res[f"npoints_w{i}"] - 1)
-                if res[f"npoints_w{i}"] > 0
+            res[f"npoints_w{i}_{keys.FLUX_EXT}"] = sum(nan_msak)
+            res[f"red_chi2_w{i}_{keys.FLUX_EXT}"] = (
+                res[f"chi2_w{i}_{keys.FLUX_EXT}"]
+                / (res[f"npoints_w{i}_{keys.FLUX_EXT}"] - 1)
+                if res[f"npoints_w{i}_{keys.FLUX_EXT}"] > 0
                 else None
             )
 
