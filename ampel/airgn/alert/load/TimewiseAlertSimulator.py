@@ -5,6 +5,7 @@ import pandas as pd
 from ampel.abstract.AbsAlertLoader import AbsAlertLoader
 
 from timewise.process import keys
+from timewise.process.stacking import MAGNITUDE_ZEROPOINTS
 
 
 class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
@@ -12,9 +13,8 @@ class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
     n_visits: int
     n_detections_per_visit: int
 
-    mean_range: tuple[float, float] = (10.0, 20.0)
-    zeropoint: float = 25.0
-    zeropoint_scatter: float = 0.1
+    mag_range: tuple[float, float] = (16.0, 13.0)
+    zeropoint_scatter: float = 0.03
 
     def simulate_alerts(self) -> Generator[pd.DataFrame, None, None]:
         n_dps = self.n_visits * self.n_detections_per_visit
@@ -34,18 +34,18 @@ class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
             df["stock_id"] = np.full(n_dps, s)
             df["table_name"] = "neowiser_p1bs_psd"
             for i in range(1, 3):
-                mean = rnd.uniform(*self.mean_range)
-                error = np.sqrt(mean)
-                f = rnd.normal(loc=mean, scale=error, size=n_dps)
-                fe = np.full(n_dps, error)
+                mag_mean = rnd.uniform(*sorted(self.mag_range))
                 zp = rnd.normal(
-                    loc=self.zeropoint,
-                    scale=self.zeropoint_scatter * self.zeropoint,
+                    loc=MAGNITUDE_ZEROPOINTS[f"w{i}"],
+                    scale=MAGNITUDE_ZEROPOINTS[f"w{i}"] * self.zeropoint_scatter,
                     size=n_dps,
                 )
+                flux_mean = 10 ** ((zp - mag_mean) / 2.5)
+                f = rnd.poisson(flux_mean)
+                fe = np.sqrt(f)
                 df[f"w{i}{keys.FLUX_EXT}"] = f
                 df[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"] = fe
-                df[f"w{i}{keys.MAG_EXT}"] = zp - 2.5 * np.log10(f)
+                df[f"w{i}{keys.MAG_EXT}"] = mag_mean
                 df[f"w{i}{keys.ERROR_EXT}{keys.MAG_EXT}"] = (2.5 / np.log(10)) * (
                     fe / f
                 )
