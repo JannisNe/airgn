@@ -59,89 +59,102 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
 
         units = ["T2CalculateChi2Stacked", "T2CalculateChi2"]
         unit_keys = [
-            f"T2CalculateChi2Stacked_{keys.FLUX_EXT}",
-            f"T2CalculateChi2Stacked_{keys.FLUX_DENSITY_EXT}",
+            f"T2CalculateChi2Stacked_{keys.FLUX_DENSITY_EXT}_std",
+            f"T2CalculateChi2Stacked_{keys.FLUX_DENSITY_EXT}_sdom",
             f"T2CalculateChi2_{keys.FLUX_EXT}",
         ]
         chi2_res = {u: {"w1": [], "w2": []} for u in unit_keys}
         chi2_qso_res = {u: {"w1": [], "w2": []} for u in unit_keys}
         for view in gen:
             for unit in units:
-                t2res = view.get_t2_body(unit=unit)
-                for b in ["w1", "w2"]:
-                    keys_to_check = [keys.FLUX_EXT]
+                for t2 in view.get_t2_views(unit=unit):
+                    t2res = t2.body[-1]
                     if unit == "T2CalculateChi2Stacked":
-                        keys_to_check.append(keys.FLUX_DENSITY_EXT)
-                    for lk in keys_to_check:
-                        unit_key = f"{unit}_{lk}"
-                        if t2res and (k := f"red_chi2_{b}_{lk}") in t2res:
-                            if view.id in qso_ids:
-                                chi2_qso_res[unit_key][b].append(t2res[k])
-                            else:
-                                chi2_res[unit_key][b].append(t2res[k])
-
-                if any(
-                    self.chi2_range_to_plot is not None
-                    and t2res
-                    and (k := f"red_chi2_{b}_{keys.FLUX_DENSITY_EXT}") in t2res
-                    and self.chi2_range_to_plot[0]
-                    <= t2res[k]
-                    <= self.chi2_range_to_plot[1]
-                    for b in ["w1", "w2"]
-                ):
-                    raw_lightcurve = datapoints_to_dataframe(
-                        view.get_photopoints(), columns
-                    )[0]
-                    stacked_lc = pd.DataFrame(
-                        view.get_t2_body(unit="T2StackVisits", ret_type=tuple),
-                    )
-                    chi2_text = "\n".join(
-                        r"$\chi^2_{{red,{b}}} = {chi2:.2f}$".format(
-                            b=b, chi2=t2res[f"red_chi2_{b}_{keys.FLUX_DENSITY_EXT}"]
+                        std_name = (
+                            t2.config["t2_dependency"][0]["config"]["std_name"]
+                            or "sdom-1"
                         )
-                        for b in ["w1", "w2"]
-                        if t2res and (f"red_chi2_{b}" in t2res)
-                    )
-                    fig, axs = plt.subplots(nrows=3, sharex="all")
-                    plot_lightcurve(
-                        lum_key=keys.FLUX_EXT,
-                        stacked_lightcurve=stacked_lc,
-                        raw_lightcurve=raw_lightcurve,
-                        ax=axs[0],
-                    )
-                    plot_lightcurve(
-                        lum_key=keys.FLUX_DENSITY_EXT,
-                        stacked_lightcurve=stacked_lc,
-                        ax=axs[1],
-                    )
-                    axs[2].annotate(
-                        chi2_text,
-                        xy=(0.05, 0.05),
-                        xycoords="axes fraction",
-                        fontsize=10,
-                        verticalalignment="bottom",
-                        horizontalalignment="left",
-                    )
+                    else:
+                        std_name = ""
                     for b in ["w1", "w2"]:
-                        axs[2].plot(
-                            stacked_lc["mean_mjd"],
-                            stacked_lc[
-                                f"{b}{keys.FLUX_DENSITY_EXT}{keys.KSTEST_NORM_EXT}"
-                            ],
-                            "o-",
-                            color=BAND_PLOT_COLORS[b],
+                        keys_to_check = (
+                            [keys.FLUX_EXT]
+                            if unit == "T2CalculateChi2"
+                            else [keys.FLUX_DENSITY_EXT]
                         )
-                    axs[2].axhline(0.05, color="red", linestyle="dashed")
-                    axs[2].set_ylim(1e-3, 1)
-                    axs[2].set_ylabel("K-S Test p-value")
-                    axs[2].set_xlabel("MJD")
-                    axs[0].set_xlabel("")
-                    axs[1].set_xlabel("")
-                    for ax in axs:
-                        ax.set_yscale("log")
-                    fig.suptitle(f"Transient {view.id} (unit: {unit})")
-                    fig.savefig(plot_dir / f"chi2_exceed_{view.id}_{unit}.pdf")
-                    plt.close(fig)
+                        for lk in keys_to_check:
+                            unit_key = f"{unit}_{lk}"
+                            if "Stacked" in unit:
+                                unit_key += f"_{std_name}"
+                            if t2res and (k := f"red_chi2_{b}_{lk}") in t2res:
+                                if view.id in qso_ids:
+                                    chi2_qso_res[unit_key][b].append(t2res[k])
+                                else:
+                                    chi2_res[unit_key][b].append(t2res[k])
+
+                    if any(
+                        self.chi2_range_to_plot is not None
+                        and t2res
+                        and (k := f"red_chi2_{b}_{keys.FLUX_DENSITY_EXT}") in t2res
+                        and (dps := view.get_photopoints())
+                        and self.chi2_range_to_plot[0]
+                        <= t2res[k]
+                        <= self.chi2_range_to_plot[1]
+                        for b in ["w1", "w2"]
+                    ):
+                        raw_lightcurve = datapoints_to_dataframe(dps, columns)[0]
+                        stacked_lc = pd.DataFrame(
+                            view.get_t2_body(unit="T2StackVisits", ret_type=tuple),
+                        )
+                        chi2_text = "\n".join(
+                            r"$\chi^2_{{red,{b}}} = {chi2:.2f}$".format(
+                                b=b, chi2=t2res[f"red_chi2_{b}_{keys.FLUX_DENSITY_EXT}"]
+                            )
+                            for b in ["w1", "w2"]
+                            if t2res and (f"red_chi2_{b}" in t2res)
+                        )
+                        fig, axs = plt.subplots(nrows=3, sharex="all")
+                        plot_lightcurve(
+                            lum_key=keys.FLUX_EXT,
+                            stacked_lightcurve=stacked_lc,
+                            raw_lightcurve=raw_lightcurve,
+                            ax=axs[0],
+                        )
+                        plot_lightcurve(
+                            lum_key=keys.FLUX_DENSITY_EXT,
+                            stacked_lightcurve=stacked_lc,
+                            ax=axs[1],
+                        )
+                        axs[2].annotate(
+                            chi2_text,
+                            xy=(0.05, 0.05),
+                            xycoords="axes fraction",
+                            fontsize=10,
+                            verticalalignment="bottom",
+                            horizontalalignment="left",
+                        )
+                        for b in ["w1", "w2"]:
+                            axs[2].plot(
+                                stacked_lc["mean_mjd"],
+                                stacked_lc[
+                                    f"{b}{keys.FLUX_DENSITY_EXT}{keys.KSTEST_NORM_EXT}"
+                                ],
+                                "o-",
+                                color=BAND_PLOT_COLORS[b],
+                            )
+                        axs[2].axhline(0.05, color="red", linestyle="dashed")
+                        axs[2].set_ylim(1e-3, 1)
+                        axs[2].set_ylabel("K-S Test p-value")
+                        axs[2].set_xlabel("MJD")
+                        axs[0].set_xlabel("")
+                        axs[1].set_xlabel("")
+                        for ax in axs:
+                            ax.set_yscale("log")
+                        fig.suptitle(f"Transient {view.id} (unit: {unit}{std_name})")
+                        fig.savefig(
+                            plot_dir / f"chi2_exceed_{view.id}_{unit}{std_name}.pdf"
+                        )
+                        plt.close(fig)
 
         fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
         bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
@@ -210,9 +223,9 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
             )
             ax.set_xlim(0, self.upper_lim)
             ax.set_ylabel(f"w{i + 1}")
-            ax.legend()
             ax.set_ylim(0, 1.2)
 
+        axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
         axs[-1].set_xlabel("Reduced Chi-Squared")
         fig.supylabel("Probability Density")
 
