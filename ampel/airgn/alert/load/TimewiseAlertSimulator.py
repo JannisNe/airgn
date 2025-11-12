@@ -24,7 +24,9 @@ class TimewiseAlertSimulator(AbsAlertLoader[Dict]):
         n_dps = self.n_visits * self.n_detections_per_visit
 
         # draw MJDs for all visits
-        mid_visit_mjd = np.linspace(56000, 60500, self.n_visits, endpoint=True)
+        start = 56000
+        end = start + self.n_visits * 200
+        mid_visit_mjd = np.linspace(start, end, self.n_visits, endpoint=True)
         offsets = np.linspace(-0.5, 0.5, self.n_detections_per_visit, endpoint=True)
         mjds = (mid_visit_mjd[:, None] + offsets).flatten()
 
