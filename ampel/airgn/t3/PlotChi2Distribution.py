@@ -1,6 +1,6 @@
 from collections.abc import Generator
 from pathlib import Path
-from typing import Sequence
+from typing import Literal, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -171,7 +171,6 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
             self.add_expected_dist(ax, x)
             ax.set_xlim(0, self.upper_lim)
             ax.set_ylabel(f"w{i + 1}")
-            ax.set_ylim(0, 1.2)
 
         axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
         axs[-1].set_xlabel("Reduced Chi-Squared")
@@ -230,6 +229,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                     ax.annotate(
                         rf"{bins[bin_number - 1]} < {b} < {bins[bin_number]}",
                         (0.05, 0.95),
+                        xycoords="axes fraction",
                         ha="left",
                         va="top",
                     )
@@ -238,7 +238,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
             xlim = axs[0, 0].get_xlim()
             x = np.linspace(*xlim, 100)
             for ax in axs.flatten():
-                self.add_expected_dist(ax, x)
+                self.add_expected_dist(ax, x, "stacked")
 
             axs[0][0].legend(ncols=3, bbox_to_anchor=[1, 1.05], loc="lower center")
             fig.supxlabel("Reduced Chi-Squared")
@@ -312,29 +312,38 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         fig.savefig(self._plot_dir / f"chi2_exceed_{view.id}_{descriptor}.pdf")
         plt.close(fig)
 
-    def add_expected_dist(self, ax: plt.Axes, x: Sequence[float]):
-        ax.plot(
-            x,
-            stats.chi2(
-                self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
-            ).__getattribute__(self._method_name)(x),
-            color="k",
-            ls="--",
-            label=rf"$\chi^2_{{{self.n1 * self.n2 - 1:.0f}}}$",
-        )
-        ax.plot(
-            x,
-            stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
-                self._method_name
-            )(x),
-            color="k",
-            ls=":",
-            label=rf"$\chi^2_{{{self.n1 - 1:.0f}}}$",
-        )
-        ax.plot(
-            x,
-            stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(self._method_name)(x),
-            color="k",
-            ls="-.",
-            label=f"F({self.n1 - 1:.0f},{self.n2 - 1:.0f})",
-        )
+    def add_expected_dist(
+        self,
+        ax: plt.Axes,
+        x: Sequence[float],
+        which: Literal["all", "stacked", "raw"] = "all",
+    ):
+        if ("all" in which) or ("raw" in which):
+            ax.plot(
+                x,
+                stats.chi2(
+                    self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
+                ).__getattribute__(self._method_name)(x),
+                color="k",
+                ls="--",
+                label=rf"$\chi^2_{{{self.n1 * self.n2 - 1:.0f}}}$",
+            )
+        if ("all" in which) or ("stacked" in which):
+            ax.plot(
+                x,
+                stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
+                    self._method_name
+                )(x),
+                color="k",
+                ls=":",
+                label=rf"$\chi^2_{{{self.n1 - 1:.0f}}}$",
+            )
+            ax.plot(
+                x,
+                stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(self._method_name)(
+                    x
+                ),
+                color="k",
+                ls="-.",
+                label=f"F({self.n1 - 1:.0f},{self.n2 - 1:.0f})",
+            )
