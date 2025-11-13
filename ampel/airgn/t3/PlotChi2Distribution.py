@@ -184,8 +184,15 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
 
         # set up result structure
         res = {}
+        cols = [c for c in df.columns if "T2CalculateChi2" in c]
+        colors = {
+            c: f"C{i}"
+            for i, c in enumerate(
+                {c.replace("w1_", "").replace("w2_", "") for c in cols}
+            )
+        }
 
-        for i, u in enumerate([c for c in df.columns if "T2CalculateChi2" in c]):
+        for i, u in enumerate(cols):
             b = u[:2]
             ax = axs[int(b[1]) - 1]
             chi2_dist = df[u]
@@ -196,7 +203,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                 cumulative=self.cumulative,
                 alpha=0.5,
                 label=u,
-                color=f"C{i}",
+                color=colors[u[3:]],
             )
             chi2_dist = np.array(chi2_dist)
             m = ~np.isnan(chi2_dist) & np.isfinite(chi2_dist)
@@ -208,7 +215,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
             ax.plot(
                 x,
                 stats.f(*ffit).__getattribute__(method_name)(x),
-                color=f"C{i}",
+                color=colors[u[3:]],
                 linestyle="dotted",
             )
 
@@ -218,19 +225,25 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                 stats.chi2(
                     self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
                 ).__getattribute__(method_name)(x),
-                color="C1",
+                color="k",
+                ls="--",
+                label=rf"$\chi^2_{{{self.n1 * self.n2 - 1:.0f}}}$",
             )
             ax.plot(
                 x,
                 stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
                     method_name
                 )(x),
-                color="C0",
+                color="k",
+                ls=":",
+                label=rf"$\chi^2_{{{self.n1 - 1:.0f}}}$",
             )
             ax.plot(
                 x,
                 stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(method_name)(x),
-                color="C2",
+                color="k",
+                ls="-.",
+                label=f"F({self.n1 - 1:.0f},{self.n2 - 1:.0f})",
             )
             ax.set_xlim(0, self.upper_lim)
             ax.set_ylabel(f"w{i + 1}")
@@ -239,7 +252,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
         axs[-1].set_xlabel("Reduced Chi-Squared")
         fig.supylabel("Probability Density")
-
+        fig.tight_layout()
         fig.savefig(self._path)
         plt.close()
 
