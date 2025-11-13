@@ -24,6 +24,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
     """
 
     path: str
+    chi2_stacked_std_names: list[str]
 
     input_mongodb_name: str | None = None
     chi2_range_to_plot: tuple[float, float] | None = None
@@ -58,10 +59,9 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                 columns.extend([f"w{i}{key}", f"w{i}{keys.ERROR_EXT}{key}"])
 
         units = ["T2CalculateChi2Stacked", "T2CalculateChi2"]
-        unit_keys = [
-            f"T2CalculateChi2Stacked_{keys.FLUX_DENSITY_EXT}_std",
-            f"T2CalculateChi2Stacked_{keys.FLUX_DENSITY_EXT}_sdom",
-            f"T2CalculateChi2_{keys.FLUX_EXT}",
+        unit_keys = [f"T2CalculateChi2_{keys.FLUX_EXT}"] + [
+            f"T2CalculateChi2Stacked_{keys.FLUX_DENSITY_EXT}_{n}"
+            for n in self.chi2_stacked_std_names
         ]
         chi2_res = {u: {"w1": [], "w2": []} for u in unit_keys}
         chi2_qso_res = {u: {"w1": [], "w2": []} for u in unit_keys}
