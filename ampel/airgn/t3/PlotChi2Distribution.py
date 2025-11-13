@@ -18,6 +18,7 @@ from ampel.types import T3Send, UBson
 
 from timewise.plot.lightcurve import plot_lightcurve, BAND_PLOT_COLORS
 from timewise.process import keys
+from timewise.process.stacking import FLUX_ZEROPOINTS
 
 
 class PlotChi2Distribution(AbsPhotoT3Unit):
@@ -25,7 +26,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
     Plot lightcurves of transients using matplotlib
     """
 
-    path: str
+    base_path: str
     chi2_stacked_std_names: list[str]
 
     input_mongodb_name: str | None = None
@@ -38,8 +39,8 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._path = Path(self.path)
-        self._path.parent.mkdir(exist_ok=True, parents=True)
+        self._base_path = Path(self.base_path)
+        self._base_path.parent.mkdir(exist_ok=True, parents=True)
         self._plot_dir = Path(self.plot_dir)
         self._plot_dir.mkdir(exist_ok=True, parents=True)
 
@@ -136,12 +137,8 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         # set up result structure
         res = {}
         cols = [c for c in df.columns if "T2CalculateChi2" in c]
-        colors = {
-            c: f"C{i}"
-            for i, c in enumerate(
-                {c.replace("w1_", "").replace("w2_", "") for c in cols}
-            )
-        }
+        chi2_units = {c.replace("w1_", "").replace("w2_", "") for c in cols}
+        colors = {c: f"C{i}" for i, c in enumerate(chi2_units)}
 
         for i, u in enumerate(cols):
             b = u[:2]
@@ -180,12 +177,77 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         axs[-1].set_xlabel("Reduced Chi-Squared")
         fig.supylabel("Probability Density")
         fig.tight_layout()
-        fig.savefig(self._path)
+        fig.savefig(self._base_path.parent / (self._base_path.name + "_full_chi2.pdf"))
         plt.close()
 
         # -----------------------------------------------------------
         # PLOT CHI2 IN MAG BINS
         # -----------------------------------------------------------
+
+        # convert flux densities to mag
+        bins = np.arange(5, 18)
+        for b in ["w1", "w2"]:
+            df[f"{b}_median_mag"] = -2.5 * np.log10(
+                df[f"{b}_T2CalculateMedians"] * 1e-3 / FLUX_ZEROPOINTS[b]
+            )
+            df[f"{b}_mag_bin"] = np.digitize(df[f"{b}_median_mag"], bins=bins)
+        full_bins = np.unique(
+            np.concatenate([df[f"{b}_mag_bin"] for b in ["w1", "w2"]])
+        )
+
+        for c in chi2_units:
+            if "Stacked" not in c:
+                continue
+
+            w, h = plt.rcParams["figure.figsize"]
+            factor = 0.7
+            fig, axs = plt.subplots(
+                figsize=(w * 2 * factor, h * len(full_bins) * factor),
+                ncols=2,
+                nrows=len(full_bins),
+                sharex="all",
+                sharey="all",
+            )
+
+            for bin_number in df[f"{b}_mag_bin"]:
+                for ib in range(1, 3):
+                    b = f"w{ib}"
+                    vals = df[f"{b}_{c}"]
+                    ax = axs[int(np.where(full_bins == bin_number)[0]), ib - 1]
+                    m = (
+                        (df[f"{b}_mag_bin"] == bin_number)
+                        & np.isfinite(vals)
+                        & vals.notna()
+                    )
+                    if any(m):
+                        ax.hist(
+                            vals[m],
+                            density=True,
+                            cumulative=self.cumulative,
+                            alpha=0.5,
+                            color=colors[c],
+                        )
+                    ax.annotate(
+                        rf"{bins[bin_number - 1]} < {b} < {bins[bin_number]}",
+                        (0.05, 0.95),
+                        ha="left",
+                        va="top",
+                    )
+                    ax.set_xlim(0, self.upper_lim)
+
+            xlim = axs[0, 0].get_xlim()
+            x = np.linspace(*xlim, 100)
+            for ax in axs.flatten():
+                self.add_expected_dist(ax, x)
+
+            axs[0][0].legend(ncols=3, bbox_to_anchor=[1, 1.05], loc="lower center")
+            fig.supxlabel("Reduced Chi-Squared")
+            fig.supylabel("Probability Density")
+            fig.tight_layout()
+            fig.savefig(
+                self._base_path.parent / (self._base_path.name + f"_{c}_chi2_bins.pdf")
+            )
+            plt.close()
 
         return res
 
