@@ -43,6 +43,9 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         self._plot_dir = Path(self.plot_dir)
         self._plot_dir.mkdir(exist_ok=True, parents=True)
 
+        # method name of PDFs
+        self._method_name = "pdf" if not self.cumulative else "cdf"
+
         columns = [
             "ra",
             "dec",
@@ -52,6 +55,143 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
             for key in [keys.MAG_EXT, keys.FLUX_EXT]:
                 columns.extend([f"w{i}{key}", f"w{i}{keys.ERROR_EXT}{key}"])
         self._columns = columns
+
+    def process(
+        self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
+    ) -> UBson | UnitResult:
+        if self.input_mongodb_name:
+            input_collection = MongoClient()[self.input_mongodb_name]["input"]
+            qso_ids = [
+                doc["orig_id"]
+                for doc in input_collection.find({"objtype": "b'QSO'"}, {"orig_id": 1})
+            ]
+        else:
+            qso_ids = []
+
+        # -----------------------------------------------------------
+        # COLLECT UNIT RESULTS
+        # -----------------------------------------------------------
+
+        units = ["T2CalculateChi2Stacked", "T2CalculateChi2"]
+
+        t2_reses = []
+        for view in gen:
+            row = {}
+            for iunit, unit in enumerate(units):
+                for t2 in view.get_t2_views(unit=unit):
+                    t2res = t2.body[-1]
+                    if unit == "T2CalculateChi2Stacked":
+                        std_name = (
+                            t2.config["t2_dependency"][0]["config"]["std_name"]
+                            or "sdom-1"
+                        )
+                    else:
+                        std_name = ""
+                    for b in ["w1", "w2"]:
+                        keys_to_check = (
+                            [keys.FLUX_EXT]
+                            if unit == "T2CalculateChi2"
+                            else [keys.FLUX_DENSITY_EXT]
+                        )
+                        for lk in keys_to_check:
+                            unit_key = f"{unit}_{lk}"
+                            if "Stacked" in unit:
+                                unit_key += f"_{std_name}"
+                            if t2res and (k := f"red_chi2_{b}_{lk}") in t2res:
+                                row[f"{b}_{unit_key}"] = t2res[k]
+
+                    if any(
+                        self.chi2_range_to_plot is not None
+                        and t2res
+                        and (k := f"red_chi2_{b}_{keys.FLUX_DENSITY_EXT}") in t2res
+                        and (dps := view.get_photopoints())
+                        and self.chi2_range_to_plot[0]
+                        <= t2res[k]
+                        <= self.chi2_range_to_plot[1]
+                        for b in ["w1", "w2"]
+                    ):
+                        self.plot_single(
+                            view=view,
+                            t2res=t2res,
+                            descriptor=f"{unit}{std_name}",
+                            dps=dps,
+                        )
+
+                medians_body = view.get_t2_body("T2CalculateMedians")
+                for b in ["w1", "w2"]:
+                    row[f"{b}_T2CalculateMedians"] = medians_body[f"median_{b}_all"]
+
+            t2_reses.append(row)
+
+        df = pd.DataFrame(t2_reses)
+
+        # -----------------------------------------------------------
+        # PLOT FULL CHI2 DISTRIBUTION
+        # -----------------------------------------------------------
+
+        fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
+        bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
+        x = np.linspace(0, self.upper_lim, 1000)
+
+        # set up result structure
+        res = {}
+        cols = [c for c in df.columns if "T2CalculateChi2" in c]
+        colors = {
+            c: f"C{i}"
+            for i, c in enumerate(
+                {c.replace("w1_", "").replace("w2_", "") for c in cols}
+            )
+        }
+
+        for i, u in enumerate(cols):
+            b = u[:2]
+            ax = axs[int(b[1]) - 1]
+            chi2_dist = df[u]
+            ax.hist(
+                chi2_dist,
+                density=True,
+                bins=bins,
+                cumulative=self.cumulative,
+                alpha=0.5,
+                label=u,
+                color=colors[u[3:]],
+            )
+            chi2_dist = np.array(chi2_dist)
+            m = ~np.isnan(chi2_dist) & np.isfinite(chi2_dist)
+            ffit = stats.f.fit(chi2_dist[m], self.n1, self.n2, floc=0)
+            key_base = f"{u}_{b}"
+            for p, p_name in zip(ffit, ["d1", "d2", "loc", "scale"]):
+                res[f"{key_base}_{p_name}"] = p
+
+            ax.plot(
+                x,
+                stats.f(*ffit).__getattribute__(self._method_name)(x),
+                color=colors[u[3:]],
+                linestyle="dotted",
+            )
+
+        for i, ax in enumerate(axs):
+            self.add_expected_dist(ax, x)
+            ax.set_xlim(0, self.upper_lim)
+            ax.set_ylabel(f"w{i + 1}")
+            ax.set_ylim(0, 1.2)
+
+        axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
+        axs[-1].set_xlabel("Reduced Chi-Squared")
+        fig.supylabel("Probability Density")
+        fig.tight_layout()
+        fig.savefig(self._path)
+        plt.close()
+
+        # -----------------------------------------------------------
+        # PLOT CHI2 IN MAG BINS
+        # -----------------------------------------------------------
+
+        return res
+
+    # -----------------------------------------------------------
+    # PLOT HELPER FUNCTIONS
+    # -----------------------------------------------------------
 
     def plot_single(
         self,
@@ -110,150 +250,29 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         fig.savefig(self._plot_dir / f"chi2_exceed_{view.id}_{descriptor}.pdf")
         plt.close(fig)
 
-    def process(
-        self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
-    ) -> UBson | UnitResult:
-        if self.input_mongodb_name:
-            input_collection = MongoClient()[self.input_mongodb_name]["input"]
-            qso_ids = [
-                doc["orig_id"]
-                for doc in input_collection.find({"objtype": "b'QSO'"}, {"orig_id": 1})
-            ]
-        else:
-            qso_ids = []
-
-        units = ["T2CalculateChi2Stacked", "T2CalculateChi2"]
-
-        t2_reses = []
-        for view in gen:
-            row = {}
-            for iunit, unit in enumerate(units):
-                for t2 in view.get_t2_views(unit=unit):
-                    t2res = t2.body[-1]
-                    if unit == "T2CalculateChi2Stacked":
-                        std_name = (
-                            t2.config["t2_dependency"][0]["config"]["std_name"]
-                            or "sdom-1"
-                        )
-                    else:
-                        std_name = ""
-                    for b in ["w1", "w2"]:
-                        keys_to_check = (
-                            [keys.FLUX_EXT]
-                            if unit == "T2CalculateChi2"
-                            else [keys.FLUX_DENSITY_EXT]
-                        )
-                        for lk in keys_to_check:
-                            unit_key = f"{unit}_{lk}"
-                            if "Stacked" in unit:
-                                unit_key += f"_{std_name}"
-                            if t2res and (k := f"red_chi2_{b}_{lk}") in t2res:
-                                row[f"{b}_{unit_key}"] = t2res[k]
-
-                    if any(
-                        self.chi2_range_to_plot is not None
-                        and t2res
-                        and (k := f"red_chi2_{b}_{keys.FLUX_DENSITY_EXT}") in t2res
-                        and (dps := view.get_photopoints())
-                        and self.chi2_range_to_plot[0]
-                        <= t2res[k]
-                        <= self.chi2_range_to_plot[1]
-                        for b in ["w1", "w2"]
-                    ):
-                        self.plot_single(
-                            view=view,
-                            t2res=t2res,
-                            descriptor=f"{unit}{std_name}",
-                            dps=dps,
-                        )
-
-                medians_body = view.get_t2_body("T2CalculateMedians")
-                for b in ["w1", "w2"]:
-                    row[f"{b}_T2CalculateMedians"] = medians_body[f"median_{b}_all"]
-
-            t2_reses.append(row)
-
-        df = pd.DataFrame(t2_reses)
-
-        fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
-        bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
-        x = np.linspace(0, self.upper_lim, 1000)
-
-        # method name of PDFs
-        method_name = "pdf" if not self.cumulative else "cdf"
-
-        # set up result structure
-        res = {}
-        cols = [c for c in df.columns if "T2CalculateChi2" in c]
-        colors = {
-            c: f"C{i}"
-            for i, c in enumerate(
-                {c.replace("w1_", "").replace("w2_", "") for c in cols}
-            )
-        }
-
-        for i, u in enumerate(cols):
-            b = u[:2]
-            ax = axs[int(b[1]) - 1]
-            chi2_dist = df[u]
-            ax.hist(
-                chi2_dist,
-                density=True,
-                bins=bins,
-                cumulative=self.cumulative,
-                alpha=0.5,
-                label=u,
-                color=colors[u[3:]],
-            )
-            chi2_dist = np.array(chi2_dist)
-            m = ~np.isnan(chi2_dist) & np.isfinite(chi2_dist)
-            ffit = stats.f.fit(chi2_dist[m], self.n1, self.n2, floc=0)
-            key_base = f"{u}_{b}"
-            for p, p_name in zip(ffit, ["d1", "d2", "loc", "scale"]):
-                res[f"{key_base}_{p_name}"] = p
-
-            ax.plot(
-                x,
-                stats.f(*ffit).__getattribute__(method_name)(x),
-                color=colors[u[3:]],
-                linestyle="dotted",
-            )
-
-        for i, ax in enumerate(axs):
-            ax.plot(
-                x,
-                stats.chi2(
-                    self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
-                ).__getattribute__(method_name)(x),
-                color="k",
-                ls="--",
-                label=rf"$\chi^2_{{{self.n1 * self.n2 - 1:.0f}}}$",
-            )
-            ax.plot(
-                x,
-                stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
-                    method_name
-                )(x),
-                color="k",
-                ls=":",
-                label=rf"$\chi^2_{{{self.n1 - 1:.0f}}}$",
-            )
-            ax.plot(
-                x,
-                stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(method_name)(x),
-                color="k",
-                ls="-.",
-                label=f"F({self.n1 - 1:.0f},{self.n2 - 1:.0f})",
-            )
-            ax.set_xlim(0, self.upper_lim)
-            ax.set_ylabel(f"w{i + 1}")
-            ax.set_ylim(0, 1.2)
-
-        axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
-        axs[-1].set_xlabel("Reduced Chi-Squared")
-        fig.supylabel("Probability Density")
-        fig.tight_layout()
-        fig.savefig(self._path)
-        plt.close()
-
-        return res
+    def add_expected_dist(self, ax: plt.Axes, x: Sequence[float]):
+        ax.plot(
+            x,
+            stats.chi2(
+                self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
+            ).__getattribute__(self._method_name)(x),
+            color="k",
+            ls="--",
+            label=rf"$\chi^2_{{{self.n1 * self.n2 - 1:.0f}}}$",
+        )
+        ax.plot(
+            x,
+            stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
+                self._method_name
+            )(x),
+            color="k",
+            ls=":",
+            label=rf"$\chi^2_{{{self.n1 - 1:.0f}}}$",
+        )
+        ax.plot(
+            x,
+            stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(self._method_name)(x),
+            color="k",
+            ls="-.",
+            label=f"F({self.n1 - 1:.0f},{self.n2 - 1:.0f})",
+        )
