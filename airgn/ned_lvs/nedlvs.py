@@ -2,17 +2,18 @@ import requests
 import logging
 from tqdm import tqdm
 from astropy.table import Table
-from pathlib import Path
+from timewise.util.path import expand
 
 
 NEDLVS_URL = "https://ned.ipac.caltech.edu/NED::LVS/fits/Current/"
-NEDLVS_CSV_PATH = Path("/Users/jannisnecker/airgn_data/nedlvs.csv")
+NEDLVS_CSV_PATH = expand("$AIRGNDATA/nedlvs.csv")
 
 logger = logging.getLogger(__name__)
 
 
 def download():
     logger.info("downloading NED-LVS")
+    NEDLVS_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
     fits_path = NEDLVS_CSV_PATH.with_suffix(".fits")
 
     logger.debug(f"downloading fits from {NEDLVS_URL} to {fits_path}")
