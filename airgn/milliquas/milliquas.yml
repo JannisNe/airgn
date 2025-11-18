@@ -1,12 +1,12 @@
 download:
-  input_csv: /Users/jannisnecker/airgn_data/milliquas.csv
+  input_csv: $AIRGNDATA/milliquas.csv
   chunk_size: 200000
   max_concurrent_jobs: 6
   poll_interval: 600
 
   backend:
     type: filesystem
-    base_path: /Users/jannisnecker/airgn_data/milliquas
+    base_path: $AIRGNDATA/milliquas/backend
 
   queries:
     - type: positional

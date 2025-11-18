@@ -1,12 +1,12 @@
 download:
-  input_csv: /Users/jannisnecker/airgn_data/nedlvs.csv
+  input_csv: $AIRGNDATA/nedlvs.csv
   chunk_size: 200000
   max_concurrent_jobs: 6
   poll_interval: 600
 
   backend:
     type: filesystem
-    base_path: /Users/jannisnecker/airgn_data/nedlvs
+    base_path: $AIRGNDATA/nedlvs/backend
 
   queries:
     - type: positional

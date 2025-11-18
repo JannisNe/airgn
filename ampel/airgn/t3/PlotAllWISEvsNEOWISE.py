@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,6 +12,7 @@ from ampel.timewise.util.pdutil import datapoints_to_dataframe
 
 from timewise.plot.lightcurve import plot_lightcurve
 from timewise.process import keys
+from timewise.util.path import expand
 
 
 def fd2w1mag(flux_density: float) -> float:
@@ -47,7 +47,7 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
     ) -> None:
-        plot_dir = Path(self.plot_dir)
+        plot_dir = expand(self.plot_dir)
         plot_dir.mkdir(parents=True, exist_ok=True)
 
         columns = [
@@ -113,5 +113,5 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
         axs[-1].set_xlabel("Median AllWISE Flux Density")
         fig.supylabel("AllWISE / NEOWISE Flux Density Ratio")
 
-        fig.savefig(self.path)
+        fig.savefig(expand(self.path))
         plt.close()

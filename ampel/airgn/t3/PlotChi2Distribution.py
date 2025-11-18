@@ -19,6 +19,7 @@ from ampel.types import T3Send, UBson
 from timewise.plot.lightcurve import plot_lightcurve, BAND_PLOT_COLORS
 from timewise.process import keys
 from timewise.process.stacking import FLUX_ZEROPOINTS
+from timewise.util.path import expand
 
 
 class PlotChi2Distribution(AbsPhotoT3Unit):
@@ -39,9 +40,9 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._base_path = Path(self.base_path)
+        self._base_path = expand(self.base_path)
         self._base_path.parent.mkdir(exist_ok=True, parents=True)
-        self._plot_dir = Path(self.plot_dir)
+        self._plot_dir = expand(self.plot_dir)
         self._plot_dir.mkdir(exist_ok=True, parents=True)
 
         # method name of PDFs

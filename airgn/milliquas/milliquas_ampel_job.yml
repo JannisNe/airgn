@@ -38,7 +38,7 @@ task:
         dpid: hash
         loader:
           config:
-            timewise_config_file: airgn/milliquas/milliquas.yml
+            timewise_config_file: $AIRGNSOURCE/airgn/milliquas/milliquas.yml
             stock_id_column_name: orig_id
             chunks: [0]
           unit: TimewiseFileLoader
@@ -82,10 +82,10 @@ task:
         execute:
           - unit: PlotChi2Distribution
             config:
-              path: /Users/jannisnecker/Software/airgn/plots/milliquas_chi2_full.pdf
+              path: $AIRGNDATA/milliquas/plots/milliquas_chi2_full.pdf
               input_mongodb_name: nedlvs
               cumulative: true
               upper_lim: 15
           - unit: PlotAllWISEvsNEOWISE
             config:
-              path: /Users/jannisnecker/Software/airgn/plots/milliquas_allwise_vs_neowise.png
+              path: $AIRGNDATA/milliquas/plots/milliquas_allwise_vs_neowise.png
