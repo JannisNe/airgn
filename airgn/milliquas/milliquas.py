@@ -1,17 +1,18 @@
 import logging
-from pathlib import Path
 import requests
 from tqdm import tqdm
 import gzip
 import shutil
 from astropy.table import Table
 
+from timewise.util.path import expand
+
 
 logger = logging.getLogger(__name__)
 
 # https://cdsarc.cds.unistra.fr/viz-bin/cat/VII/294
 
-MILLIQUAS_CSV_PATH = Path("/Users/jannisnecker/airgn_data/milliquas.csv")
+MILLIQUAS_CSV_PATH = expand("$AIRGNDATA/milliquas.csv")
 REFERENCE = ""
 README_URL = "https://cdsarc.cds.unistra.fr/ftp/VII/294/ReadMe"
 TABLE_URL = "https://cdsarc.cds.unistra.fr/ftp/VII/294/catalog.dat.gz"
@@ -19,6 +20,7 @@ TABLE_URL = "https://cdsarc.cds.unistra.fr/ftp/VII/294/catalog.dat.gz"
 
 def download():
     logger.info("downloading Milliquas catalog")
+    MILLIQUAS_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
     response = requests.get(TABLE_URL, stream=True)
     response.raise_for_status()
     gz_path = MILLIQUAS_CSV_PATH.parent / "catalog.dat.gz"
