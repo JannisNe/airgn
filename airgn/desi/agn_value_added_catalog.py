@@ -41,6 +41,9 @@ def download():
             del hdul[ihdul].data
 
     df = pd.concat(dfs, axis=1)
+    df["orig_id"] = df.index
+    df["ra"] = df["TARGET_RA"]
+    df["dec"] = df["TARGET_DEC"]
     df.to_csv(CSV_FILE_PATH, index=False)
     logger.info(f"wrote to {CSV_FILE_PATH}")
 
