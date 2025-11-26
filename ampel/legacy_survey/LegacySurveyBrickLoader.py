@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File:                airgn/ampel/legacy_survey/alert/load/LegacySurveyBrickLoader.py
+# File:                airgn/ampel/legacy_survey/LegacySurveyBrickLoader.py
 # License:             BSD-3-Clause
 # Author:              Jannis Necker <jannis.necker@gmail.com>
 # Date:                05.11.2025
