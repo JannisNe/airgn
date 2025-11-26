@@ -38,6 +38,7 @@ def get_filenames() -> list[tuple[str, str]]:
         )
 
         logger.debug(f"caching lightcurve filenames to {cache_file}")
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
         with open(cache_file, "w") as f:
             for filename in filenames:
                 f.write(f"{filename}\n")
