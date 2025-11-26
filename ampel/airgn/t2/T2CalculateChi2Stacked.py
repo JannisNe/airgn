@@ -13,7 +13,9 @@ from timewise.process import keys
 
 
 class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
-    t2_dependency: Sequence[StateT2Dependency[Literal["T2StackVisits"]]]
+    t2_dependency: Sequence[
+        StateT2Dependency[Literal["T2StackVisits", "T2MaggyToFluxDensity"]]
+    ]
 
     def process(
         self, light_curve: LightCurve, t2_views: Sequence[T2DocView]
