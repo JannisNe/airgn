@@ -8,7 +8,9 @@
 # Last Modified By:    Jannis Necker <jannis.necker@gmail.com>
 from typing import Dict, Generator
 from pathlib import Path
+import warnings
 
+from astropy.utils.exceptions import AstropyWarning
 from astropy.table import Table
 import pandas as pd
 from ampel.abstract.AbsAlertLoader import AbsAlertLoader
@@ -75,28 +77,30 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
         self, filenames: list[list[Path]]
     ) -> Generator[pd.DataFrame, None, None]:
         # loop over pairs of summary and lightcurve files
-        for summary_fn, lightcurve_fn in filenames:
-            summary_table = (
-                Table.read(summary_fn, format="fits")[
-                    ["RELEASE", "BRICKID", "OBJID", "RA", "DEC"]
-                ]
-                .to_pandas()
-                .set_index(["RELEASE", "BRICKID", "OBJID"])
-            )
-
-            for row in Table.read(lightcurve_fn, format="fits"):
-                lc = {
-                    col: row[col]
-                    for col in LEGACY_SURVEY_WISE_COLUMNS
-                    if col in row.colnames
-                }
-                cntr = row["RELEASE"], row["BRICKID"], row["OBJID"]
-                ra = summary_table.loc[cntr, "RA"]
-                dec = summary_table.loc[cntr, "DEC"]
-                lc = pd.DataFrame(lc).assign(
-                    release=cntr[0], brickid=cntr[1], objid=cntr[2], ra=ra, dec=dec
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", AstropyWarning)
+            for summary_fn, lightcurve_fn in filenames:
+                summary_table = (
+                    Table.read(summary_fn, format="fits")[
+                        ["RELEASE", "BRICKID", "OBJID", "RA", "DEC"]
+                    ]
+                    .to_pandas()
+                    .set_index(["RELEASE", "BRICKID", "OBJID"])
                 )
-                yield lc[lc["LC_MJD_W2"] > 0]  # unused entries have zeros in MJD
+
+                for row in Table.read(lightcurve_fn, format="fits"):
+                    lc = {
+                        col: row[col]
+                        for col in LEGACY_SURVEY_WISE_COLUMNS
+                        if col in row.colnames
+                    }
+                    cntr = row["RELEASE"], row["BRICKID"], row["OBJID"]
+                    ra = summary_table.loc[cntr, "RA"]
+                    dec = summary_table.loc[cntr, "DEC"]
+                    lc = pd.DataFrame(lc).assign(
+                        release=cntr[0], brickid=cntr[1], objid=cntr[2], ra=ra, dec=dec
+                    )
+                    yield lc[lc["LC_MJD_W2"] > 0]  # unused entries have zeros in MJD
 
     def __iter__(self):
         return self
