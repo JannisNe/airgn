@@ -14,8 +14,6 @@ from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
 from ampel.types import StockId
 
-from ampel.timewise.ingest.tags import tags
-
 
 class LegacySurveyDatapointShaper(AbsT0Unit):
     """
@@ -40,7 +38,7 @@ class LegacySurveyDatapointShaper(AbsT0Unit):
                 {  # type: ignore[typeddict-item]
                     "id": photo_dict["candid"],
                     "stock": stock,
-                    "tag": tags[photo_dict["table_name"]],
+                    "tag": ["WISE", "LEGACYSURVEY"],
                     "body": photo_dict,
                 }
             )
