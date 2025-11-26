@@ -10,15 +10,14 @@
 from collections.abc import Iterable
 from typing import Any
 
-
-from ampel.base.AmpelUnit import AmpelUnit
+from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
 from ampel.types import StockId
 
 from ampel.timewise.ingest.tags import tags
 
 
-class LegacySurveyDatapointShaper(AmpelUnit):
+class LegacySurveyDatapointShaper(AbsT0Unit):
     """
     This class 'shapes' datapoints in a format suitable
     to be saved into the ampel database
