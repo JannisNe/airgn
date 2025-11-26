@@ -1,0 +1,86 @@
+channel:
+- access:
+  - ZTF_PUB
+  name: wise_ls
+  policy: []
+  version: 0
+mongo:
+  prefix: airgn_lss0
+  reset: false
+name: lss0
+task:
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+    - channel: wise_ls
+      ingest:
+        mux:
+          combine:
+          - state_t2:
+            - unit: T2MaggyToFluxDensity
+            - unit: T2CalculateChi2Stacked
+              config:
+                t2_dependency:
+                - unit: T2StackVisits
+            - unit: T2CalculateMedians
+              config:
+                t2_dependency:
+                  - unit: T2StackVisits
+            unit: T1SimpleCombiner
+          unit: TiMongoMuxer
+    iter_max: 100000
+    shaper: LegacySurveyDataPointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            file_indices: [0]
+          unit: LegacySurveyBrockLoader
+      unit: LegacySurveySupplier
+  multiplier: 1
+  title: t0
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+
+
+- config:
+    log_profile: default
+  multiplier: 5
+  title: t2
+  unit: T2Worker
+
+
+- title: PlotChi2
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+            channel: "wise"
+    stage:
+      unit: T3SimpleStager
+      config:
+        execute:
+          - unit: PlotChi2Distribution
+            config:
+              path: $AIRGNDATA/legacy_survey/sweep0/plots/chi2_full.pdf
+              input_mongodb_name: nedlvs
+              cumulative: true
+              upper_lim: 15
+          - unit: PlotAllWISEvsNEOWISE
+            config:
+              path: $AIRGNDATA/legacy_survey/sweep0/plots/allwise_vs_neowise.png
