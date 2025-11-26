@@ -77,7 +77,9 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
         # loop over pairs of summary and lightcurve files
         for summary_fn, lightcurve_fn in filenames:
             summary_table = (
-                Table.read(summary_fn, format="fits")
+                Table.read(summary_fn, format="fits")[
+                    ["RELEASE", "BRICKID", "OBJID", "RA", "DEC"]
+                ]
                 .to_pandas()
                 .set_index(["RELEASE", "BRICKID", "OBJID"])
             )
