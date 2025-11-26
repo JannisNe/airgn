@@ -30,11 +30,11 @@ def make_csv_file():
     # DCHISQ is ,multidimensional
     table.remove_columns("DCHISQ")
     table.rename_columns(["RA", "DEC"], ["ra", "dec"])
-    orig_ig = np.char.add(
+    orig_id = np.char.add(
         np.char.add(table["RELEASE"].astype(str), table["BRICKID"].astype(str)),
         table["OBJID"].astype(str),
     ).astype(int)
-    table["orig_ig"] = orig_ig
+    table["orig_id"] = orig_id
     logger.info(f"Writing {CSV_FILENAME}")
     table.write(CSV_FILENAME, format="csv", overwrite=True)
 
