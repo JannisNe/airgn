@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# File:                airgn/ampel/legacy_survey/LegacySurveySupplier.py
+# License:             BSD-3-Clause
+# Author:              Jannis Necker <jannis.necker@gmail.com>
+# Date:                26.11.2025
+# Last Modified Date:  26.11.2025
+# Last Modified By:    Jannis Necker <jannis.necker@gmail.com>
+
+import sys
+from hashlib import blake2b
+from typing import Literal, List
+
+import pandas as pd
+
+from bson import encode
+
+from ampel.alert.AmpelAlert import AmpelAlert
+from ampel.base.AmpelABC import AmpelABC
+from ampel.alert.BaseAlertSupplier import BaseAlertSupplier
+from ampel.view.ReadOnlyDict import ReadOnlyDict
+
+
+class LegacySurveySupplier(BaseAlertSupplier, AmpelABC):
+    """
+    Iterable class that, for each transient name provided by the underlying alert_loader
+    returns a PhotoAlert instance.
+    """
+
+    stat_pps: int = 0
+    stat_uls: int = 0
+
+    dpid: Literal["hash", "inc"] = "hash"
+    #    external_directory: Optional[ str ]
+    #    deserialize: None | Literal["avro", "json"]
+
+    bands: List[str] = ["w1", "w2"]
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.counter = 0 if self.dpid == "hash" else 1
+
+    def __next__(self) -> AmpelAlert:
+        """
+        :returns: a dict with a structure that AlertProcessor understands
+        :raises StopIteration: when alert_loader dries out.
+        :raises AttributeError: if alert_loader was not set properly before this method is called
+        """
+        # make the tables into a list of dictionaries for ampel to understand
+        all_ids = b""
+        pps = []
+
+        table: pd.DataFrame = self._deserialize(next(self.alert_loader))  # type: ignore
+
+        # make sure only data from one object is present
+        stock_ids = table[["releaseid", "brickid", "objid"]].astype(str).sum(axis=1)
+        assert stock_ids.nunique() == 1
+        stock_id = stock_ids[0]
+
+        for i, row in table.iterrows():
+            # convert table row to dict, convert data types from numpy to native python
+            # Respect masked fields and convert to None
+            pp = {k: None if pd.isna(v) else v for k, v in row.to_dict().items()}
+            pp_hash = blake2b(encode(pp), digest_size=7).digest()
+            if self.counter:
+                pp["candid"] = self.counter
+                self.counter += 1
+            else:
+                pp["candid"] = int.from_bytes(pp_hash, byteorder=sys.byteorder)
+
+            all_ids += pp_hash
+            pps.append(ReadOnlyDict(pp))
+
+        if not pps:
+            return self.__next__()
+
+        # Update stats
+        self.stat_pps += len(pps)
+
+        return AmpelAlert(
+            id=int.from_bytes(  # alert id
+                blake2b(all_ids, digest_size=7).digest(), byteorder=sys.byteorder
+            ),
+            stock=int(stock_id),  # internal ampel id
+            datapoints=tuple(pps),
+        )
