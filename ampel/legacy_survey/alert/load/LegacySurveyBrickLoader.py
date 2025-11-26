@@ -91,9 +91,10 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
                 cntr = row["RELEASE"], row["BRICKID"], row["OBJID"]
                 ra = summary_table.loc[cntr, "RA"]
                 dec = summary_table.loc[cntr, "DEC"]
-                yield pd.DataFrame(lc).assign(
+                lc = pd.DataFrame(lc).assign(
                     release=cntr[0], brickid=cntr[1], objid=cntr[2], ra=ra, dec=dec
                 )
+                yield lc[lc["LC_MJD_W2"] > 0]  # unused entries have zeros in MJD
 
     def __iter__(self):
         return self
