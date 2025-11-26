@@ -1,16 +1,14 @@
-import os
 import logging
 import warnings
-from pathlib import Path
 
 import numpy as np
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyWarning
-from airgn.legacy_survey.download import download_file_by_index
+from airgn.legacy_survey.download import download_file_by_index, DATA_DIR
 
 
 logger = logging.getLogger(__name__)
-CSV_FILENAME = Path(os.environ["AIRGNDATA"]) / "legacy_survey_sweep0.csv"
+CSV_FILENAME = DATA_DIR / "legacy_survey_sweep0.csv"
 
 
 def make_csv_file():

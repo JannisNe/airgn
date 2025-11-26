@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import requests
 from argparse import ArgumentParser
@@ -6,7 +7,6 @@ from pathlib import Path
 
 import numpy as np
 from tqdm import tqdm
-from astropy.config import get_cache_dir
 
 
 logger = logging.getLogger(
@@ -14,10 +14,11 @@ logger = logging.getLogger(
 )
 BASE_URL = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr10/south/sweep/"
 VERSION = "10.1"
+DATA_DIR = Path(os.environ["AIRGNDATA"]) / "legacy_survey" / "sweep0"
 
 
 def get_filenames() -> list[tuple[str, str]]:
-    cache_file = Path(get_cache_dir()) / "legacy_survey_lc_filenames.txt"
+    cache_file = DATA_DIR / "legacy_survey_lc_filenames.txt"
 
     if not cache_file.exists():
         url = BASE_URL + VERSION + "/"
@@ -59,7 +60,7 @@ def get_filenames() -> list[tuple[str, str]]:
 
 
 def get_local_path(filename: str) -> Path:
-    cache_dir = Path(get_cache_dir()) / f"legacy_survey_DR{VERSION}"
+    cache_dir = DATA_DIR / f"legacy_survey_DR{VERSION}"
     local_filename = cache_dir / filename
     local_filename.parent.mkdir(parents=True, exist_ok=True)
     return local_filename

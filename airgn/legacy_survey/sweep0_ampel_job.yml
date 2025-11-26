@@ -82,10 +82,10 @@ task:
         execute:
           - unit: PlotChi2Distribution
             config:
-              path: $AIRGNDATA/legacy_survey_sweep0/plots/chi2_full.pdf
+              path: $AIRGNDATA/legacy_survey/sweep0/plots/chi2_full.pdf
               input_mongodb_name: nedlvs
               cumulative: true
               upper_lim: 15
           - unit: PlotAllWISEvsNEOWISE
             config:
-              path: $AIRGNDATA/legacy_survey_sweep0/plots/allwise_vs_neowise.png
+              path: $AIRGNDATA/legacy_survey/sweep0/plots/allwise_vs_neowise.png
