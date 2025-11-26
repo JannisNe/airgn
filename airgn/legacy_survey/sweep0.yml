@@ -6,7 +6,7 @@ download:
 
   backend:
     type: filesystem
-    base_path: $AIRGNDATA/legacy_survey/sweep0/backend
+    base_path: $AIRGNDATA/legacy_survey/sweep0/timewise
 
   queries:
     - type: positional

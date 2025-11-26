@@ -8,7 +8,7 @@ from airgn.legacy_survey.download import download_file_by_index, DATA_DIR
 
 
 logger = logging.getLogger(__name__)
-CSV_FILENAME = DATA_DIR / "legacy_survey_sweep0.csv"
+CSV_FILENAME = DATA_DIR / "sweep0" / "legacy_survey_sweep0.csv"
 
 
 def make_csv_file():
@@ -34,6 +34,7 @@ def make_csv_file():
     ).astype(int)
     table["orig_id"] = orig_id
     logger.info(f"Writing {CSV_FILENAME}")
+    CSV_FILENAME.parent.mkdir(parents=True, exist_ok=True)
     table.write(CSV_FILENAME, format="csv", overwrite=True)
 
 

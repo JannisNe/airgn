@@ -14,7 +14,7 @@ logger = logging.getLogger(
 )
 BASE_URL = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr10/south/sweep/"
 VERSION = "10.1"
-DATA_DIR = Path(os.environ["AIRGNDATA"]) / "legacy_survey" / "sweep0"
+DATA_DIR = Path(os.environ["AIRGNDATA"]) / "legacy_survey"
 
 
 def get_filenames() -> list[tuple[str, str]]:
