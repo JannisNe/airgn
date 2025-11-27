@@ -93,20 +93,20 @@ task:
         select:
           unit: T3StockSelector
           config:
-            channel: "wise"
+            channel: "wise_ls"
         load:
           unit: T3SimpleDataLoader
           config:
             directives:
               - T2DOC
-            channel: "wise"
+            channel: "wise_ls"
     stage:
       unit: T3SimpleStager
       config:
         execute:
           - unit: PlotChi2Distribution
             config:
-              path: $AIRGNDATA/legacy_survey/sweep0/plots/chi2_full.pdf
+              base_path: $AIRGNDATA/legacy_survey/sweep0/plots/chi2_full
               input_mongodb_name: nedlvs
               cumulative: true
               upper_lim: 15
