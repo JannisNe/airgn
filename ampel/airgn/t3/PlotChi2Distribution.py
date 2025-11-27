@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from pathlib import Path
 from typing import Literal, Sequence
 
 import matplotlib.pyplot as plt
@@ -28,7 +27,6 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
     """
 
     base_path: str
-    chi2_stacked_std_names: list[str]
 
     input_mongodb_name: str | None = None
     chi2_range_to_plot: tuple[float, float] | None = None
@@ -83,10 +81,11 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                 for t2 in view.get_t2_views(unit=unit):
                     t2res = t2.body[-1]
                     if unit == "T2CalculateChi2Stacked":
-                        std_name = (
-                            t2.config["t2_dependency"][0]["config"]["std_name"]
-                            or "sdom-1"
-                        )
+                        t2dep = t2.config["t2_dependency"][0]
+                        if t2dep["unit"] == "T2StackVisits":
+                            std_name = t2dep["config"]["std_name"] or "sdom-1"
+                        else:  # T2MaggyToFluxDensity
+                            std_name = "tractor"
                     else:
                         std_name = ""
                     for b in ["w1", "w2"]:
