@@ -21,22 +21,50 @@ task:
             - unit: T2CalculateChi2Stacked
               config:
                 t2_dependency:
-                - unit: T2StackVisits
+                - unit: T2MaggyToFluxDensity
             - unit: T2CalculateMedians
               config:
                 t2_dependency:
-                  - unit: T2StackVisits
+                  - unit: T2MaggyToFluxDensity
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
+          config:
+            projection:
+              _id: 0
+              id: 1
+              tag: 1
+              channel: 1
+              stock: 1
+              body.release: 1
+              body.brickid: 1
+              body.objid: 1
+              body.ra: 1
+              body.dec: 1
+              body.LC_FLUX_W1: 1
+              body.LC_FLUX_W2: 1
+              body.LC_FLUX_IVAR_W1: 1
+              body.LC_FLUX_IVAR_W2: 1
+              body.LC_NOBS_W1: 1
+              body.LC_NOBS_W2: 1
+              body.LC_MJD_W1: 1
+              body.LC_MJD_W2: 1
+              body.LC_FRACFLUX_W1: 1
+              body.LC_FRACFLUX_W2: 1
+              body.LC_RCHISQ_W1: 1
+              body.LC_RCHISQ_W2: 1
+              body.LC_EPOCH_INDEX_W1: 1
+              body.LC_EPOCH_INDEX_W2: 1
+            unique_key: [release, brickid, objid, LC_MJD_W1]
+
     iter_max: 100000
-    shaper: LegacySurveyDataPointShaper
+    shaper: LegacySurveyDatapointShaper
     supplier:
       config:
         dpid: hash
         loader:
           config:
             file_indices: [0]
-          unit: LegacySurveyBrockLoader
+          unit: LegacySurveyBrickLoader
       unit: LegacySurveySupplier
   multiplier: 1
   title: t0
