@@ -1,8 +1,13 @@
 channel:
 - access:
   - ZTF_PUB
-  name: wise_ls
+  name: legacy_survey
   policy: []
+  version: 0
+- access:
+    - ZTF_PUB
+  name: timewise
+  policy: [ ]
   version: 0
 mongo:
   prefix: airgn_lss0
@@ -14,7 +19,7 @@ task:
 - config:
     compiler_opts: TiCompilerOptions
     directives:
-    - channel: wise_ls
+    - channel: legacy_survey
       ingest:
         mux:
           combine:
@@ -59,7 +64,7 @@ task:
               body.LC_EPOCH_INDEX_W2: 1
             unique_key: [release, brickid, objid, LC_MJD_W1]
 
-    iter_max: 1000
+    iter_max: 10000
     shaper: LegacySurveyDatapointShaper
     supplier:
       config:
@@ -70,7 +75,50 @@ task:
           unit: LegacySurveyBrickLoader
       unit: LegacySurveySupplier
   multiplier: 1
-  title: t0
+  title: legacy_survey
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+
+
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+      - channel: timewise
+        filter:
+          unit: TimewiseFilter
+        ingest:
+          mux:
+            combine:
+              - state_t2:
+                  - unit: T2StackVisits
+                  - unit: T2CalculateChi2
+                  - unit: T2CalculateChi2Stacked
+                    config:
+                      t2_dependency:
+                        - unit: T2StackVisits
+                  - unit: T2CalculateMedians
+                    config:
+                      t2_dependency:
+                        - unit: T2StackVisits
+                unit: T1SimpleCombiner
+            unit: TiMongoMuxer
+    iter_max: 10000
+    shaper: TiDataPointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            timewise_config_file: $AIRGNSOURCE/airgn/legacy_survey/sweep0.yml
+            stock_id_column_name: orig_id
+            chunks: [ 0 ]
+          unit: TimewiseFileLoader
+      unit: TimewiseAlertSupplier
+  multiplier: 1
+  title: timewise
   template:
     live:
       - resolve_run_time_aliases
@@ -95,15 +143,15 @@ task:
         select:
           unit: T3StockSelector
           config:
-            channel: "wise_ls"
+            channel: "legacy_survey"
         load:
           unit: T3SimpleDataLoader
           config:
             directives:
               - T2DOC
-            channel: "wise_ls"
+            channel: "legacy_survey"
     stage:
-      unit: T3SimpleStager
+      unit: T3SequentialStager
       config:
         execute:
           - unit: PlotChi2Distribution
