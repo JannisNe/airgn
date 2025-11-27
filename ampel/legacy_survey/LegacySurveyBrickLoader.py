@@ -88,9 +88,13 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
                     .set_index(["RELEASE", "BRICKID", "OBJID"])
                 )
 
-                for row in Table.read(lightcurve_fn, format="fits"):
+                for row in Table.read(
+                    lightcurve_fn, format="fits", character_as_bytes=False
+                ):
                     lc = {
                         col: row[col]
+                        .byteswap()
+                        .newbyteorder()  # convert to native endian
                         for col in LEGACY_SURVEY_WISE_COLUMNS
                         if col in row.colnames
                     }
