@@ -8,6 +8,8 @@ mongo:
   prefix: airgn_lss0
   reset: false
 name: lss0
+
+
 task:
 - config:
     compiler_opts: TiCompilerOptions
@@ -78,7 +80,7 @@ task:
 
 - config:
     log_profile: default
-  multiplier: 5
+  multiplier: 1
   title: t2
   unit: T2Worker
 
@@ -109,7 +111,9 @@ task:
               base_path: $AIRGNDATA/legacy_survey/sweep0/plots/chi2_full
               input_mongodb_name: nedlvs
               cumulative: true
-              upper_lim: 15
+              upper_lim: 6
+              n1: 15
+              n2: 20
           - unit: PlotAllWISEvsNEOWISE
             config:
               path: $AIRGNDATA/legacy_survey/sweep0/plots/allwise_vs_neowise.png
