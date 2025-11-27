@@ -184,7 +184,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         # -----------------------------------------------------------
 
         # convert flux densities to mag
-        bins = np.arange(5, 18)
+        bins = np.arange(5, 20)
         for b in ["w1", "w2"]:
             df[f"{b}_median_mag"] = -2.5 * np.log10(
                 df[f"{b}_T2CalculateMedians"] * 1e-3 / FLUX_ZEROPOINTS[b]
@@ -208,7 +208,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                 sharey="all",
             )
 
-            for bin_number in df[f"{b}_mag_bin"]:
+            for bin_number in df[f"{b}_mag_bin"].unique():
                 for ib in range(1, 3):
                     b = f"w{ib}"
                     vals = df[f"{b}_{c}"]
