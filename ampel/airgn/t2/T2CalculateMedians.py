@@ -17,6 +17,8 @@ class T2CalculateMedians(AbsTiedLightCurveT2Unit):
         StateT2Dependency[Literal["T2StackVisits", "T2MaggyToFluxDensity"]]
     ]
 
+    mjd_column_name: str = "mean_mjd"
+
     def process(
         self, light_curve: LightCurve, t2_views: Sequence[T2DocView]
     ) -> UBson | UnitResult:
@@ -27,7 +29,7 @@ class T2CalculateMedians(AbsTiedLightCurveT2Unit):
         for i in range(1, 3):
             fd = data[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"]
             fd = fd[fd.notna()]
-            neowise_mask = data.loc[fd.notna(), "mean_mjd"] >= 56000
+            neowise_mask = data.loc[fd.notna(), self.mjd_column_name] >= 56000
             res[f"median_w{i}_all"] = fd.median()
             res[f"median_w{i}_neowise"] = (
                 fd[neowise_mask].median() if not fd[neowise_mask].empty else None
