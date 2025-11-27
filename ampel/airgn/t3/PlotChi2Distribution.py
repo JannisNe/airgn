@@ -184,12 +184,12 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         # -----------------------------------------------------------
 
         # convert flux densities to mag
-        bins = np.arange(5, 20)
+        mag_bins = np.arange(5, 22)
         for b in ["w1", "w2"]:
             df[f"{b}_median_mag"] = -2.5 * np.log10(
                 df[f"{b}_T2CalculateMedians"] * 1e-3 / FLUX_ZEROPOINTS[b]
             )
-            df[f"{b}_mag_bin"] = np.digitize(df[f"{b}_median_mag"], bins=bins)
+            df[f"{b}_mag_bin"] = np.digitize(df[f"{b}_median_mag"], bins=mag_bins)
         full_bins = np.unique(
             np.concatenate([df[f"{b}_mag_bin"] for b in ["w1", "w2"]])
         )
@@ -225,14 +225,15 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                             cumulative=self.cumulative,
                             alpha=0.5,
                             color=colors[c],
+                            bins=bins,
                         )
 
                     if bin_number == 0:
-                        label = rf"{b} < {bins[0]}"
-                    elif bin_number == len(bins):
-                        label = rf"{bins[-1]} < {b}"
+                        label = rf"{b} < {mag_bins[0]}"
+                    elif bin_number == len(mag_bins):
+                        label = rf"{mag_bins[-1]} < {b}"
                     else:
-                        label = rf"{bins[bin_number - 1]} < {b} < {bins[bin_number]}"
+                        label = rf"{mag_bins[bin_number - 1]} < {b} < {mag_bins[bin_number]}"
                     ax.annotate(
                         label,
                         (0.05, 0.95),
