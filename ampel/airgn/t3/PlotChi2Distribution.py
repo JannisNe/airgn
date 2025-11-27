@@ -226,8 +226,15 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                             alpha=0.5,
                             color=colors[c],
                         )
+
+                    if bin_number == 0:
+                        label = rf"{b} < {bins[0]}"
+                    elif bin_number == len(bins):
+                        label = rf"{bins[-1]} < {b}"
+                    else:
+                        label = rf"{bins[bin_number - 1]} < {b} < {bins[bin_number]}"
                     ax.annotate(
-                        rf"{bins[bin_number - 1]} < {b} < {bins[bin_number]}",
+                        label,
                         (0.05, 0.95),
                         xycoords="axes fraction",
                         ha="left",
