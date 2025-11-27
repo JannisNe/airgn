@@ -52,6 +52,10 @@ class LegacySurveySupplier(BaseAlertSupplier, AmpelABC):
 
         table: pd.DataFrame = self._deserialize(next(self.alert_loader))  # type: ignore
 
+        # if there is no data, skip to next
+        if table.empty:
+            return self.__next__()
+
         # make sure only data from one object is present
         stock_ids = table[["release", "brickid", "objid"]].astype(str).sum(axis=1)
         assert stock_ids.nunique() == 1
