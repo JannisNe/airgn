@@ -92,9 +92,11 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
         fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
         for i in range(1, 3):
             ax = axs[i - 1]
+            x = res[f"median_w{i}_allwise"]
+            y = res[f"allwise_neowise_ratio_w{i}"]
             ax.scatter(
-                res[f"median_w{i}_allwise"],
-                res[f"allwise_neowise_ratio_w{i}"],
+                x,
+                y,
                 alpha=0.5,
                 s=1,
             )
@@ -103,7 +105,18 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
             ylim = ax.get_ylim()
             ax.set_ylim(max(0.2, ylim[0]), min(5.0, ylim[1]))
 
+            # Define 50 equal-width bins
+            bins = pd.cut(np.log10(x), bins=50)
+            bm = 10**bins.cat.categories.mid
+            quantiles = (
+                y.groupby(bins, observed=False).quantile([0.05, 0.5, 0.95]).unstack()
+            )
+            ax.plot(bm, quantiles[0.5], ls="-", color="k")
+            ax.plot(bm, quantiles[0.05], ls=":", color="k")
+            ax.plot(bm, quantiles[0.95], ls=":", color="k")
+
         axs[-1].set_xscale("log")
+        axs[-1].set_yscale("log")
         mag_ticks = [6, 8, 10, 12, 14, 16]
         secax1 = axs[0].secondary_xaxis("top", functions=(fd2w1mag, w1mag2fd))
         secax1.set_xlabel("Apparent Magnitude")
