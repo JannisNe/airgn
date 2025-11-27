@@ -24,6 +24,7 @@ task:
                 - unit: T2MaggyToFluxDensity
             - unit: T2CalculateMedians
               config:
+                mjd_column_name: LC_MJD_W1
                 t2_dependency:
                   - unit: T2MaggyToFluxDensity
             unit: T1SimpleCombiner
@@ -56,7 +57,7 @@ task:
               body.LC_EPOCH_INDEX_W2: 1
             unique_key: [release, brickid, objid, LC_MJD_W1]
 
-    iter_max: 100000
+    iter_max: 1000
     shaper: LegacySurveyDatapointShaper
     supplier:
       config:
