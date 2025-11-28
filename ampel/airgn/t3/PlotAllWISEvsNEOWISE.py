@@ -61,62 +61,85 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
 
         res = []
         for view in gen:
-            t2res = view.get_t2_body(unit="T2CalculateMedians")
-            if t2res:
+            for t2 in view.get_t2_views(unit="T2CalculateMedians"):
+                if t2 is None or t2.body is None:
+                    continue
+
+                t2res = dict(t2.body[-1])
+                if t2res is None:
+                    continue
+
+                t2dep = t2.config["t2_dependency"][0]["unit"]
+                t2res["t2dep"] = t2dep
                 res.append(t2res)
 
-            if any(
-                self.thresh_to_plot is not None
-                and t2res
-                and (k := f"allwise_neowise_ratio_w{b}") in t2res
-                and t2res[k] > self.thresh_to_plot
-                for b in ["w1", "w2"]
-            ):
-                raw_lightcurve = datapoints_to_dataframe(
-                    view.get_photopoints(), columns
-                )[0]
-                stacked_lc = pd.DataFrame(
-                    view.get_t2_body(unit="T2StackVisits", ret_type=tuple),
-                )
-                fig, ax = plot_lightcurve(
-                    lum_key=keys.FLUX_EXT,
-                    stacked_lightcurve=stacked_lc,
-                    raw_lightcurve=raw_lightcurve,
-                )
-                fig.suptitle(f"Transient {view.id}")
-                fig.savefig(plot_dir / f"chi2_exceed_{view.id}.pdf")
-                plt.close(fig)
+                if any(
+                    self.thresh_to_plot is not None
+                    and t2res
+                    and (k := f"allwise_neowise_ratio_w{b}") in t2res
+                    and t2res[k] > self.thresh_to_plot
+                    for b in ["w1", "w2"]
+                ):
+                    raw_lightcurve = datapoints_to_dataframe(
+                        view.get_photopoints(), columns
+                    )[0]
+                    stacked_lc = pd.DataFrame(
+                        view.get_t2_body(unit=t2dep, ret_type=tuple),
+                    )
+                    fig, ax = plot_lightcurve(
+                        lum_key=keys.FLUX_EXT,
+                        stacked_lightcurve=stacked_lc,
+                        raw_lightcurve=raw_lightcurve,
+                    )
+                    fig.suptitle(f"Transient {view.id}")
+                    fig.savefig(plot_dir / f"chi2_exceed_{view.id}_{t2dep}.pdf")
+                    plt.close(fig)
 
         res = pd.DataFrame(res)
 
         fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
+        for j, t2dep in enumerate(res["t2dep"].unique()):
+            m = res["t2dep"] == t2dep
+            for i in range(1, 3):
+                ax = axs[i - 1]
+                x = res.loc[m, f"median_w{i}_allwise"]
+                y = res.loc[m, f"allwise_neowise_ratio_w{i}"]
+                ax.scatter(
+                    x,
+                    y,
+                    alpha=0.1,
+                    s=1,
+                    c=f"C{j}",
+                )
+
+                # Define 50 equal-width bins
+                bins = pd.cut(np.log10(x), bins=50)
+                bm = 10**bins.cat.categories.mid
+                quantiles = (
+                    y.groupby(bins, observed=False)
+                    .quantile([0.05, 0.5, 0.95])
+                    .unstack()
+                )
+                ax.plot(
+                    bm,
+                    quantiles[0.5],
+                    ls="-",
+                    color=f"C{j}",
+                    label=t2dep,
+                )
+                ax.plot(bm, quantiles[0.05], ls=":", color=f"C{j}")
+                ax.plot(bm, quantiles[0.95], ls=":", color=f"C{j}")
+
         for i in range(1, 3):
             ax = axs[i - 1]
-            x = res[f"median_w{i}_allwise"]
-            y = res[f"allwise_neowise_ratio_w{i}"]
-            ax.scatter(
-                x,
-                y,
-                alpha=0.5,
-                s=1,
-            )
             ax.set_ylabel(f"w{i}")
             ax.axhline(1.0, color="k", ls="--")
             ylim = ax.get_ylim()
             ax.set_ylim(max(0.2, ylim[0]), min(5.0, ylim[1]))
 
-            # Define 50 equal-width bins
-            bins = pd.cut(np.log10(x), bins=50)
-            bm = 10**bins.cat.categories.mid
-            quantiles = (
-                y.groupby(bins, observed=False).quantile([0.05, 0.5, 0.95]).unstack()
-            )
-            ax.plot(bm, quantiles[0.5], ls="-", color="k")
-            ax.plot(bm, quantiles[0.05], ls=":", color="k")
-            ax.plot(bm, quantiles[0.95], ls=":", color="k")
-
         axs[-1].set_xscale("log")
         axs[-1].set_yscale("log")
+        axs[0].legend(frameon=False, loc="upper left")
         mag_ticks = [6, 8, 10, 12, 14, 16]
         secax1 = axs[0].secondary_xaxis("top", functions=(fd2w1mag, w1mag2fd))
         secax1.set_xlabel("Apparent Magnitude")
