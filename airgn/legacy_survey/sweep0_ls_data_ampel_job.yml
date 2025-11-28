@@ -63,8 +63,6 @@ task:
               body.LC_EPOCH_INDEX_W1: 1
               body.LC_EPOCH_INDEX_W2: 1
             unique_key: [release, brickid, objid, LC_MJD_W1]
-
-    iter_max: 10000
     shaper: LegacySurveyDatapointShaper
     supplier:
       config:
@@ -72,6 +70,8 @@ task:
         loader:
           config:
             file_indices: [0]
+            timewise_config_file: $AIRGNSOURCE/airgn/legacy_survey/sweep0.yml
+            timewise_chunks: [ 2 ]
           unit: LegacySurveyBrickLoader
       unit: LegacySurveySupplier
   multiplier: 1
@@ -114,7 +114,7 @@ task:
           config:
             timewise_config_file: $AIRGNSOURCE/airgn/legacy_survey/sweep0.yml
             stock_id_column_name: orig_id
-            chunks: [ 0 ]
+            chunks: [ 2 ]
           unit: TimewiseFileLoader
       unit: TimewiseAlertSupplier
   multiplier: 1

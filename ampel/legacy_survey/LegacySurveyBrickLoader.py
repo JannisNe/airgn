@@ -9,11 +9,15 @@
 from typing import Dict, Generator
 from pathlib import Path
 import warnings
+from itertools import chain
 
 from astropy.utils.exceptions import AstropyWarning
 from astropy.table import Table
 import pandas as pd
 from ampel.abstract.AbsAlertLoader import AbsAlertLoader
+
+from timewise.config import TimewiseConfig
+from timewise.util.path import expand
 
 from airgn.legacy_survey.download import (
     get_filenames,
@@ -50,6 +54,12 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
     # download files if they do not exist locally
     download_if_missing: bool = False
 
+    # iterate only over a subset of the data given by the chunks
+    # defined by timewise. For this, the timewise download config file
+    # is needed.
+    timewise_config_file: Path | None = None
+    timewise_chunks: list[int] | None = None
+
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
@@ -70,11 +80,26 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
         # generate local filenames
         local_filenames = [[get_local_path(fn) for fn in pair] for pair in filenames]
 
+        # filter by timewise chunks if requested
+        if self.timewise_config_file is not None and self.timewise_chunks is not None:
+            config = TimewiseConfig.from_yaml(expand(self.timewise_config_file))
+            dl = config.download.build_downloader()
+            row_indices = list(
+                chain(
+                    *[
+                        dl.chunker.get_chunk(chunk_id=c).data.orig_id.tolist()
+                        for c in self.timewise_chunks
+                    ]
+                )
+            )
+        else:
+            row_indices = None
+
         # set up processing generator
-        self._gen = self.iter_lightcurves(local_filenames)
+        self._gen = self.iter_lightcurves(local_filenames, row_indices)
 
     def iter_lightcurves(
-        self, filenames: list[list[Path]]
+        self, filenames: list[list[Path]], row_indices: list[int] | None = None
     ) -> Generator[pd.DataFrame, None, None]:
         # loop over pairs of summary and lightcurve files
         with warnings.catch_warnings():
@@ -91,6 +116,15 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
                 for row in Table.read(
                     lightcurve_fn, format="fits", character_as_bytes=False
                 ):
+                    cntr = row["RELEASE"], row["BRICKID"], row["OBJID"]
+
+                    # if filtering by row indices, skip if not in the list
+                    if (
+                        row_indices is not None
+                        and int("".join([str(ic) for ic in cntr])) not in row_indices
+                    ):
+                        continue
+
                     lc = {
                         col: row[col]
                         .byteswap()
@@ -98,7 +132,6 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
                         for col in LEGACY_SURVEY_WISE_COLUMNS
                         if col in row.colnames
                     }
-                    cntr = row["RELEASE"], row["BRICKID"], row["OBJID"]
                     ra = summary_table.loc[cntr, "RA"]
                     dec = summary_table.loc[cntr, "DEC"]
                     lc = pd.DataFrame(lc).assign(
