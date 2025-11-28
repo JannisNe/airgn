@@ -28,8 +28,8 @@ class T2CalculateMedians(AbsTiedLightCurveT2Unit):
         res = {}
         for i in range(1, 3):
             fd = data[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"]
-            fd = fd[fd.notna()]
             neowise_mask = data.loc[fd.notna(), self.mjd_column_name] >= 56000
+            fd = fd[fd.notna()]
             res[f"median_w{i}_all"] = fd.median()
             res[f"median_w{i}_neowise"] = (
                 fd[neowise_mask].median() if not fd[neowise_mask].empty else None
