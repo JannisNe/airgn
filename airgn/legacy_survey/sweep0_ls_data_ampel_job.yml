@@ -175,3 +175,4 @@ task:
           - unit: CompareTimewiseToLegacySurvey
             config:
               base_path: $AIRGNDATA/legacy_survey/sweep0/plots/compare_timewise_legacysurvey
+              threshold_to_plot: 5.0
