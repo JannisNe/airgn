@@ -61,6 +61,15 @@ class T2MaggyToFluxDensity(AbsLightCurveT2Unit):
                 1.0 / data[f"LC_FLUX_IVAR_W{i}"]
             )
 
+            # convert fluxes to flux densities in mJy
+            data[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"] = (
+                data[f"LC_FLUX_W{i}"] * self._maggy_conversion[i]
+            )
+            data[f"w{i}{keys.FLUX_DENSITY_EXT}{keys.RMS}"] = (
+                data[f"w{i}{keys.FLUX_EXT}{keys.RMS}"] * self._maggy_conversion[i]
+            )
+            data[f"w{i}{keys.FLUX_DENSITY_EXT}{keys.UPPER_LIMIT}"] = False
+
             # convert to magnitudes
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
@@ -69,13 +78,5 @@ class T2MaggyToFluxDensity(AbsLightCurveT2Unit):
                     - 2.5 * np.log10(data[f"LC_FLUX_W{i}"])
                     - WISE_AB_OFFSET[f"W{i}"]
                 )
-
-            # convert fluxes to flux densities in mJy
-            data[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"] = (
-                data[f"LC_FLUX_W{i}"] * self._maggy_conversion[i]
-            )
-            data[f"w{i}{keys.FLUX_DENSITY_EXT}{keys.RMS}"] = (
-                data[f"w{i}{keys.FLUX_EXT}{keys.RMS}"] * self._maggy_conversion[i]
-            )
 
         return data.to_dict(orient="records")
