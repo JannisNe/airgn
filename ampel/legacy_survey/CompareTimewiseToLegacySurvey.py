@@ -40,7 +40,7 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
                 view.get_t2_body("T2MaggyToFluxDensity", ret_type=tuple)
             )
             t2tw = pd.DataFrame(view.get_t2_body("T2StackVisits", ret_type=tuple))
-            if t2ls is None or t2tw is None:
+            if t2ls.empty or t2tw.empty:
                 continue
 
             median_ratios = [
@@ -49,8 +49,10 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
                 for i in range(1, 3)
             ]
 
-            if (max(abs(np.log10(median_ratios))) > self.threshold_to_plot) and (
-                plot_ctr < self.max_plot
+            if (
+                (self.threshold_to_plot is not None)
+                and (plot_ctr < self.max_plot)
+                and (10 ** max(abs(np.log10(median_ratios))) > self.threshold_to_plot)
             ):
                 self.plot_lightcurves(t2ls, t2tw, view)
                 plot_ctr += 1
@@ -85,7 +87,7 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
         )
         plot_lightcurve(
             lum_key=keys.FLUX_DENSITY_EXT,
-            raw_lightcurve=t2ls,
+            stacked_lightcurve=t2ls,
             ax=ax,
             add_to_label=" Legacy Survey",
             colors={"w1": "lightseeblue", "w2": "navy"},
