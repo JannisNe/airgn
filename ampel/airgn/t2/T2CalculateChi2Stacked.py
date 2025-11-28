@@ -44,7 +44,7 @@ class T2CalculateChi2Stacked(AbsTiedLightCurveT2Unit):
                 res[f"npoints_w{i}_{key}"] = sum(nan_msak)
                 res[f"red_chi2_w{i}_{key}"] = (
                     res[f"chi2_w{i}_{key}"] / (res[f"npoints_w{i}_{key}"] - 1)
-                    if res[f"npoints_w{i}_{key}"] > 0
+                    if res[f"npoints_w{i}_{key}"] > 1
                     else None
                 )
 

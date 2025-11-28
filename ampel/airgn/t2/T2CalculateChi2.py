@@ -45,7 +45,7 @@ class T2CalculateChi2(AbsLightCurveT2Unit):
             res[f"red_chi2_w{i}_{keys.FLUX_EXT}"] = (
                 res[f"chi2_w{i}_{keys.FLUX_EXT}"]
                 / (res[f"npoints_w{i}_{keys.FLUX_EXT}"] - 1)
-                if res[f"npoints_w{i}_{keys.FLUX_EXT}"] > 0
+                if res[f"npoints_w{i}_{keys.FLUX_EXT}"] > 1
                 else None
             )
 
