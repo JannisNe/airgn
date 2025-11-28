@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 from ampel.abstract.AbsLightCurveT2Unit import AbsLightCurveT2Unit
@@ -60,9 +62,13 @@ class T2MaggyToFluxDensity(AbsLightCurveT2Unit):
             )
 
             # convert to magnitudes
-            data[f"w{i}{keys.MEAN}{keys.MAG_EXT}"] = (
-                22.5 - 2.5 * np.log10(data[f"LC_FLUX_W{i}"]) - WISE_AB_OFFSET[f"W{i}"]
-            )
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                data[f"w{i}{keys.MEAN}{keys.MAG_EXT}"] = (
+                    22.5
+                    - 2.5 * np.log10(data[f"LC_FLUX_W{i}"])
+                    - WISE_AB_OFFSET[f"W{i}"]
+                )
 
             # convert fluxes to flux densities in mJy
             data[f"w{i}{keys.MEAN}{keys.FLUX_DENSITY_EXT}"] = (
