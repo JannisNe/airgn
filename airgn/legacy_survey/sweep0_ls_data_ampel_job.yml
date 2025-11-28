@@ -63,6 +63,7 @@ task:
               body.LC_EPOCH_INDEX_W1: 1
               body.LC_EPOCH_INDEX_W2: 1
             unique_key: [release, brickid, objid, LC_MJD_W1]
+            channel: legacy_survey
     shaper: LegacySurveyDatapointShaper
     supplier:
       config:
@@ -87,8 +88,6 @@ task:
     compiler_opts: TiCompilerOptions
     directives:
       - channel: timewise
-        filter:
-          unit: TimewiseFilter
         ingest:
           mux:
             combine:
@@ -105,6 +104,8 @@ task:
                         - unit: T2StackVisits
                 unit: T1SimpleCombiner
             unit: TiMongoMuxer
+            config:
+              channel: timewise
     iter_max: 10000
     shaper: TiDataPointShaper
     supplier:
@@ -127,7 +128,7 @@ task:
 
 
 - config:
-    log_profile: default
+    log_profile: console_info
   multiplier: 1
   title: t2
   unit: T2Worker
@@ -143,13 +144,19 @@ task:
         select:
           unit: T3StockSelector
           config:
-            channel: "legacy_survey"
+            channel:
+              any_of:
+                - "legacy_survey"
+                - "timewise"
         load:
           unit: T3SimpleDataLoader
           config:
             directives:
-              - T2DOC
-            channel: "legacy_survey"
+              - T2DOC_WITH_CONF
+            channel:
+              any_of:
+                - "legacy_survey"
+                - "timewise"
     stage:
       unit: T3SequentialStager
       config:
@@ -165,3 +172,6 @@ task:
           - unit: PlotAllWISEvsNEOWISE
             config:
               path: $AIRGNDATA/legacy_survey/sweep0/plots/allwise_vs_neowise.png
+          - unit: CompareTimewiseToLegacySurvey
+            config:
+              base_path: $AIRGNDATA/legacy_survey/sweep0/plots/compare_timewise_legacysurvey
