@@ -1,0 +1,51 @@
+download:
+  input_csv: $AIRGNDATA/desi_value_added_catalog/agnqso_desi.csv
+  chunk_size: 200000
+  max_concurrent_jobs: 6
+  poll_interval: 600
+
+  backend:
+    type: filesystem
+    base_path: $AIRGNDATA/desi_value_added_catalog/backend
+
+  queries:
+    - type: positional
+      radius_arcsec: 2
+      table:
+        name: allwise_p3as_mep
+      columns:
+        - ra
+        - dec
+        - mjd
+        - cntr_mf
+        - w1mpro_ep
+        - w1sigmpro_ep
+        - w2mpro_ep
+        - w2sigmpro_ep
+        - w1flux_ep
+        - w1sigflux_ep
+        - w2flux_ep
+        - w2sigflux_ep
+
+    - type: positional
+      radius_arcsec: 2
+      table:
+        name: neowiser_p1bs_psd
+      columns:
+        - ra
+        - dec
+        - mjd
+        - allwise_cntr
+        - w1mpro
+        - w1sigmpro
+        - w2mpro
+        - w2sigmpro
+        - w1flux
+        - w1sigflux
+        - w2flux
+        - w2sigflux
+
+ampel:
+  mongo_db_name: desi_agn_vac
+  input_mongo_db_name: desi_agn_vac
+  ncpu: 6
