@@ -46,6 +46,6 @@ download:
         - w2sigflux
 
 ampel:
-  mongo_db_name: desi_agn_vac
+  mongo_db_name: desi_agn
   input_mongo_db_name: desi_agn_vac
   ncpu: 6
