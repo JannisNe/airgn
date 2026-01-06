@@ -6,7 +6,7 @@ channel:
   version: 0
 mongo:
   prefix: desi_agn
-  reset: true
+  reset: false
 name: timewise
 task:
 - config:
@@ -42,8 +42,36 @@ task:
       - resolve_run_time_aliases
       - hash_t2_config
   unit: AlertConsumer
+
 - config:
     log_profile: default
   multiplier: 5
   title: t2
   unit: T2Worker
+
+- title: PlotChi2
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - STOCK
+            channel: "wise"
+    stage:
+      unit: T3SimpleStager
+      config:
+        execute:
+          - unit: Chi2VsAGN
+            config:
+              path: $AIRGNDATA/desi_agn_value_added_catalog/plots/chi2_vs_agn
+              input_mongo_db_name: desi_agn_vac
