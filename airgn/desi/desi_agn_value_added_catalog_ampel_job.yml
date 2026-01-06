@@ -1,0 +1,49 @@
+channel:
+- access:
+  - ZTF_PUB
+  name: wise
+  policy: []
+  version: 0
+mongo:
+  prefix: desi_agn
+  reset: true
+name: timewise
+task:
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+    - channel: wise
+      ingest:
+        mux:
+          combine:
+          - state_t2:
+            - unit: T2StackVisits
+            - unit: T2CalculateChi2Stacked
+              config:
+                t2_dependency:
+                  - unit: T2StackVisits
+            unit: T1SimpleCombiner
+          unit: TiMongoMuxer
+    iter_max: 10000
+    shaper: TiDataPointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            timewise_config_file: airgn/desi/desi_agn_value_added_catalog.yml
+            stock_id_column_name: orig_id
+          unit: TimewiseFileLoader
+      unit: TimewiseAlertSupplier
+  multiplier: 1
+  title: t0
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+- config:
+    log_profile: default
+  multiplier: 5
+  title: t2
+  unit: T2Worker
