@@ -11,10 +11,11 @@ logger = logging.getLogger(__file__)
 
 
 def import_input():
-    config = TimewiseConfig.load(CONFIG_FILE)
+    config = TimewiseConfig.from_yaml(CONFIG_FILE)
     interface = config.build_ampel_interface()
-    expanded_input_csv = config.ampel.expanded_input_csv
-    logger.info(f"importing {expanded_input_csv} into {interface.input_mongo_db_name}")
+    logger.info(
+        f"importing {interface.expanded_input_csv} into {interface.input_mongo_db_name}"
+    )
     col = interface.client[interface.input_mongo_db_name]["input"]
 
     # load the data
@@ -23,9 +24,9 @@ def import_input():
     # there are duplicate TARGETIDs and thus orig_ids. From the docs I did not get why:
     # https://data.desi.lbl.gov/doc/releases/dr1/vac/agnqso/
     # for now just exclude the duplicates
-    m = ~df.orig_id.duplicated(keep=False)
+    m = df.orig_id.duplicated(keep=False)
     logger.info(f"Excluding {m.sum()} duplicates")
-    df = df[m]
+    df = df[~m]
 
     # create an index from stock id
     col.create_index([(interface.orig_id_key, ASCENDING)], unique=True)
