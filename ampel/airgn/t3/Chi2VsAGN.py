@@ -26,6 +26,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
 
     path: str
     input_mongo_db_name: str
+    ylim: tuple[float, float]
     mongo_uri: str = "mongodb://localhost:27017"
 
     def __init__(self, **kwargs) -> None:
@@ -33,7 +34,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
         self._client = MongoClient(self.mongo_uri)
         self._col = self._client[self.input_mongo_db_name]["input"]
         self._agn_bitmask = get_agn_bitmask()
-        self._path = expand(self.path).with_suffix(".pdf")
+        self._path = expand(self.path).with_suffix(".png")
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
     def process(
@@ -55,28 +56,60 @@ class Chi2VsAGN(AbsPhotoT3Unit):
 
         res = pd.DataFrame.from_dict(res, orient="index")
 
-        fig, axs = plt.subplots(nrows=2, sharex="all")
+        both_chi2 = (
+            res[[f"red_chi2_w{i + 1}_fluxdensity" for i in range(2)]]
+            .notna()
+            .all(axis=1)
+        )
+        n = [((res["decoded_agn_mask"] == "0") & both_chi2).sum()]
+        for ix in self._agn_bitmask["AGN_MASKBITS"]:
+            ixb = res["decoded_agn_mask"].str[ix[1]]
+            ixm = both_chi2 & ixb.notna() & ixb.astype(float).astype(bool)
+            n.append(ixm.sum())
 
-        for i, ax in enumerate(axs):
-            x = [ix[1] for ix in self._agn_bitmask["AGN_MASKBITS"]]
-            y = [
-                res.loc[
-                    res["decoded_agn_mask"].str[ix[1]].astype(bool),
-                    f"red_chi2_w{i + 1}_fluxdensity",
-                ]
-                for ix in self._agn_bitmask["AGN_MASKBITS"]
-            ]
-            ax.violinplot(
-                y,
-                x,
+        labels = ["no AGN"] + [ix[0] for ix in self._agn_bitmask["AGN_MASKBITS"]]
+
+        fig, axs = plt.subplots(nrows=3, sharex="all")
+        axs[0].bar(np.arange(-1, len(labels) - 1), n, alpha=0.5, ec="none")
+        axs[0].set_yscale("log")
+
+        for i, ax in enumerate(axs[1:]):
+            m = res[f"red_chi2_w{i + 1}_fluxdensity"].notna()
+            x = []
+            y = []
+            for ix in self._agn_bitmask["AGN_MASKBITS"]:
+                ixb = res["decoded_agn_mask"].str[ix[1]]
+                ixm = m & ixb.notna() & ixb.astype(float).astype(bool)
+                if any(ixm):
+                    y.append(
+                        np.log10(
+                            res.loc[
+                                ixm,
+                                f"red_chi2_w{i + 1}_fluxdensity",
+                            ].values.tolist()
+                        )
+                    )
+                    x.append(
+                        ix[1] if ix[1] < 10 else ix[1] - 2
+                    )  # bits 8 and 9 are skipped
+            not_agn_mask = m & (res["decoded_agn_mask"] == "0")
+            x.append(-1)
+            y.append(
+                np.log10(
+                    res.loc[
+                        not_agn_mask, f"red_chi2_w{i + 1}_fluxdensity"
+                    ].values.tolist()
+                )
             )
+            ax.violinplot(dataset=y, positions=x, showextrema=False, showmedians=True)
             ax.set_ylabel(f"W{i + 1}")
+            ax.set_ylim(*self.ylim)
 
         fig.supylabel(r"$\chi^2_\mathrm{red}$")
-        axs[-1].tick_params(axis="x", labelrotation=60)
-        labels = [ix[0] for ix in self._agn_bitmask["AGN_MASKBITS"]]
-        axs[-1].set_xticks(np.arange(1, len(labels) + 1), labels=labels)
+        axs[-1].set_xticks(np.arange(-1, len(labels) - 1))
+        axs[-1].set_xticklabels(labels, rotation=60, ha="right")
 
         self.logger.info(f"saving {self._path}")
+        fig.tight_layout()
         fig.savefig(self._path)
         plt.close()

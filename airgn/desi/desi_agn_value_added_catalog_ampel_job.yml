@@ -73,5 +73,6 @@ task:
         execute:
           - unit: Chi2VsAGN
             config:
-              path: $AIRGNDATA/desi_agn_value_added_catalog/plots/chi2_vs_agn
+              path: $AIRGNDATA/desi_value_added_catalog/plots/chi2_vs_agn
               input_mongo_db_name: desi_agn_vac
+              ylim: [-2, 2]
