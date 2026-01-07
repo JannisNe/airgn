@@ -82,10 +82,9 @@ def get_agn_bitmask() -> dict:
         logger.info(f"wrote to {AGN_MASKBITS_PATH}")
 
     with open(AGN_MASKBITS_PATH, "r") as f:
-        agn_maskbits_info_list = yaml.safe_load(f)["OPT_UV_TYPE"]
-    agn_maskbits_info_dict = {int(l[1]): l[0] for l in agn_maskbits_info_list}
+        agn_maskbits_info_list = yaml.safe_load(f)
 
-    return agn_maskbits_info_dict
+    return agn_maskbits_info_list
 
 
 if __name__ == "__main__":
