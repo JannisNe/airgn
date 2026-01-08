@@ -15,6 +15,14 @@ from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
 
 
+# AB offset to Vega for WISE bands from Jarrett et al. (2011)
+# https://dx.doi.org/10.1088/0004-637X/735/2/112
+WISE_AB_OFFSET = {
+    "W1": 2.699,
+    "W2": 3.339,
+}
+
+
 def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
     mask = str(bin(int(agn_bitmask))).replace("0b", "")[::-1]
     return [am[0] for im, am in zip(mask, agn_mask["AGN_MASKBITS"]) if im]
@@ -30,6 +38,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
     ylim: tuple[float, float]
     n_points_bins: tuple[int, ...] = (0, 10, 20, 30)
     mongo_uri: str = "mongodb://localhost:27017"
+    iter_max: int | None = None
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -39,10 +48,26 @@ class Chi2VsAGN(AbsPhotoT3Unit):
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
 
+    def iter_npoints_binned(
+        self, df: pd.DataFrame
+    ) -> Generator[tuple[pd.DataFrame, float, float], None, None]:
+        npoints_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
+        bins = list(pairwise(self.n_points_bins)) + [
+            (min(self.n_points_bins), max(self.n_points_bins))
+        ]
+        for s, e in bins:
+            bin_mask = (df[npoints_cols] >= s).all(axis=1) & (df[npoints_cols] < e).any(
+                axis=1
+            )
+            yield df[bin_mask], s, e
+
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
     ) -> None:
+        # ---------------------- aggregate results ---------------------- #
+
         res = {}
+        n_iter = 0
         for view in gen:
             input_res = None
             for t2 in view.get_t2_views("T2CalculateChi2Stacked"):
@@ -56,9 +81,16 @@ class Chi2VsAGN(AbsPhotoT3Unit):
             ires["decoded_agn_mask"] = mask
             res[view.stock["stock"]] = ires
 
+            n_iter += 1
+            if self.iter_max and n_iter >= self.iter_max:
+                self.logger.info("iteration limit reached, stopping loop")
+                break
+
         res = pd.DataFrame.from_dict(res, orient="index")
         chi2_cols = [f"red_chi2_w{i + 1}_fluxdensity" for i in range(2)]
         npoints_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
+
+        # ---------------------- npoints hist ---------------------- #
 
         fig, ax = plt.subplots()
         ax.hist(res[npoints_cols].min(axis=1), ec="white", alpha=0.8)
@@ -70,12 +102,9 @@ class Chi2VsAGN(AbsPhotoT3Unit):
         fig.savefig(fn)
         plt.close()
 
-        for s, e in pairwise(self.n_points_bins):
-            bin_mask = (res[npoints_cols] >= s).all(axis=1) & (
-                res[npoints_cols] < e
-            ).any(axis=1)
-            res_bin = res[bin_mask]
+        # ---------------------- chi2 violinplots ---------------------- #
 
+        for res_bin, s, e in self.iter_npoints_binned(res):
             both_chi2 = res_bin[chi2_cols].notna().all(axis=1)
             n = [((res_bin["decoded_agn_mask"] == "0") & both_chi2).sum()]
             for ix in self._agn_bitmask["AGN_MASKBITS"]:
@@ -132,3 +161,56 @@ class Chi2VsAGN(AbsPhotoT3Unit):
             fig.tight_layout()
             fig.savefig(fn)
             plt.close()
+
+        # ---------------------- chi2 vs color ---------------------- #
+
+        res["w1-w2"] = (
+            np.log10(res["FLUX_W2"] / res["FLUX_W1"])
+            + WISE_AB_OFFSET["W2"]
+            - WISE_AB_OFFSET["W1"]
+        )
+        res["agn_wise_color"] = (
+            (res["w1-w2"] > 0.8) & res["w1-w2"].notna() & ~np.isinf(res["w1-w2"])
+        )
+        log_chi2 = np.linspace(*self.ylim, 100)
+        res["agn"] = ~(res["decoded_agn_mask"] == "0")
+
+        for res_bin, s, e in self.iter_npoints_binned(res):
+            for ix in self._agn_bitmask["AGN_MASKBITS"]:
+                ixb = res_bin["decoded_agn_mask"].str[ix[1]]
+                type_mask = ixb.notna() & ixb.astype(float).astype(bool)
+                type_res_bin = res_bin[type_mask]
+                this_bin = {}
+                for k in ["agn", "agn_wise_color"]:
+                    n_agn = type_res_bin[k].sum()
+                    completeness = []
+                    purity = []
+                    for chi2_thresh in log_chi2:
+                        n_selected_agn = (
+                            (type_res_bin.loc[type_res_bin[k], chi2_cols] > chi2_thresh)
+                            .all(axis=1)
+                            .sum()
+                        )
+                        n_selected_non_agn = (
+                            (res_bin.loc[~res_bin[k], chi2_cols] > chi2_thresh)
+                            .all(axis=1)
+                            .sum()
+                        )
+                        completeness.append(n_selected_agn / n_agn)
+                        purity.append(
+                            n_selected_agn / (n_selected_agn + n_selected_non_agn)
+                        )
+                    this_bin[f"{k}_completeness"] = completeness
+                    this_bin[f"{k}_purity"] = purity
+
+                fig, ax = plt.subplots()
+                for k, v in this_bin.items():
+                    ax.plot(log_chi2, v, label=k)
+                ax.set_xlabel(r"$\log_{10}(\chi^2_\mathrm{red})$")
+                ax.set_ylabel("percentage")
+                ax.legend()
+                fn = self._path / f"bin_{s}_{e}_{ix[0]}.png"
+                self.logger.info(f"saving {fn}")
+                fig.tight_layout()
+                fig.savefig(fn)
+                plt.close()
