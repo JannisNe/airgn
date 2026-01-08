@@ -67,6 +67,7 @@ task:
               - T2DOC
               - STOCK
             channel: "wise"
+        chunk_size: 100000
     stage:
       unit: T3SimpleStager
       config:
