@@ -164,48 +164,84 @@ class Chi2VsAGN(AbsPhotoT3Unit):
 
         # ---------------------- chi2 vs color ---------------------- #
 
-        res["w1-w2"] = (
-            np.log10(res["FLUX_W2"] / res["FLUX_W1"])
-            + WISE_AB_OFFSET["W2"]
-            - WISE_AB_OFFSET["W1"]
-        )
-        res["agn_wise_color"] = (
-            (res["w1-w2"] > 0.8) & res["w1-w2"].notna() & ~np.isinf(res["w1-w2"])
-        )
         log_chi2 = np.linspace(*self.ylim, 100)
         res["agn"] = ~(res["decoded_agn_mask"] == "0")
+        wise_agn_bit = res["decoded_agn_mask"].str[15]
+        wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(bool)
+        res["wise_agn"] = wise_agn_mask
+        res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
 
         for res_bin, s, e in self.iter_npoints_binned(res):
             for ix in self._agn_bitmask["AGN_MASKBITS"]:
                 ixb = res_bin["decoded_agn_mask"].str[ix[1]]
                 type_mask = ixb.notna() & ixb.astype(float).astype(bool)
                 type_res_bin = res_bin[type_mask]
-                this_bin = {}
-                for k in ["agn", "agn_wise_color"]:
-                    n_agn = type_res_bin[k].sum()
-                    completeness = []
-                    purity = []
-                    for chi2_thresh in log_chi2:
-                        n_selected_agn = (
-                            (type_res_bin.loc[type_res_bin[k], chi2_cols] > chi2_thresh)
-                            .all(axis=1)
-                            .sum()
+
+                n_agn = type_res_bin["agn"].sum()
+                n_wise_agn = type_res_bin["wise_agn"].sum()
+                n_non_wise_agn = type_res_bin["non_wise_agn"].sum()
+
+                completeness = []
+                purity = []
+                percentage_wise_agn = []
+                percentage_non_wise_agn = []
+
+                for chi2_thresh in log_chi2:
+                    n_selected_agn = (
+                        (type_res_bin.loc[type_res_bin["agn"], chi2_cols] > chi2_thresh)
+                        .all(axis=1)
+                        .sum()
+                    )
+                    n_selected_non_agn = (
+                        (res_bin.loc[~res_bin["agn"], chi2_cols] > chi2_thresh)
+                        .all(axis=1)
+                        .sum()
+                    )
+                    completeness.append(n_selected_agn / n_agn)
+                    purity.append(
+                        n_selected_agn / (n_selected_agn + n_selected_non_agn)
+                    )
+
+                    n_selected_wise_agn = (
+                        (
+                            type_res_bin.loc[type_res_bin["wise_agn"], chi2_cols]
+                            > chi2_thresh
                         )
-                        n_selected_non_agn = (
-                            (res_bin.loc[~res_bin[k], chi2_cols] > chi2_thresh)
-                            .all(axis=1)
-                            .sum()
+                        .all(axis=1)
+                        .sum()
+                    )
+                    percentage_wise_agn.append(n_selected_wise_agn / n_wise_agn)
+                    n_selected_non_wise_agn = (
+                        (
+                            type_res_bin.loc[type_res_bin["non_wise_agn"], chi2_cols]
+                            > chi2_thresh
                         )
-                        completeness.append(n_selected_agn / n_agn)
-                        purity.append(
-                            n_selected_agn / (n_selected_agn + n_selected_non_agn)
-                        )
-                    this_bin[f"{k}_completeness"] = completeness
-                    this_bin[f"{k}_purity"] = purity
+                        .all(axis=1)
+                        .sum()
+                    )
+                    percentage_non_wise_agn.append(
+                        n_selected_non_wise_agn / n_non_wise_agn
+                    )
 
                 fig, ax = plt.subplots()
-                for k, v in this_bin.items():
-                    ax.plot(log_chi2, v, label=k)
+                ax.plot(log_chi2, completeness, label="completeness", lw=2, color="C0")
+                ax.plot(log_chi2, purity, label="purity", lw=2, ls="--", color="C0")
+                ax.plot(
+                    log_chi2,
+                    percentage_wise_agn,
+                    label="WISE AGN",
+                    lw=2,
+                    ls=":",
+                    color="C1",
+                )
+                ax.plot(
+                    log_chi2,
+                    percentage_non_wise_agn,
+                    label="Non WISE AGN",
+                    lw=2,
+                    ls="-.",
+                    color="C1",
+                )
                 ax.set_xlabel(r"$\log_{10}(\chi^2_\mathrm{red})$")
                 ax.set_ylabel("percentage")
                 ax.legend()
