@@ -121,8 +121,9 @@ class Chi2VsAGN(AbsPhotoT3Unit):
                     dataset=y, positions=x, showextrema=False, showmedians=True
                 )
                 ax.set_ylabel(f"W{i + 1}")
+                ax.set_ylim(*self.ylim)
 
-            fig.supylabel(r"$\chi^2_\mathrm{red}$")
+            fig.supylabel(r"$\log_{10}(\chi^2_\mathrm{red})$")
             axs[-1].set_xticks(np.arange(-1, len(labels) - 1))
             axs[-1].set_xticklabels(labels, rotation=60, ha="right")
 
