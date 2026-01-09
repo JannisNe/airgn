@@ -39,6 +39,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
     n_points_bins: tuple[int, ...] = (0, 10, 20, 30)
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
+    file_format: str = "pdf"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -96,7 +97,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
         ax.hist(res[npoints_cols].min(axis=1), ec="white", alpha=0.8)
         ax.set_xlabel("visits with detection")
         ax.set_ylabel("counts")
-        fn = self._path / "n_points_hist.png"
+        fn = self._path / f"n_points_hist.{self.file_format}"
         self.logger.info(f"saving {fn}")
         fig.tight_layout()
         fig.savefig(fn)
@@ -157,7 +158,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
             axs[-1].set_xticks(np.arange(-1, len(labels) - 1))
             axs[-1].set_xticklabels(labels, rotation=60, ha="right")
 
-            fn = self._path / f"bin_{s}_{e}.png"
+            fn = self._path / f"bin_{s}_{e}.{self.file_format}"
             self.logger.info(f"saving {fn}")
             fig.tight_layout()
             fig.savefig(fn)
@@ -248,7 +249,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
                     r"percentage with $\chi^2_\mathrm{red} > \chi^2_\mathrm{red,\,thresh}$"
                 )
                 ax.legend()
-                fn = self._path / f"bin_{s}_{e}_{ix[0]}.png"
+                fn = self._path / f"bin_{s}_{e}_{ix[0]}.{self.file_format}"
                 self.logger.info(f"saving {fn}")
                 fig.tight_layout()
                 fig.savefig(fn)
