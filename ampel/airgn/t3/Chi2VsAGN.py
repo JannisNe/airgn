@@ -94,8 +94,8 @@ class Chi2VsAGN(AbsPhotoT3Unit):
 
         fig, ax = plt.subplots()
         ax.hist(res[npoints_cols].min(axis=1), ec="white", alpha=0.8)
-        ax.set_xlabel("N")
-        ax.set_ylabel("count")
+        ax.set_xlabel("visits with detection")
+        ax.set_ylabel("counts")
         fn = self._path / "n_points_hist.png"
         self.logger.info(f"saving {fn}")
         fig.tight_layout()
@@ -117,6 +117,7 @@ class Chi2VsAGN(AbsPhotoT3Unit):
             fig, axs = plt.subplots(nrows=3, sharex="all")
             axs[0].bar(np.arange(-1, len(labels) - 1), n, alpha=0.5, ec="none")
             axs[0].set_yscale("log")
+            axs[0].set_ylabel("counts")
 
             for i, ax in enumerate(axs[1:]):
                 m = res_bin[f"red_chi2_w{i + 1}_fluxdensity"].notna()
@@ -242,8 +243,10 @@ class Chi2VsAGN(AbsPhotoT3Unit):
                     ls="-.",
                     color="C1",
                 )
-                ax.set_xlabel(r"$\log_{10}(\chi^2_\mathrm{red})$")
-                ax.set_ylabel("percentage")
+                ax.set_xlabel(r"$\log_{10}(\chi^2_\mathrm{red,\,thresh})$")
+                ax.set_ylabel(
+                    r"percentage with $\chi^2_\mathrm{red} > \chi^2_\mathrm{red,\,thresh}$"
+                )
                 ax.legend()
                 fn = self._path / f"bin_{s}_{e}_{ix[0]}.png"
                 self.logger.info(f"saving {fn}")
