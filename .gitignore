@@ -2,3 +2,4 @@
 *.png
 .idea/
 airgn_data
+*.npz
