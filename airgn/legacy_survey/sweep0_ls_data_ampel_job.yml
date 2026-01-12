@@ -106,7 +106,6 @@ task:
             unit: TiMongoMuxer
             config:
               channel: timewise
-    iter_max: 10000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -115,7 +114,6 @@ task:
           config:
             timewise_config_file: $AIRGNSOURCE/airgn/legacy_survey/sweep0.yml
             stock_id_column_name: orig_id
-            chunks: [ 2 ]
           unit: TimewiseFileLoader
       unit: TimewiseAlertSupplier
   multiplier: 1
@@ -128,7 +126,7 @@ task:
 
 
 - config:
-    log_profile: console_info
+    log_profile: prod
   multiplier: 1
   title: t2
   unit: T2Worker
