@@ -7,17 +7,16 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11,<3.14"
 dependencies = [
-    "timewise[ampel,dev] (==1.0.0a7)",
+    "timewise[ampel,dev]  @ file:///home/necker/Software/timewise",
     "jupyterlab (>=4.4.6,<5.0.0)",
+    "wget (>=3.2,<4.0)",
+    "rubin-sim (>=2.6.0,<3.0.0)",
+    "ligo-skymap (>=2.5.3,<3.0.0)",
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.dependencies]
-timewise = {develop = true}
-ampel-core = {develop = true}
