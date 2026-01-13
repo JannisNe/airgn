@@ -71,7 +71,7 @@ def estimate_ls_coverage(min_n_exp=5):
     opsdb = LSST_BASELINE_STRATEGY_FILENAME
     run_name = opsdb.name.replace(".db", "")
 
-    nside = 64
+    nside = 128
     metric = maf.CountMetric("observationStartMJD", metric_name="NVisits")
     slicer = maf.HealpixSlicer(nside=nside)
     constraint = "night < 366"
@@ -109,7 +109,7 @@ def estimate_ls_coverage(min_n_exp=5):
     ax.plot(x, y)
     ax.set_xlabel("LS exposures")
     ax.set_ylabel("LSST covered")
-    fn = PLOTS_DIR / "lsst_coverage_by_ls.png"
+    fn = PLOTS_DIR / "lsst_coverage_by_ls.pdf"
     logger.info(f"Saving plot to {fn}")
     fig.tight_layout()
     fig.savefig(fn)
@@ -130,7 +130,7 @@ def estimate_ls_coverage(min_n_exp=5):
         extend_cbar = "max" if data_max > maxmax else "neither"
         fig.colorbar(ax=ax, orientation="vertical", mappable=sm, extend=extend_cbar)
         ax.set_title(n)
-    fn = PLOTS_DIR / "lsst_coverage_by_ls_skymaps.png"
+    fn = PLOTS_DIR / "lsst_coverage_by_ls_skymaps.pdf"
     logger.info(f"Saving plot to {fn}")
     fig.tight_layout()
     fig.savefig(fn)
