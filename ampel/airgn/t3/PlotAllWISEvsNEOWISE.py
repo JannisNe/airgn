@@ -149,5 +149,5 @@ class PlotAllWISEvsNEOWISE(AbsPhotoT3Unit):
         axs[-1].set_xlabel("Median AllWISE Flux Density")
         fig.supylabel("AllWISE / NEOWISE Flux Density Ratio")
 
-        fig.savefig(expand(self.path))
+        fig.savefig(expand(self.path), dpi=300)
         plt.close()

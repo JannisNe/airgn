@@ -72,7 +72,7 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
 
         res = np.array(res)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(3 * 1.618, 3))
         ax.hist(np.log10(res[:, 0]), bins=30, alpha=0.5, label="W1", color="lightcoral")
         ax.hist(np.log10(res[:, 1]), bins=30, alpha=0.5, label="W2", color="maroon")
         ax.set_xlabel("Log10(Median Legacy Survey Flux / Median Timewise Flux)")
@@ -82,6 +82,7 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
             self._name + "compare_timewise_legacy_survey_median_ratio_hist.pdf"
         )
         fig.suptitle("Median Flux Ratio: Legacy Survey vs Timewise")
+        fig.tight_layout()
         fig.savefig(fn)
         plt.close(fig)
 
@@ -94,7 +95,7 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
         view: TransientView,
         median_ratios: list[float],
     ) -> None:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(3 * 1.618, 4))
         plot_lightcurve(
             lum_key=keys.FLUX_DENSITY_EXT,
             stacked_lightcurve=t2tw,
@@ -132,5 +133,6 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
         d.mkdir(exist_ok=True, parents=True)
         fn = d / f"{view.id}_compare_timewise_legacy_survey.pdf"
         fig.suptitle(f"Transient {view.id}")
+        fig.tight_layout()
         fig.savefig(fn)
         plt.close(fig)
