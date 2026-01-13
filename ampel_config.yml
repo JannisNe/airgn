@@ -1,6 +1,6 @@
 build:
-  date: 06/01/2026
-  time: '16:55:39'
+  date: 13/01/2026
+  time: '14:44:57'
   by: necker
   conda: airgn
   stop_on_errors: 0
@@ -15,10 +15,10 @@ build:
   ampel-interface: 0.10.5a8
   ampel-core: 0.10.6a17
   ampel-plot: 0.9.1
+  timewise: 1.0.0a9
+  ampel-photometry: 0.10.2a1
   airgn: 0.1.0
   ampel-alerts: 0.10.3a6
-  ampel-photometry: 0.10.2a1
-  timewise: 1.0.0a9
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -193,6 +193,7 @@ unit:
     xxh64: 8872217729468029895
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -210,6 +211,7 @@ unit:
     xxh64: 8281300100313073163
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -227,6 +229,7 @@ unit:
     xxh64: 14442819256911179592
     dependencies:
     - annotated_types
+    - cryptography
     - mongomock
     - packaging
     - prometheus_client
@@ -247,6 +250,7 @@ unit:
     xxh64: 15234424918224562521
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -266,6 +270,7 @@ unit:
     xxh64: 9761917718217925194
     dependencies:
     - annotated_types
+    - cryptography
     - mongomock
     - packaging
     - prometheus_client
@@ -287,6 +292,7 @@ unit:
     xxh64: 10642110307745408251
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -304,6 +310,7 @@ unit:
     xxh64: 5725603746595064425
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -322,6 +329,7 @@ unit:
     xxh64: 6161864656479546928
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -482,6 +490,7 @@ unit:
     xxh64: 2790331036742963826
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -499,6 +508,7 @@ unit:
     xxh64: 10019230342611180891
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -517,6 +527,7 @@ unit:
     xxh64: 3597392898476386980
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -534,6 +545,7 @@ unit:
     xxh64: 5862946897053559896
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -554,6 +566,7 @@ unit:
     xxh64: 10607718304059557294
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -574,6 +587,7 @@ unit:
     xxh64: 11447753997146506177
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -591,6 +605,7 @@ unit:
     xxh64: 9176224965497852118
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -608,6 +623,7 @@ unit:
     xxh64: 15040241164370441086
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -625,6 +641,7 @@ unit:
     xxh64: 177029996330832417
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -645,6 +662,7 @@ unit:
     xxh64: 16168460460362787531
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -662,6 +680,7 @@ unit:
     xxh64: 10303600697083878147
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - pydantic_core
     - typing_inspection
@@ -678,6 +697,7 @@ unit:
     xxh64: 736117426726534081
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -695,6 +715,7 @@ unit:
     xxh64: 10184423948152998266
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -712,6 +733,7 @@ unit:
     xxh64: 17778272485979734196
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -732,6 +754,7 @@ unit:
     xxh64: 4286998017656554040
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -766,6 +789,7 @@ unit:
     xxh64: 13265330298836740119
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -783,6 +807,7 @@ unit:
     xxh64: 17466276394845956675
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -800,6 +825,7 @@ unit:
     xxh64: 11546630926444517843
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -817,6 +843,7 @@ unit:
     xxh64: 12110161669031221840
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -837,6 +864,7 @@ unit:
     xxh64: 7318515918128220137
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -854,6 +882,7 @@ unit:
     xxh64: 9297652542317218040
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -872,6 +901,7 @@ unit:
     xxh64: 16613931977779416555
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -893,10 +923,16 @@ unit:
     - astropy_iers_data
     - backoff
     - charset_normalizer
+    - cloudpickle
+    - google_crc32c
     - idna
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
+    - pyarrow
     - pydantic_core
     - pytz
     - pyvo
@@ -928,15 +964,34 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 8481236568549158043
+    xxh64: 8687998769326025513
     dependencies:
     - annotated_types
+    - astropy
+    - astropy_iers_data
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - cycler
+    - defusedxml
+    - google_crc32c
+    - idna
+    - kiwisolver
+    - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
+    - pyarrow
     - pydantic_core
+    - pyparsing
     - pytz
+    - requests
+    - tqdm
     - typing_inspection
+    - urllib3
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/airgn/t3/Chi2VsAGN.py
@@ -947,24 +1002,31 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 11490393608940312157
+    xxh64: 3875928240107550435
     dependencies:
     - annotated_types
     - astropy
     - astropy_iers_data
     - backoff
     - charset_normalizer
+    - cloudpickle
+    - cryptography
     - cycler
     - defusedxml
+    - google_crc32c
     - idna
     - kiwisolver
     - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pyparsing
     - pytz
@@ -1196,17 +1258,24 @@ unit:
     - astropy_iers_data
     - backoff
     - charset_normalizer
+    - cloudpickle
+    - cryptography
     - cycler
     - defusedxml
+    - google_crc32c
     - idna
     - kiwisolver
     - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pyparsing
     - pytz
@@ -1232,17 +1301,24 @@ unit:
     - astropy_iers_data
     - backoff
     - charset_normalizer
+    - cloudpickle
+    - cryptography
     - cycler
     - defusedxml
+    - google_crc32c
     - idna
     - kiwisolver
     - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pyparsing
     - pytz
@@ -1268,18 +1344,25 @@ unit:
     - astropy_iers_data
     - backoff
     - charset_normalizer
+    - cloudpickle
+    - cryptography
     - cycler
     - defusedxml
+    - google_crc32c
     - idna
     - joblib
     - kiwisolver
     - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pyparsing
     - pytz
@@ -1346,12 +1429,16 @@ unit:
     xxh64: 5721582883320430800
     dependencies:
     - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -1371,12 +1458,16 @@ unit:
     xxh64: 17977965268880098961
     dependencies:
     - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -1396,12 +1487,16 @@ unit:
     xxh64: 6330577536384175788
     dependencies:
     - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -1420,12 +1515,17 @@ unit:
     xxh64: 662415356974905802
     dependencies:
     - annotated_types
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -1445,12 +1545,17 @@ unit:
     xxh64: 2496393686853866313
     dependencies:
     - annotated_types
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -1469,6 +1574,7 @@ unit:
     xxh64: 10052295788148574761
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -1537,12 +1643,16 @@ unit:
     xxh64: 3143678810639488032
     dependencies:
     - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -1738,6 +1848,7 @@ unit:
     xxh64: 4399267697217271257
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -1757,6 +1868,7 @@ unit:
     xxh64: 664119635459602987
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -1776,6 +1888,7 @@ unit:
     xxh64: 11155546142519187491
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -1795,6 +1908,7 @@ unit:
     xxh64: 16489823956637273251
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -1967,6 +2081,7 @@ unit:
     xxh64: 13059713349891099032
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -2019,108 +2134,6 @@ unit:
     distrib: ampel-photometry
     version: 0.10.2a1
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/ULSFilter.py
-  TiCompilerOptions:
-    fqn: ampel.timewise.ingest.TiCompilerOptions
-    base:
-    - TiCompilerOptions
-    - CompilerOptions
-    - AuxAliasableModel
-    - AmpelBaseModel
-    xxh64: 12962718940109995425
-    dependencies:
-    - annotated_types
-    - packaging
-    - pydantic_core
-    - typing_inspection
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiCompilerOptions.py
-  TimewiseAlertSupplier:
-    fqn: ampel.timewise.alert.TimewiseAlertSupplier
-    base:
-    - TimewiseAlertSupplier
-    - BaseAlertSupplier
-    - AbsAlertSupplier
-    - AbsContextManager
-    xxh64: 3981456688827886737
-    dependencies:
-    - annotated_types
-    - numpy
-    - packaging
-    - pandas
-    - pydantic_core
-    - pytz
-    - rich
-    - typing_inspection
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/alert/TimewiseAlertSupplier.py
-  TimewiseFileLoader:
-    fqn: ampel.timewise.alert.load.TimewiseFileLoader
-    base:
-    - TimewiseFileLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 662465825510451503
-    dependencies:
-    - annotated_types
-    - astropy
-    - astropy_iers_data
-    - backoff
-    - charset_normalizer
-    - idna
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pydantic_core
-    - pytz
-    - pyvo
-    - requests
-    - rich
-    - schedule
-    - typing_inspection
-    - urllib3
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/alert/load/TimewiseFileLoader.py
-  AuxDiagnosticPlotter:
-    fqn: ampel.timewise.util.AuxDiagnosticPlotter
-    base:
-    - AuxDiagnosticPlotter
-    - AmpelBaseModel
-    xxh64: 15968297211953813324
-    dependencies:
-    - annotated_types
-    - astropy
-    - astropy_iers_data
-    - backoff
-    - charset_normalizer
-    - cycler
-    - defusedxml
-    - idna
-    - kiwisolver
-    - matplotlib
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pydantic_core
-    - pyparsing
-    - pytz
-    - pyvo
-    - requests
-    - rich
-    - schedule
-    - typing_inspection
-    - urllib3
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/util/AuxDiagnosticPlotter.py
   TimewiseAlertSimulator:
     fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
     base:
@@ -2130,12 +2143,17 @@ unit:
     xxh64: 15988811724111479624
     dependencies:
     - annotated_types
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -2158,13 +2176,20 @@ unit:
     - astropy_iers_data
     - backoff
     - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - google_crc32c
     - idna
+    - msgpack
+    - numcodecs
+    - numexpr
     - numpy
     - packaging
     - pandas
     - platformdirs
     - prometheus_client
     - psutil
+    - pyarrow
     - pydantic_core
     - pytz
     - pyvo
@@ -2187,9 +2212,12 @@ unit:
     xxh64: 12943264248883137962
     dependencies:
     - annotated_types
+    - cloudpickle
+    - numexpr
     - numpy
     - packaging
     - pandas
+    - pyarrow
     - pydantic_core
     - pytz
     - rich
@@ -2313,6 +2341,7 @@ unit:
     xxh64: 13512684806126266059
     dependencies:
     - annotated_types
+    - cryptography
     - packaging
     - prometheus_client
     - pydantic_core
@@ -2321,6 +2350,125 @@ unit:
     distrib: ampel-alerts
     version: 0.10.3a6
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/template/EasyAlertConsumerTemplate.py
+  TiCompilerOptions:
+    fqn: ampel.timewise.ingest.TiCompilerOptions
+    base:
+    - TiCompilerOptions
+    - CompilerOptions
+    - AuxAliasableModel
+    - AmpelBaseModel
+    xxh64: 12962718940109995425
+    dependencies:
+    - annotated_types
+    - packaging
+    - pydantic_core
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiCompilerOptions.py
+  TimewiseAlertSupplier:
+    fqn: ampel.timewise.alert.TimewiseAlertSupplier
+    base:
+    - TimewiseAlertSupplier
+    - BaseAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 15703500630282389746
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/alert/TimewiseAlertSupplier.py
+  TimewiseFileLoader:
+    fqn: ampel.timewise.alert.load.TimewiseFileLoader
+    base:
+    - TimewiseFileLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 662465825510451503
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - backoff
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - google_crc32c
+    - idna
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - pyvo
+    - requests
+    - rich
+    - schedule
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/alert/load/TimewiseFileLoader.py
+  AuxDiagnosticPlotter:
+    fqn: ampel.timewise.util.AuxDiagnosticPlotter
+    base:
+    - AuxDiagnosticPlotter
+    - AmpelBaseModel
+    xxh64: 15968297211953813324
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - backoff
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - cycler
+    - defusedxml
+    - google_crc32c
+    - idna
+    - kiwisolver
+    - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - pyvo
+    - requests
+    - rich
+    - schedule
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/util/AuxDiagnosticPlotter.py
 process:
   t0: {}
   t1: {}
@@ -2372,35 +2520,42 @@ environment:
   conda_airgn:
     annotated_types: 0.7.0
     packaging: '25.0'
-    pydantic_core: 2.33.2
-    rich: 14.1.0
+    pydantic_core: 2.41.5
+    rich: 14.2.0
     typing_inspection: 0.4.2
+    cryptography: 46.0.3
     prometheus_client: 0.23.1
     schedule: 1.2.2
     mongomock: 4.3.0
     pytz: '2025.2'
     sentinels: 1.1.1
-    astropy: 7.1.1
-    astropy_iers_data: 0.2025.11.10.0.38.31
-    backoff: 2.2.1
-    charset_normalizer: 3.4.3
-    idna: '3.10'
-    numpy: 1.26.4
+    charset_normalizer: 3.4.4
+    cloudpickle: 3.1.2
+    numexpr: 2.14.1
+    numpy: 2.3.5
     pandas: 2.3.3
-    pyvo: '1.7'
-    requests: 2.32.5
-    urllib3: 2.5.0
-    platformdirs: 4.4.0
-    psutil: 7.1.3
-    scipy: 1.16.2
+    platformdirs: 4.5.1
+    psutil: 7.2.1
+    pyarrow: 22.0.0
+    scipy: 1.17.0
+    astropy: 7.2.0
+    astropy_iers_data: 0.2026.1.12.0.42.13
     cycler: 0.12.1
     defusedxml: 0.7.1
-    joblib: 1.5.2
+    google_crc32c: 1.8.0
+    idna: '3.11'
     kiwisolver: 1.4.9
-    matplotlib: 3.10.6
-    pyparsing: 3.2.5
-    threadpoolctl: 3.6.0
+    matplotlib: 3.10.8
+    msgpack: 1.1.2
+    numcodecs: 0.16.5
+    pyparsing: 3.3.1
+    requests: 2.32.5
     tqdm: 4.67.1
+    urllib3: 2.6.3
+    backoff: 2.2.1
+    pyvo: '1.8'
+    joblib: 1.5.3
+    threadpoolctl: 3.6.0
 template:
   hash_t2_config: ampel.config.alter.HashT2Config
   resolve_run_time_aliases: ampel.config.alter.ResolveRunTimeAliases
