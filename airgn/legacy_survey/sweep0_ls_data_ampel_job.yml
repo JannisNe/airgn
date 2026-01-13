@@ -155,6 +155,7 @@ task:
               any_of:
                 - "legacy_survey"
                 - "timewise"
+        chunk_size: 100000
     stage:
       unit: T3SequentialStager
       config:
