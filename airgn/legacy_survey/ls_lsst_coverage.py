@@ -105,10 +105,12 @@ def estimate_ls_coverage(min_n_exp=5):
     x = np.arange(1, 20)
     y = [np.nansum(rubin_map[ls_map > ix]) / rubin_total for ix in x]
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(2.5 * 1.618, 2.5))
     ax.plot(x, y)
     ax.set_xlabel("LS exposures")
     ax.set_ylabel("LSST covered")
+    ax.set_xticks(x, minor=True)
+    ax.set_xticks([1, 5, 10, 15, 20])
     fn = PLOTS_DIR / "lsst_coverage_by_ls.pdf"
     logger.info(f"Saving plot to {fn}")
     fig.tight_layout()
@@ -128,7 +130,13 @@ def estimate_ls_coverage(min_n_exp=5):
         ax.imshow_hpx(m, cmap=cmap, norm=norm)
         sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
         extend_cbar = "max" if data_max > maxmax else "neither"
-        fig.colorbar(ax=ax, orientation="vertical", mappable=sm, extend=extend_cbar)
+        fig.colorbar(
+            ax=ax,
+            orientation="vertical",
+            mappable=sm,
+            extend=extend_cbar,
+            label="visits",
+        )
         ax.set_title(n)
     fn = PLOTS_DIR / "lsst_coverage_by_ls_skymaps.pdf"
     logger.info(f"Saving plot to {fn}")
