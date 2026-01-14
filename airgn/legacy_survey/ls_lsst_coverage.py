@@ -1,7 +1,10 @@
 import logging
+from pathlib import Path
+import os
 
 import wget
 import rubin_sim.maf as maf
+from rubin_sim.data import get_baseline
 from astropy.io import fits
 import numpy as np
 import healpy as hp
@@ -9,34 +12,21 @@ from ligo.skymap import plot
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-from airgn.legacy_survey.download import DATA_DIR
-
 
 logger = logging.getLogger(__name__)
-LSST_BASELINE_STRATEGY_URL = "https://s3df.slac.stanford.edu/data/rubin/sim-data/sims_featureScheduler_runs5.0/baseline/baseline_v5.0.0_10yrs.db"
-LSST_BASELINE_STRATEGY_FILENAME = DATA_DIR / "baseline_v5.0.0_10yrs.db"
-LS_SURVEY_BROCKS_URL = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr10/south/survey-bricks-dr10-south.fits.gz"
-LS_SURVEY_BROCKS_FILENAME = DATA_DIR / "south_survey_bricks.fits.gz"
+DATA_DIR = Path(os.environ["AIRGNDATA"]) / "legacy_survey" / "lsst_coverage"
+LS_SURVEY_BRICKS_URL = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr{DR}/south/survey-bricks-dr{DR}-south.fits.gz"
+LS_SURVEY_BRICKS_FILENAME = DATA_DIR / Path(LS_SURVEY_BRICKS_URL).name
 PLOTS_DIR = DATA_DIR / "plots"
 
 
-def download():
-    for url, fn in zip(
-        [LS_SURVEY_BROCKS_URL, LSST_BASELINE_STRATEGY_URL],
-        [LS_SURVEY_BROCKS_FILENAME, LSST_BASELINE_STRATEGY_FILENAME],
-    ):
-        if not fn.exists():
-            logger.info(f"Downloading {url}")
-            wget.download(url, str(fn))
-
-
-def compute_ls_healpix_map(nside=64, band="g"):
+def compute_ls_healpix_map(filename, nside=64, band="g"):
     logger.info("computing LS coverage map")
     npix = hp.nside2npix(nside)
     ls_map = np.zeros(npix, dtype=int)
 
-    logger.info(f"loading {LS_SURVEY_BROCKS_FILENAME}")
-    with fits.open(LS_SURVEY_BROCKS_FILENAME) as hdul:
+    logger.info(f"loading {filename}")
+    with fits.open(filename) as hdul:
         bricks = hdul[1].data
 
     # Precompute pixel centers
@@ -53,12 +43,18 @@ def compute_ls_healpix_map(nside=64, band="g"):
     return ls_map
 
 
-def get_ls_healpix_map(nside=64, band="g"):
-    fn = LS_SURVEY_BROCKS_FILENAME.parent / (
-        LS_SURVEY_BROCKS_FILENAME.stem + f"{nside}_{band}band.fits"
+def get_ls_healpix_map(nside=64, band="g", dr=9):
+    formatted_base_fn = Path(str(LS_SURVEY_BRICKS_FILENAME).format(DR=dr))
+    fn = formatted_base_fn.parent / (
+        formatted_base_fn.stem + f"{nside}_{band}band.fits"
     )
     if not fn.exists():
-        ls_map = compute_ls_healpix_map(nside, band)
+        if not formatted_base_fn.exists():
+            formatted_base_fn.parent.mkdir(parents=True, exist_ok=True)
+            url = LS_SURVEY_BRICKS_URL.format(DR=dr)
+            logger.info(f"downloading {url}")
+            wget.download(url, str(formatted_base_fn))
+        ls_map = compute_ls_healpix_map(formatted_base_fn, nside, band)
         logger.info(f"writing LS coverage map to {fn}")
         hp.write_map(str(fn), ls_map)
         return ls_map
@@ -67,8 +63,8 @@ def get_ls_healpix_map(nside=64, band="g"):
         return hp.read_map(fn)
 
 
-def estimate_ls_coverage(min_n_exp=5):
-    opsdb = LSST_BASELINE_STRATEGY_FILENAME
+def estimate_ls_coverage(dr):
+    opsdb = Path(get_baseline())
     run_name = opsdb.name.replace(".db", "")
 
     nside = 128
@@ -99,11 +95,12 @@ def estimate_ls_coverage(min_n_exp=5):
         g.run_all()
 
     rubin_map = bundle.metric_values
-    ls_map = get_ls_healpix_map(nside)
+    ls_map = get_ls_healpix_map(nside, dr=dr)
 
     rubin_total = np.nansum(rubin_map)
     x = np.arange(1, 20)
     y = [np.nansum(rubin_map[ls_map > ix]) / rubin_total for ix in x]
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(2.5 * 1.618, 2.5))
     ax.plot(x, y)
@@ -111,7 +108,7 @@ def estimate_ls_coverage(min_n_exp=5):
     ax.set_ylabel("LSST covered")
     ax.set_xticks(x, minor=True)
     ax.set_xticks([1, 5, 10, 15, 20])
-    fn = PLOTS_DIR / "lsst_coverage_by_ls.pdf"
+    fn = PLOTS_DIR / f"lsst_coverage_by_ls{dr}.pdf"
     logger.info(f"Saving plot to {fn}")
     fig.tight_layout()
     fig.savefig(fn)
@@ -138,7 +135,7 @@ def estimate_ls_coverage(min_n_exp=5):
             label="visits",
         )
         ax.set_title(n)
-    fn = PLOTS_DIR / "lsst_coverage_by_ls_skymaps.pdf"
+    fn = PLOTS_DIR / f"lsst_coverage_by_ls{dr}_skymaps.pdf"
     logger.info(f"Saving plot to {fn}")
     fig.tight_layout()
     fig.savefig(fn)
@@ -147,5 +144,5 @@ def estimate_ls_coverage(min_n_exp=5):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    download()
-    estimate_ls_coverage(min_n_exp=2)
+    estimate_ls_coverage(dr=9)
+    estimate_ls_coverage(dr=10)
