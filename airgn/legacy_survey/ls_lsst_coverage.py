@@ -12,9 +12,10 @@ from ligo.skymap import plot
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
+from airgn.legacy_survey.download import BASE_DATA_DIR
 
 logger = logging.getLogger(__name__)
-DATA_DIR = Path(os.environ["AIRGNDATA"]) / "legacy_survey" / "lsst_coverage"
+DATA_DIR = BASE_DATA_DIR / "lsst_coverage"
 LS_SURVEY_BRICKS_URL = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr{DR}/south/survey-bricks-dr{DR}-south.fits.gz"
 LS_SURVEY_BRICKS_FILENAME = DATA_DIR / Path(LS_SURVEY_BRICKS_URL).name
 PLOTS_DIR = DATA_DIR / "plots"
