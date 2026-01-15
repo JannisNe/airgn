@@ -34,6 +34,7 @@ def download():
         "Z",
         "FLUX_W1",
         "FLUX_W2",
+        "LS_ID",
     ]
 
     # Download the DESI value added catalog
