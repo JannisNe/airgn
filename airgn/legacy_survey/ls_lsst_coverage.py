@@ -38,7 +38,14 @@ def compute_ls_healpix_map(filename, nside=64, band="g"):
     for brick in bricks:
         in_ra = (ra >= brick["ra1"]) & (ra <= brick["ra2"])
         in_dec = (dec >= brick["dec1"]) & (dec <= brick["dec2"])
-        ls_map[in_ra & in_dec] += brick[f"nexp_{band}"]
+        in_mask = in_ra & in_dec
+        if any(in_mask):
+            ls_map[in_ra & in_dec] = np.max(
+                [
+                    np.full_like(ls_map[in_ra & in_dec], brick[f"galdepth_{band}"]),
+                    ls_map[in_ra & in_dec],
+                ]
+            )
 
     return ls_map
 
@@ -68,7 +75,7 @@ def estimate_ls_coverage(dr):
     run_name = opsdb.name.replace(".db", "")
 
     nside = 128
-    metric = maf.CountMetric("observationStartMJD", metric_name="NVisits")
+    metric = maf.Coaddm5Metric()
     slicer = maf.HealpixSlicer(nside=nside)
     constraint = "night < 366"
     plot_dict = {
@@ -97,17 +104,15 @@ def estimate_ls_coverage(dr):
     rubin_map = bundle.metric_values
     ls_map = get_ls_healpix_map(nside, dr=dr)
 
-    rubin_total = np.nansum(rubin_map)
-    x = np.arange(1, 20)
-    y = [np.nansum(rubin_map[ls_map > ix]) / rubin_total for ix in x]
+    rubin_total = np.nansum(rubin_map > 24)
+    x = np.linspace(20, 30, 100)
+    y = [np.nansum(rubin_map[ls_map > ix] > 24) / rubin_total for ix in x]
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(2.5 * 1.618, 2.5))
     ax.plot(x, y)
-    ax.set_xlabel("LS exposures")
+    ax.set_xlabel(r"$m_\mathrm{lim}$")
     ax.set_ylabel("LSST covered")
-    ax.set_xticks(x, minor=True)
-    ax.set_xticks([1, 5, 10, 15, 20])
     fn = PLOTS_DIR / f"lsst_coverage_by_ls{dr}.pdf"
     logger.info(f"Saving plot to {fn}")
     fig.tight_layout()
@@ -117,27 +122,24 @@ def estimate_ls_coverage(dr):
     fig, axs = plt.subplots(
         nrows=2, subplot_kw={"projection": "astro degrees mollweide"}
     )
+    norm = mcolors.Normalize(vmin=23, vmax=28)
+    cmap = "viridis"
     for ax, m, n in zip(
-        axs, [rubin_map, ls_map], ["LSST coverage, 1yr", "LS coverage"]
+        axs, [rubin_map, ls_map], ["LSST coverage, 1yr", f"LS coverage DR{dr}"]
     ):
-        maxmax = 100
-        data_max = np.nanmax(m)
-        norm = mcolors.LogNorm(vmin=1, vmax=min([maxmax, data_max]))
-        cmap = "viridis"
         ax.imshow_hpx(m, cmap=cmap, norm=norm)
-        sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-        extend_cbar = "max" if data_max > maxmax else "neither"
-        fig.colorbar(
-            ax=ax,
-            orientation="vertical",
-            mappable=sm,
-            extend=extend_cbar,
-            label="visits",
-        )
         ax.set_title(n)
+
+    fig.colorbar(
+        ax=axs,
+        location="right",
+        mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
+        label=r"$m_\mathrm{lim}$",
+        extend="min",
+        pad=0.1,
+    )
     fn = PLOTS_DIR / f"lsst_coverage_by_ls{dr}_skymaps.pdf"
     logger.info(f"Saving plot to {fn}")
-    fig.tight_layout()
     fig.savefig(fn)
     plt.close()
 
