@@ -1,12 +1,12 @@
 download:
-  input_csv: $AIRGNDATA/legacy_survey/sweep0/legacy_survey_sweep0.csv
+  input_csv: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/DR10_1_sweep0.csv
   chunk_size: 200000
   max_concurrent_jobs: 6
   poll_interval: 600
 
   backend:
     type: filesystem
-    base_path: $AIRGNDATA/legacy_survey/sweep0/timewise
+    base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0
 
   queries:
     - type: positional

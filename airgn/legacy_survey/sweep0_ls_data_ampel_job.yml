@@ -162,7 +162,7 @@ task:
         execute:
           - unit: PlotChi2Distribution
             config:
-              base_path: $AIRGNDATA/legacy_survey/sweep0/plots/chi2_full
+              base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots/chi2_full
               input_mongodb_name: nedlvs
               cumulative: true
               upper_lim: 6
@@ -170,8 +170,8 @@ task:
               n2: 20
           - unit: PlotAllWISEvsNEOWISE
             config:
-              path: $AIRGNDATA/legacy_survey/sweep0/plots/allwise_vs_neowise.png
+              path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots/allwise_vs_neowise.png
           - unit: CompareTimewiseToLegacySurvey
             config:
-              base_path: $AIRGNDATA/legacy_survey/sweep0/plots/compare_timewise_legacysurvey
+              base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots/compare_timewise_legacysurvey
               threshold_to_plot: 5.0
