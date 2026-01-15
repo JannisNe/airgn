@@ -4,15 +4,16 @@ import warnings
 import numpy as np
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyWarning
-from airgn.legacy_survey.download import download_file_by_index, DATA_DIR
+from airgn.legacy_survey.download import download_file_by_index, get_data_dir
 
 
 logger = logging.getLogger(__name__)
-CSV_FILENAME = DATA_DIR / "sweep0" / "legacy_survey_sweep0.csv"
 
 
 def make_csv_file():
-    sweep0_summary_file = download_file_by_index(0)[0]
+    dr = 10
+    sv = 1
+    sweep0_summary_file = download_file_by_index(0, dr, sv)[0]
     logger.info(f"Reading {sweep0_summary_file}")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", AstropyWarning)
@@ -33,9 +34,10 @@ def make_csv_file():
         table["OBJID"].astype(str),
     ).astype(int)
     table["orig_id"] = orig_id
-    logger.info(f"Writing {CSV_FILENAME}")
-    CSV_FILENAME.parent.mkdir(parents=True, exist_ok=True)
-    table.write(CSV_FILENAME, format="csv", overwrite=True)
+    csv_filename = get_data_dir(dr) / "sweep0" / f"DR{dr}_{sv}_sweep0.csv"
+    logger.info(f"Writing {csv_filename}")
+    csv_filename.parent.mkdir(parents=True, exist_ok=True)
+    table.write(csv_filename, format="csv", overwrite=True)
 
 
 if __name__ == "__main__":
