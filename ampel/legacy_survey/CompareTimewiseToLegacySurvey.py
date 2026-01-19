@@ -75,7 +75,9 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
         fig, ax = plt.subplots(figsize=(3 * 1.618, 3))
         ax.hist(np.log10(res[:, 0]), bins=30, alpha=0.5, label="W1", color="lightcoral")
         ax.hist(np.log10(res[:, 1]), bins=30, alpha=0.5, label="W2", color="maroon")
-        ax.set_xlabel("Log10(Median Legacy Survey Flux / Median Timewise Flux)")
+        ax.set_xlabel(
+            r"$(\mu_\mathrm{tw} - \mu_\mathrm{LS}) / \sqrt{\sigma_\mathrm{tw}^2 + \sigma_\mathrm{LS}^2}$"
+        )
         ax.set_ylabel("Count")
         ax.legend()
         fn = self._plot_dir / (
