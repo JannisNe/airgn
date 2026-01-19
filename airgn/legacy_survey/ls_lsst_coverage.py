@@ -205,13 +205,14 @@ def estimate_coverage_dr10_galaxies():
     )
 
     norm = mcolors.Normalize(vmin=0, vmax=max(counts))
-    axs[1].imshow(counts, cmap="viridis", norm=norm)
+    axs[1].imshow_hpx(counts, cmap="viridis", norm=norm)
     fig.colorbar(
         ax=axs[1],
         location="right",
         mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
         label=r"n [deg$^{-2}$]",
     )
+    axs[1].set_title("LS WISE galaxies DR10")
 
     fn = PLOTS_DIR / "lsst_coverage_by_ls10_galaxies_skymaps.pdf"
     logger.info(f"Saving plot to {fn}")
