@@ -155,6 +155,7 @@ def estimate_ls_coverage(dr):
 
 def estimate_coverage_dr10_galaxies():
     filename = get_data_dir(10) / "LS_WISE_galaxies.csv"
+    logger.info(f"Reading {filename}")
     coords = pd.read_csv(filename)
     nside = 128
     pix_area = hp.nside2pixarea(nside, degrees=True)
