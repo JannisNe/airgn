@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 import os
 
+import pandas as pd
 import wget
 import rubin_sim.maf as maf
 from rubin_sim.data import get_baseline
@@ -12,7 +13,7 @@ from ligo.skymap import plot
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-from airgn.legacy_survey.download import BASE_DATA_DIR
+from airgn.legacy_survey.download import BASE_DATA_DIR, get_data_dir
 
 logger = logging.getLogger(__name__)
 DATA_DIR = BASE_DATA_DIR / "lsst_coverage"
@@ -71,11 +72,9 @@ def get_ls_healpix_map(nside=64, band="g", dr=9):
         return hp.read_map(fn)
 
 
-def estimate_ls_coverage(dr):
+def get_rubin_map(nside):
     opsdb = Path(get_baseline())
     run_name = opsdb.name.replace(".db", "")
-
-    nside = 128
     metric = maf.Coaddm5Metric()
     slicer = maf.HealpixSlicer(nside=nside)
     constraint = "night < 366"
@@ -102,7 +101,12 @@ def estimate_ls_coverage(dr):
         g = maf.MetricBundleGroup({"nvisits": bundle}, str(opsdb), verbose=True)
         g.run_all()
 
-    rubin_map = bundle.metric_values
+    return bundle.metric_values
+
+
+def estimate_ls_coverage(dr):
+    nside = 128
+    rubin_map = get_rubin_map(nside)
     ls_map = get_ls_healpix_map(nside, dr=dr)
 
     rubin_total = np.nansum(rubin_map > 24)
@@ -121,7 +125,11 @@ def estimate_ls_coverage(dr):
     plt.close()
 
     fig, axs = plt.subplots(
-        nrows=2, subplot_kw={"projection": "astro degrees mollweide"}
+        nrows=2,
+        subplot_kw={
+            "projection": "astro degrees mollweide",
+            "center": "0d 0d",
+        },
     )
     norm = mcolors.Normalize(vmin=23, vmax=28)
     cmap = "viridis"
@@ -145,7 +153,74 @@ def estimate_ls_coverage(dr):
     plt.close()
 
 
+def estimate_coverage_dr10_galaxies():
+    filename = get_data_dir(10) / "LS_WISE_galaxies.csv"
+    coords = pd.read_csv(filename)
+    nside = 128
+    pix_area = hp.nside2pixarea(nside, degrees=True)
+
+    # Count objects per pixel
+    counts = (
+        np.bincount(
+            hp.ang2pix(nside, np.radians(90.0 - coords.dec), np.radians(coords.ra)),
+            minlength=hp.nside2npix(nside),
+        )
+        / pix_area
+    )
+
+    rubin_map = get_rubin_map(nside)
+    rubin_total = np.nansum(rubin_map > 24)
+    x = np.linspace(0, 5000, 1000)
+    y = [np.nansum(rubin_map[counts > ix] > 24) / rubin_total for ix in x]
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(2.5 * 1.618, 2.5))
+    ax.plot(x, y)
+    ax.set_xlabel(r"n [deg$^{-2}$]")
+    ax.set_ylabel("LSST covered")
+    fn = PLOTS_DIR / "lsst_coverage_by_ls10_galaxies.pdf"
+    logger.info(f"Saving plot to {fn}")
+    fig.tight_layout()
+    fig.savefig(fn)
+    plt.close()
+
+    fig, axs = plt.subplots(
+        nrows=2,
+        subplot_kw={
+            "projection": "astro degrees mollweide",
+            "center": "0d 0d",
+        },
+    )
+    norm = mcolors.Normalize(vmin=23, vmax=28)
+    cmap = "viridis"
+    axs[0].imshow_hpx(rubin_map, cmap=cmap, norm=norm)
+    axs[0].set_title("LSST coverage, 1yr")
+    fig.colorbar(
+        ax=axs[0],
+        location="right",
+        mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
+        label=r"$m_\mathrm{lim}$",
+        extend="min",
+        pad=0.1,
+    )
+
+    norm = mcolors.Normalize(vmin=0, vmax=max(counts))
+    axs[1].imshow(counts, cmap="viridis", norm=norm)
+    fig.colorbar(
+        ax=axs[1],
+        location="right",
+        mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
+        label=r"n [deg$^{-2}$]",
+    )
+
+    fn = PLOTS_DIR / "lsst_coverage_by_ls10_galaxies_skymaps.pdf"
+    logger.info(f"Saving plot to {fn}")
+    fig.savefig(fn)
+    plt.close()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     estimate_ls_coverage(dr=9)
     estimate_ls_coverage(dr=10)
+    estimate_coverage_dr10_galaxies()
