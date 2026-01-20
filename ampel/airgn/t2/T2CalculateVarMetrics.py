@@ -29,9 +29,15 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
     t2_dependency: Sequence[
         StateT2Dependency[Literal["T2StackVisits", "T2MaggyToFluxDensity"]]
     ]
+    metric_names: list[str] = []
 
     _metrics = {}
     _metric_options = {}
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not self.metric_names:
+            self.metric_names = list(self._metrics.keys())
 
     @classmethod
     def register(
