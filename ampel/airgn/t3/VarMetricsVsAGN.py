@@ -112,8 +112,12 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
             cols = [f"{metric_name}_w{i}_fluxdensity" for i in range(1, 3)]
             fig, ax = plt.subplots()
-            ax.hist(res[cols].min(axis=1), ec="white", alpha=0.8)
-            ax.set_xlabel(pn)
+            vals = res[cols].min(axis=1)
+            if log:
+                m = vals > 0
+                vals = np.log10(vals[m])
+            ax.hist(vals, ec="white", alpha=0.8)
+            ax.set_xlabel(pl)
             ax.set_ylabel("counts")
             fn = self._path / f"{metric_name}_hist.{self.file_format}"
             self.logger.info(f"saving {fn}")
@@ -273,12 +277,12 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                         color="C1",
                     )
                     pl_thresh = (
-                        r"$\log_{10}($" + pn + r"$_\mathrm{thresh})$"
+                        r"$\log_{10}($" + pn + r"$\,_\mathrm{thresh})$"
                         if log
                         else pl + r"$_\mathrm{thresh}$"
                     )
                     ax.set_xlabel(pl_thresh)
-                    ax.set_ylabel(rf"percentage with {pl} > {pl_thresh}$")
+                    ax.set_ylabel(rf"percentage with {pl} > {pl_thresh}")
                     ax.legend()
                     fn = pdir / f"bin_{s}_{e}_{ix[0]}.{self.file_format}"
                     self.logger.info(f"saving {fn}")
