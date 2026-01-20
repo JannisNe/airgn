@@ -24,6 +24,11 @@ class MetricOptions(TypedDict):
 float_arr = npt.NDArray[np.floating]
 MetricFunc = Callable[[float_arr, float_arr, float_arr], float | None]
 
+MJD_COLNAMES = {
+    "T2StackVisits": "mean_mjd",
+    "T2MaggyToFluxDensity": "LC_MJD_W{band}",
+}
+
 
 class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
     t2_dependency: Sequence[
@@ -69,7 +74,9 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
 
                 f = stacked_lightcurve[f"w{i}{keys.MEAN}{key}"].values
                 fe = stacked_lightcurve[f"w{i}{key}{keys.RMS}"].values
-                t = stacked_lightcurve["mean_mjd"].values
+                t = stacked_lightcurve[
+                    MJD_COLNAMES[self.t2_dependency[0].unit].format(band=i)
+                ].values
                 for metric_name, metric_func in self._metrics.items():
                     res[f"{metric_name}_w{i}_{key}"] = metric_func(f, fe, t)
 
