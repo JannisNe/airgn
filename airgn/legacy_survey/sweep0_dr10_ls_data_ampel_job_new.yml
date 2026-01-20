@@ -1,0 +1,178 @@
+channel:
+- access:
+  - ZTF_PUB
+  name: legacy_survey
+  policy: []
+  version: 0
+- access:
+    - ZTF_PUB
+  name: timewise
+  policy: [ ]
+  version: 0
+mongo:
+  prefix: airgn_lss0_dr10_new
+  reset: false
+name: lss0_dr10
+
+
+task:
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+    - channel: legacy_survey
+      ingest:
+        mux:
+          combine:
+          - state_t2:
+            - unit: T2MaggyToFluxDensity
+            - unit: T2CalculateChi2Stacked
+              config:
+                t2_dependency:
+                - unit: T2MaggyToFluxDensity
+            - unit: T2CalculateMedians
+              config:
+                mjd_column_name: LC_MJD_W1
+                t2_dependency:
+                  - unit: T2MaggyToFluxDensity
+            unit: T1SimpleCombiner
+          unit: TiMongoMuxer
+          config:
+            projection:
+              _id: 0
+              id: 1
+              tag: 1
+              channel: 1
+              stock: 1
+              body.release: 1
+              body.brickid: 1
+              body.objid: 1
+              body.ra: 1
+              body.dec: 1
+              body.LC_FLUX_W1: 1
+              body.LC_FLUX_W2: 1
+              body.LC_FLUX_IVAR_W1: 1
+              body.LC_FLUX_IVAR_W2: 1
+              body.LC_NOBS_W1: 1
+              body.LC_NOBS_W2: 1
+              body.LC_MJD_W1: 1
+              body.LC_MJD_W2: 1
+              body.LC_FRACFLUX_W1: 1
+              body.LC_FRACFLUX_W2: 1
+              body.LC_RCHISQ_W1: 1
+              body.LC_RCHISQ_W2: 1
+              body.LC_EPOCH_INDEX_W1: 1
+              body.LC_EPOCH_INDEX_W2: 1
+            unique_key: [release, brickid, objid, LC_MJD_W1]
+            channel: legacy_survey
+    shaper: LegacySurveyDatapointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            file_indices: [0]
+            timewise_config_file: $AIRGNSOURCE/airgn/legacy_survey/sweep0.yml
+            timewise_chunks: [ 2 ]
+          unit: LegacySurveyBrickLoader
+      unit: LegacySurveySupplier
+  multiplier: 1
+  title: legacy_survey
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+
+
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+      - channel: timewise
+        ingest:
+          mux:
+            combine:
+              - state_t2:
+                  - unit: T2StackVisits
+                  - unit: T2CalculateChi2
+                  - unit: T2CalculateChi2Stacked
+                    config:
+                      t2_dependency:
+                        - unit: T2StackVisits
+                  - unit: T2CalculateMedians
+                    config:
+                      t2_dependency:
+                        - unit: T2StackVisits
+                unit: T1SimpleCombiner
+            unit: TiMongoMuxer
+            config:
+              channel: timewise
+    shaper: TiDataPointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            timewise_config_file: $AIRGNSOURCE/airgn/legacy_survey/sweep0.yml
+            stock_id_column_name: orig_id
+            chunks: [2]
+          unit: TimewiseFileLoader
+      unit: TimewiseAlertSupplier
+  multiplier: 1
+  title: timewise
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+
+
+- config:
+    log_profile: prod
+  multiplier: 10
+  title: t2
+  unit: T2Worker
+
+
+- title: PlotChi2
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel:
+              any_of:
+                - "legacy_survey"
+                - "timewise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC_WITH_CONF
+            channel:
+              any_of:
+                - "legacy_survey"
+                - "timewise"
+        chunk_size: 100000
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: PlotChi2Distribution
+            config:
+              base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots_dr10_new/chi2_full
+              input_mongodb_name: nedlvs
+              cumulative: true
+              upper_lim: 6
+              n1: 15
+              n2: 20
+          - unit: PlotAllWISEvsNEOWISE
+            config:
+              path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots_dr10_new/allwise_vs_neowise.png
+          - unit: CompareTimewiseToLegacySurvey
+            config:
+              base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots_dr10_new/compare_timewise_legacysurvey
+              threshold_to_plot: 5.0
