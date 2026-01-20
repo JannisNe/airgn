@@ -4,6 +4,7 @@ from ampel.types import UBson
 from ampel.view.LightCurve import LightCurve
 
 from ampel.timewise.util.pdutil import datapoints_to_dataframe
+from ampel.airgn.t2.T2CalculateVarMetrics import red_chi2, npoints
 
 from timewise.process import keys
 
@@ -31,22 +32,10 @@ class T2CalculateChi2(AbsLightCurveT2Unit):
                 | data[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"].notna()
             )
             data = data[nan_msak]
-            res[f"chi2_w{i}_{keys.FLUX_EXT}"] = sum(
-                (
-                    (
-                        data[f"w{i}{keys.FLUX_EXT}"]
-                        - data[f"w{i}{keys.FLUX_EXT}"].median()
-                    )
-                    / data[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"]
-                )
-                ** 2
-            )
-            res[f"npoints_w{i}_{keys.FLUX_EXT}"] = sum(nan_msak)
-            res[f"red_chi2_w{i}_{keys.FLUX_EXT}"] = (
-                res[f"chi2_w{i}_{keys.FLUX_EXT}"]
-                / (res[f"npoints_w{i}_{keys.FLUX_EXT}"] - 1)
-                if res[f"npoints_w{i}_{keys.FLUX_EXT}"] > 1
-                else None
-            )
+            f = data[f"w{i}{keys.FLUX_EXT}"]
+            fe = data[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"]
+            t = data["mean_mjd"]
+            res[f"npoints_w{i}_{keys.FLUX_EXT}"] = npoints(f, fe, t)
+            res[f"red_chi2_w{i}_{keys.FLUX_EXT}"] = red_chi2(f, fe, t)
 
         return res
