@@ -67,9 +67,9 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
                 )
                 stacked_lightcurve = stacked_lightcurve[nan_msak]
 
-                f = stacked_lightcurve[f"w{i}{keys.MEAN}{key}"]
-                fe = stacked_lightcurve[f"w{i}{key}{keys.RMS}"]
-                t = stacked_lightcurve["mean_mjd"]
+                f = stacked_lightcurve[f"w{i}{keys.MEAN}{key}"].values
+                fe = stacked_lightcurve[f"w{i}{key}{keys.RMS}"].values
+                t = stacked_lightcurve["mean_mjd"].values
                 for metric_name, metric_func in self._metrics.items():
                     res[f"{metric_name}_w{i}_{key}"] = metric_func(f, fe, t)
 
