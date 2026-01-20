@@ -75,7 +75,8 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
 )
 def red_chi2(f: float_arr, fe: float_arr, t: float_arr) -> float | None:
     if len(f) > 1:
-        return sum(((f - np.mean(f)) / fe) ** 2) / (len(f) - 1)
+        f_mean = np.average(f, weights=1 / fe**2)
+        return sum(((f - f_mean) / fe) ** 2) / (len(f) - 1)
     return None
 
 
