@@ -2,6 +2,7 @@ from typing import Sequence, Literal, TypedDict, Callable
 
 import pandas as pd
 import numpy as np
+import numpy.typing as npt
 
 from ampel.abstract.AbsTiedLightCurveT2Unit import AbsTiedLightCurveT2Unit
 from ampel.struct.UnitResult import UnitResult
@@ -17,6 +18,11 @@ from timewise.process import keys
 class MetricOptions(TypedDict):
     log: bool
     range: tuple[float, float]
+    pretty_name: str
+
+
+float_arr = npt.NDArray[np.floating]
+MetricFunc = Callable[[float_arr, float_arr, float_arr], float | None]
 
 
 class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
@@ -28,10 +34,14 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
     _metric_options = {}
 
     @classmethod
-    def register(cls, log: bool, range: tuple[float, float]) -> Callable:
-        def decorator(func: Callable) -> Callable:
+    def register(
+        cls, log: bool, range: tuple[float, float], pretty_name: str
+    ) -> Callable:
+        def decorator(func: MetricFunc) -> MetricFunc:
             cls._metrics[func.__name__] = func
-            cls._metric_options[func.__name__] = MetricOptions(log=log, range=range)
+            cls._metric_options[func.__name__] = MetricOptions(
+                log=log, range=range, pretty_name=pretty_name
+            )
             return func
 
         return decorator
@@ -60,13 +70,17 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
         return res
 
 
-@T2CalculateVarMetrics.register(log=True, range=(-2, 2))
-def red_chi2(f, fe, t):
+@T2CalculateVarMetrics.register(
+    log=True, range=(-2, 2), pretty_name=r"$\chi2_\mathrm{red}^2$"
+)
+def red_chi2(f: float_arr, fe: float_arr, t: float_arr) -> float | None:
     if len(f) > 1:
-        return None
-    return sum(((f - np.mean(f)) / fe) ** 2) / (len(f) - 1)
+        return sum(((f - np.mean(f)) / fe) ** 2) / (len(f) - 1)
+    return None
 
 
-@T2CalculateVarMetrics.register(log=False, range=(0, 30))
-def npoints(f, fe, t):
+@T2CalculateVarMetrics.register(
+    log=False, range=(0, 30), pretty_name=r"$N_\mathrm{points}$"
+)
+def npoints(f: float_arr, fe: float_arr, t: float_arr) -> float:
     return len(f)

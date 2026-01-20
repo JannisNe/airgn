@@ -24,7 +24,7 @@ task:
                   - unit: T2StackVisits
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 10000
+    iter_max: 1000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -45,7 +45,7 @@ task:
 
 - config:
     log_profile: default
-  multiplier: 10
+  multiplier: 1
   title: t2
   unit: T2Worker
 

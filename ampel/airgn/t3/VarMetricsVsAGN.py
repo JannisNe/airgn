@@ -99,10 +99,17 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
         # ---------------------- histograms ---------------------- #
 
         for metric_name in self.metric_names:
+            log = self._metric_options[metric_name]["log"]
+            lim = self._metric_options[metric_name]["range"]
+            pn = self._metric_options[metric_name]["pretty_name"]
+            pl = r"$\log_{10}($" + pn + "$)$" if log else pn
+            pdir = self._path / metric_name
+            pdir.mkdir(parents=True, exist_ok=True)
+
             cols = [f"{metric_name}_w{i}_fluxdensity" for i in range(1, 3)]
             fig, ax = plt.subplots()
             ax.hist(res[cols].min(axis=1), ec="white", alpha=0.8)
-            ax.set_xlabel("visits with detection")
+            ax.set_xlabel(pn)
             ax.set_ylabel("counts")
             fn = self._path / f"{metric_name}_hist.{self.file_format}"
             self.logger.info(f"saving {fn}")
@@ -112,7 +119,6 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
             # ---------------------- violinplots ---------------------- #
 
-            log = self.metric_options[metric_name]["log"]
             for res_bin, s, e in self.iter_npoints_binned(res):
                 both_bands_mask = res_bin[cols].notna().all(axis=1)
                 n = [((res_bin["decoded_agn_mask"] == "0") & both_bands_mask).sum()]
@@ -158,15 +164,13 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                         dataset=y, positions=x, showextrema=False, showmedians=True
                     )
                     ax.set_ylabel(f"W{i + 1}")
-                    ax.set_ylim(*self.ylim)
+                    ax.set_ylim(*lim)
 
-                fig.supylabel(
-                    "$\log_{10}($" + metric_name + "$)$" if log else metric_name
-                )
+                fig.supylabel(pl)
                 axs[-1].set_xticks(np.arange(-1, len(labels) - 1))
                 axs[-1].set_xticklabels(labels, rotation=60, ha="right")
 
-                fn = self._path / metric_name / f"bin_{s}_{e}.{self.file_format}"
+                fn = pdir / f"bin_{s}_{e}.{self.file_format}"
                 self.logger.info(f"saving {fn}")
                 fig.tight_layout()
                 fig.savefig(fn)
@@ -174,7 +178,6 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
             # ---------------------- metric vs color ---------------------- #
 
-            lim = self.metric_options[metric_name]["range"]
             metric_threshs = np.linspace(*lim, 100)
             res["agn"] = ~(res["decoded_agn_mask"] == "0")
             wise_agn_bit = res["decoded_agn_mask"].str[15]
@@ -265,12 +268,15 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                         ls="-.",
                         color="C1",
                     )
-                    ax.set_xlabel(metric_name)
-                    ax.set_ylabel(
-                        rf"percentage with {metric_name} > {metric_name}_\mathrm{{thresh}}$"
+                    pl_thresh = (
+                        r"$\log_{10}($" + pn + r"$_\mathrm{thresh})$"
+                        if log
+                        else pl + r"$_\mathrm{thresh}$"
                     )
+                    ax.set_xlabel(pl_thresh)
+                    ax.set_ylabel(rf"percentage with {pl} > {pl_thresh}$")
                     ax.legend()
-                    fn = self._path / f"bin_{s}_{e}_{ix[0]}.{self.file_format}"
+                    fn = pdir / f"bin_{s}_{e}_{ix[0]}.{self.file_format}"
                     self.logger.info(f"saving {fn}")
                     fig.tight_layout()
                     fig.savefig(fn)
