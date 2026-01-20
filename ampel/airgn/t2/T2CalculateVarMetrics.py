@@ -91,3 +91,29 @@ def red_chi2(f: float_arr, fe: float_arr, t: float_arr) -> float | None:
 )
 def npoints(f: float_arr, fe: float_arr, t: float_arr) -> float:
     return len(f)
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-100, 100), pretty_name=r"IQR$_\mathrm{rel}$"
+)
+def relative_inter_quartile_range(
+    f: float_arr, fe: float_arr, t: float_arr
+) -> float | None:
+    if len(f) > 1:
+        f_med = np.median(f)
+        upper_half = f >= f_med
+        return float((np.median(f[upper_half]) - np.median(f[~upper_half])) / f_med)
+    return None
+
+
+@T2CalculateVarMetrics.register(log=False, range=(-100, 100), pretty_name=r"$1/\eta$")
+def inverse_von_neumann_ratio(
+    f: float_arr, fe: float_arr, t: float_arr
+) -> float | None:
+    if len(f) > 1:
+        sort_mask = np.argsort(t)
+        f = f[sort_mask]
+        fe = fe[sort_mask]
+        f_mean = np.average(f, weights=1 / fe**2)
+        return sum((f - f_mean) ** 2) / sum((f[1:] - f[:-1]) ** 2)
+    return None
