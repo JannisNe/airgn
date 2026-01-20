@@ -83,7 +83,11 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                 break
             if not input_res:
                 continue
-            ires = dict(view.get_latest_t2_body("T2CalculateVarMetrics"))
+
+            latest_body = view.get_latest_t2_body("T2CalculateVarMetrics")
+            if not latest_body:
+                continue
+            ires = dict(latest_body)
             ires.update(input_res)
             mask = str(bin(int(input_res["AGN_MASKBITS"]))).replace("0b", "")[::-1]
             ires["decoded_agn_mask"] = mask
