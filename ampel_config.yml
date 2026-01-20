@@ -1,6 +1,6 @@
 build:
-  date: 13/01/2026
-  time: '14:44:57'
+  date: 20/01/2026
+  time: '11:00:29'
   by: necker
   conda: airgn
   stop_on_errors: 0
@@ -14,10 +14,10 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a8
   ampel-core: 0.10.6a17
-  ampel-plot: 0.9.1
-  timewise: 1.0.0a9
   ampel-photometry: 0.10.2a1
   airgn: 0.1.0
+  timewise: 1.0.0a9
+  ampel-plot: 0.9.1
   ampel-alerts: 0.10.3a6
 mongo:
   ingest:
@@ -957,44 +957,6 @@ unit:
     distrib: ampel-alerts
     version: 0.10.3a6
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/filter/BasicMultiFilter.py
-  Chi2VsAGN:
-    fqn: ampel.airgn.t3.Chi2VsAGN
-    base:
-    - Chi2VsAGN
-    - AbsPhotoT3Unit
-    - AbsT3Unit
-    - LogicalUnit
-    xxh64: 8687998769326025513
-    dependencies:
-    - annotated_types
-    - astropy
-    - astropy_iers_data
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - cycler
-    - defusedxml
-    - google_crc32c
-    - idna
-    - kiwisolver
-    - matplotlib
-    - msgpack
-    - numcodecs
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - pyarrow
-    - pydantic_core
-    - pyparsing
-    - pytz
-    - requests
-    - tqdm
-    - typing_inspection
-    - urllib3
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/airgn/t3/Chi2VsAGN.py
   CompareTimewiseToLegacySurvey:
     fqn: ampel.legacy_survey.CompareTimewiseToLegacySurvey
     base:
@@ -1002,7 +964,7 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 3875928240107550435
+    xxh64: 948161070218621081
     dependencies:
     - annotated_types
     - astropy
@@ -1251,7 +1213,7 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 2818356615993572620
+    xxh64: 11852947941496289265
     dependencies:
     - annotated_types
     - astropy
@@ -1505,6 +1467,35 @@ unit:
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/airgn/t2/T2CalculateMedians.py
+  T2CalculateVarMetrics:
+    fqn: ampel.airgn.t2.T2CalculateVarMetrics
+    base:
+    - T2CalculateVarMetrics
+    - AbsTiedLightCurveT2Unit
+    - AbsTiedCustomStateT2Unit
+    - AbsTiedT2Unit
+    - LogicalUnit
+    xxh64: 13145678138904482023
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - schedule
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t2/T2CalculateVarMetrics.py
   T2MaggyToFluxDensity:
     fqn: ampel.legacy_survey.T2MaggyToFluxDensity
     base:
@@ -1661,6 +1652,49 @@ unit:
     distrib: timewise
     version: 1.0.0a9
     source: /home/necker/Software/timewise/ampel/timewise/t1/TimewiseFilter.py
+  VarMetricsVsAGN:
+    fqn: ampel.airgn.t3.VarMetricsVsAGN
+    base:
+    - VarMetricsVsAGN
+    - AbsPhotoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 5346022486248571388
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - cycler
+    - defusedxml
+    - google_crc32c
+    - idna
+    - kiwisolver
+    - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - requests
+    - rich
+    - schedule
+    - tqdm
+    - typing_inspection
+    - urllib3
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t3/VarMetricsVsAGN.py
   ComboDictModifier:
     fqn: ampel.aux.ComboDictModifier
     base:
@@ -2106,34 +2140,6 @@ unit:
     distrib: ampel-core
     version: 0.10.6a17
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/template/PeriodicSummaryT3.py
-  PPSFilter:
-    fqn: ampel.aux.PPSFilter
-    base:
-    - PPSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 252807104807642313
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/PPSFilter.py
-  ULSFilter:
-    fqn: ampel.aux.ULSFilter
-    base:
-    - ULSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 14523103307642547590
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/ULSFilter.py
   TimewiseAlertSimulator:
     fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
     base:
@@ -2225,6 +2231,125 @@ unit:
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
+  TiCompilerOptions:
+    fqn: ampel.timewise.ingest.TiCompilerOptions
+    base:
+    - TiCompilerOptions
+    - CompilerOptions
+    - AuxAliasableModel
+    - AmpelBaseModel
+    xxh64: 12962718940109995425
+    dependencies:
+    - annotated_types
+    - packaging
+    - pydantic_core
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiCompilerOptions.py
+  TimewiseAlertSupplier:
+    fqn: ampel.timewise.alert.TimewiseAlertSupplier
+    base:
+    - TimewiseAlertSupplier
+    - BaseAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 15703500630282389746
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/alert/TimewiseAlertSupplier.py
+  TimewiseFileLoader:
+    fqn: ampel.timewise.alert.load.TimewiseFileLoader
+    base:
+    - TimewiseFileLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 662465825510451503
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - backoff
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - google_crc32c
+    - idna
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - pyvo
+    - requests
+    - rich
+    - schedule
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/alert/load/TimewiseFileLoader.py
+  AuxDiagnosticPlotter:
+    fqn: ampel.timewise.util.AuxDiagnosticPlotter
+    base:
+    - AuxDiagnosticPlotter
+    - AmpelBaseModel
+    xxh64: 15968297211953813324
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - backoff
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - cycler
+    - defusedxml
+    - google_crc32c
+    - idna
+    - kiwisolver
+    - matplotlib
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - pyvo
+    - requests
+    - rich
+    - schedule
+    - typing_inspection
+    - urllib3
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/util/AuxDiagnosticPlotter.py
   FilteringAlertSupplier:
     fqn: ampel.alert.FilteringAlertSupplier
     base:
@@ -2350,125 +2475,34 @@ unit:
     distrib: ampel-alerts
     version: 0.10.3a6
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/template/EasyAlertConsumerTemplate.py
-  TiCompilerOptions:
-    fqn: ampel.timewise.ingest.TiCompilerOptions
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
     base:
-    - TiCompilerOptions
-    - CompilerOptions
-    - AuxAliasableModel
+    - PPSFilter
+    - AbsApplicable
     - AmpelBaseModel
-    xxh64: 12962718940109995425
+    xxh64: 252807104807642313
     dependencies:
     - annotated_types
-    - packaging
     - pydantic_core
     - typing_inspection
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiCompilerOptions.py
-  TimewiseAlertSupplier:
-    fqn: ampel.timewise.alert.TimewiseAlertSupplier
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/PPSFilter.py
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
     base:
-    - TimewiseAlertSupplier
-    - BaseAlertSupplier
-    - AbsAlertSupplier
-    - AbsContextManager
-    xxh64: 15703500630282389746
-    dependencies:
-    - annotated_types
-    - cloudpickle
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - rich
-    - typing_inspection
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/alert/TimewiseAlertSupplier.py
-  TimewiseFileLoader:
-    fqn: ampel.timewise.alert.load.TimewiseFileLoader
-    base:
-    - TimewiseFileLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 662465825510451503
-    dependencies:
-    - annotated_types
-    - astropy
-    - astropy_iers_data
-    - backoff
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - google_crc32c
-    - idna
-    - msgpack
-    - numcodecs
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - pyvo
-    - requests
-    - rich
-    - schedule
-    - typing_inspection
-    - urllib3
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/alert/load/TimewiseFileLoader.py
-  AuxDiagnosticPlotter:
-    fqn: ampel.timewise.util.AuxDiagnosticPlotter
-    base:
-    - AuxDiagnosticPlotter
+    - ULSFilter
+    - AbsApplicable
     - AmpelBaseModel
-    xxh64: 15968297211953813324
+    xxh64: 14523103307642547590
     dependencies:
     - annotated_types
-    - astropy
-    - astropy_iers_data
-    - backoff
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - cycler
-    - defusedxml
-    - google_crc32c
-    - idna
-    - kiwisolver
-    - matplotlib
-    - msgpack
-    - numcodecs
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pyarrow
     - pydantic_core
-    - pyparsing
-    - pytz
-    - pyvo
-    - requests
-    - rich
-    - schedule
     - typing_inspection
-    - urllib3
-    distrib: timewise
-    version: 1.0.0a9
-    source: /home/necker/Software/timewise/ampel/timewise/util/AuxDiagnosticPlotter.py
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/ULSFilter.py
 process:
   t0: {}
   t1: {}
