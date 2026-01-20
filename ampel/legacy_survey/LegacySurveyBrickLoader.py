@@ -49,7 +49,7 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
     """
 
     dr: int = 10
-    sv: int = 0
+    sv: int = 1
 
     # path to timewise download config file
     file_indices: list[int] | None = None
@@ -133,7 +133,9 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
                     lc = {
                         col: row[col]
                         .byteswap()
-                        .newbyteorder()  # convert to native endian
+                        .view(
+                            row[col].dtype.newbyteorder("=")
+                        )  # convert to native endian
                         for col in LEGACY_SURVEY_WISE_COLUMNS
                         if col in row.colnames
                     }
