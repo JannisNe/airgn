@@ -1,0 +1,79 @@
+channel:
+- access:
+  - ZTF_PUB
+  name: wise
+  policy: []
+  version: 0
+mongo:
+  prefix: desi_agn_test_var_metrics
+  reset: false
+name: timewise
+task:
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+    - channel: wise
+      ingest:
+        mux:
+          combine:
+          - state_t2:
+            - unit: T2StackVisits
+            - unit: T2CalculateVarMetrics
+              config:
+                t2_dependency:
+                  - unit: T2StackVisits
+            unit: T1SimpleCombiner
+          unit: TiMongoMuxer
+    iter_max: 10000
+    shaper: TiDataPointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            timewise_config_file: $AIRGNSOURCE/airgn/desi/desi_agn_value_added_catalog.yml
+            stock_id_column_name: orig_id
+          unit: TimewiseFileLoader
+      unit: TimewiseAlertSupplier
+  multiplier: 1
+  title: t0
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+
+- config:
+    log_profile: default
+  multiplier: 10
+  title: t2
+  unit: T2Worker
+
+- title: PlotChi2
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - STOCK
+            channel: "wise"
+        chunk_size: 100000
+    stage:
+      unit: T3SimpleStager
+      config:
+        execute:
+          - unit: VarMetricsVsAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn
+              input_mongo_db_name: desi_agn_vac
+              file_format: "png"
