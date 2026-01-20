@@ -71,7 +71,7 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
 
 
 @T2CalculateVarMetrics.register(
-    log=True, range=(-2, 2), pretty_name=r"$\chi2_\mathrm{red}^2$"
+    log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$"
 )
 def red_chi2(f: float_arr, fe: float_arr, t: float_arr) -> float | None:
     if len(f) > 1:
