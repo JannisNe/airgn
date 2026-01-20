@@ -48,6 +48,9 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
     Load alerts from one of more files.
     """
 
+    dr: int = 10
+    sv: int = 0
+
     # path to timewise download config file
     file_indices: list[int] | None = None
 
@@ -64,7 +67,7 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
         super().__init__(**kwargs)
 
         # get all filenames from legacy survey server
-        filenames = get_filenames()
+        filenames = get_filenames(dr=self.dr, sv=self.sv)
         if self.file_indices is not None:
             filenames = [filenames[i] for i in self.file_indices]
 
@@ -75,10 +78,12 @@ class LegacySurveyBrickLoader(AbsAlertLoader[Dict]):
                 if self.file_indices is None
                 else self.file_indices
             )
-            download_file_by_index(indices)
+            download_file_by_index(indices, dr=self.dr, sv=self.sv)
 
         # generate local filenames
-        local_filenames = [[get_local_path(fn) for fn in pair] for pair in filenames]
+        local_filenames = [
+            [get_local_path(fn, dr=self.dr) for fn in pair] for pair in filenames
+        ]
 
         # filter by timewise chunks if requested
         if self.timewise_config_file is not None and self.timewise_chunks is not None:
