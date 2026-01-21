@@ -1,24 +1,23 @@
 build:
-  date: 20/01/2026
-  time: '15:16:18'
+  date: 21/01/2026
+  time: '14:50:37'
   by: necker
   conda: airgn
   stop_on_errors: 0
   config_validator: null
   skip_default_processes: true
   json_serializable: true
-  pwds: false
   ext_resource: false
   get_unit_env: true
   ignore_channels: false
   ignore_processes: false
   ampel-interface: 0.10.5a8
-  ampel-core: 0.10.6a17
-  ampel-alerts: 0.10.3a6
-  airgn: 0.1.0
-  timewise: 1.0.0a9
+  ampel-core: 0.10.6a21
   ampel-photometry: 0.10.2a1
+  ampel-alerts: 0.10.4a0
+  timewise: 1.0.0a9
   ampel-plot: 0.9.1
+  airgn: 0.1.0
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -117,7 +116,7 @@ logging:
       std_stream: stdout
       datefmt: '%Y-%m-%d '
       timefmt: '%H:%M:%S '
-      level: 1024
+      level: 2048
       aggregate_interval: 1.0
       density: default
       terminator: '
@@ -135,51 +134,51 @@ logging:
       cline: rosy_brown
       clvl: grey53
     db:
-      level: 1024
+      level: 2048
   compact:
     console:
-      level: 1024
+      level: 2048
       density: compact
       log_sep: ''
     db:
-      level: 1024
+      level: 2048
   headerless:
     console:
-      level: 1024
+      level: 2048
       density: headerless
     db:
-      level: 1024
+      level: 2048
   prod:
     console:
       std_stream: stderr
-      level: 2048
+      level: 4096
     db:
-      level: 1024
+      level: 2048
   verbose:
     console:
       std_stream: stdout
-      level: 512
+      level: 1024
     db:
-      level: 512
+      level: 1024
   debug:
     console:
       std_stream: stdout
-      level: 256
+      level: 512
     db:
-      level: 256
+      level: 512
   silent: {}
   console_quiet:
     console:
-      level: 2048
+      level: 4096
   console_info:
     console:
-      level: 1024
+      level: 2048
   console_verbose:
     console:
-      level: 512
+      level: 1024
   console_debug:
     console:
-      level: 256
+      level: 512
 channel: {}
 unit:
   AlertConsumer:
@@ -200,7 +199,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/AlertConsumer.py
   DemoProcessor:
     fqn: ampel.demo.DemoProcessor
@@ -218,7 +217,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/demo/DemoProcessor.py
   IngestionWorker:
     fqn: ampel.ingest.IngestionWorker
@@ -239,7 +238,7 @@ unit:
     - sentinels
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ingest/IngestionWorker.py
   OpsProcessor:
     fqn: ampel.ops.OpsProcessor
@@ -257,7 +256,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ops/OpsProcessor.py
   T2QueueWorker:
     fqn: ampel.t2.T2QueueWorker
@@ -280,7 +279,7 @@ unit:
     - sentinels
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t2/T2QueueWorker.py
   T2Worker:
     fqn: ampel.t2.T2Worker
@@ -299,7 +298,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t2/T2Worker.py
   T3Processor:
     fqn: ampel.t3.T3Processor
@@ -317,7 +316,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/T3Processor.py
   T4Processor:
     fqn: ampel.t4.T4Processor
@@ -336,7 +335,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t4/T4Processor.py
   AmpelPlotAdapter:
     fqn: ampel.core.adapter.AmpelPlotAdapter
@@ -367,7 +366,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ingest/ChainedT0Muxer.py
   FullActiveAlertRegister:
     fqn: ampel.alert.reject.FullActiveAlertRegister
@@ -386,7 +385,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/reject/FullActiveAlertRegister.py
   FullAlertRegister:
     fqn: ampel.alert.reject.FullAlertRegister
@@ -404,7 +403,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/reject/FullAlertRegister.py
   GeneralActiveAlertRegister:
     fqn: ampel.alert.reject.GeneralActiveAlertRegister
@@ -423,7 +422,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/reject/GeneralActiveAlertRegister.py
   GeneralAlertRegister:
     fqn: ampel.alert.reject.GeneralAlertRegister
@@ -441,7 +440,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/reject/GeneralAlertRegister.py
   MinimalActiveAlertRegister:
     fqn: ampel.alert.reject.MinimalActiveAlertRegister
@@ -460,7 +459,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/reject/MinimalActiveAlertRegister.py
   MinimalAlertRegister:
     fqn: ampel.alert.reject.MinimalAlertRegister
@@ -478,7 +477,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/reject/MinimalAlertRegister.py
   MongoIngester:
     fqn: ampel.mongo.update.MongoIngester
@@ -497,7 +496,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/update/MongoIngester.py
   MongoStockDeleter:
     fqn: ampel.mongo.purge.MongoStockDeleter
@@ -515,7 +514,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/purge/MongoStockDeleter.py
   QueueIngester:
     fqn: ampel.queue.QueueIngester
@@ -534,7 +533,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/queue/QueueIngester.py
   SimpleT2BasedSupplier:
     fqn: ampel.t3.supply.SimpleT2BasedSupplier
@@ -552,7 +551,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/SimpleT2BasedSupplier.py
   T3AdaptativeStager:
     fqn: ampel.t3.stage.T3AdaptativeStager
@@ -573,7 +572,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3AdaptativeStager.py
   T3AggregatingStager:
     fqn: ampel.t3.stage.T3AggregatingStager
@@ -594,7 +593,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3AggregatingStager.py
   T3BufferExporterStager:
     fqn: ampel.cli.T3BufferExporterStager
@@ -612,7 +611,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/cli/T3BufferExporterStager.py
   T3ChannelStager:
     fqn: ampel.t3.stage.T3ChannelStager
@@ -630,7 +629,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3ChannelStager.py
   T3DefaultBufferSupplier:
     fqn: ampel.t3.supply.T3DefaultBufferSupplier
@@ -648,7 +647,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/T3DefaultBufferSupplier.py
   T3DistributiveStager:
     fqn: ampel.t3.stage.T3DistributiveStager
@@ -669,7 +668,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3DistributiveStager.py
   T3ExtJournalAppender:
     fqn: ampel.t3.supply.complement.T3ExtJournalAppender
@@ -685,7 +684,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/complement/T3ExtJournalAppender.py
   T3FilteringStockSelector:
     fqn: ampel.t3.supply.select.T3FilteringStockSelector
@@ -704,7 +703,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/select/T3FilteringStockSelector.py
   T3LatestStateDataLoader:
     fqn: ampel.t3.supply.load.T3LatestStateDataLoader
@@ -722,7 +721,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/load/T3LatestStateDataLoader.py
   T3LogsAppender:
     fqn: ampel.t3.supply.complement.T3LogsAppender
@@ -740,7 +739,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/complement/T3LogsAppender.py
   T3ProjectingStager:
     fqn: ampel.t3.stage.T3ProjectingStager
@@ -761,7 +760,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3ProjectingStager.py
   T3RandIntAppender:
     fqn: ampel.t3.supply.complement.T3RandIntAppender
@@ -776,7 +775,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/complement/T3RandIntAppender.py
   T3SequentialStager:
     fqn: ampel.t3.stage.T3SequentialStager
@@ -796,7 +795,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3SequentialStager.py
   T3SessionAlertsNumber:
     fqn: ampel.t3.include.session.T3SessionAlertsNumber
@@ -814,7 +813,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/include/session/T3SessionAlertsNumber.py
   T3SessionLastRunTime:
     fqn: ampel.t3.include.session.T3SessionLastRunTime
@@ -832,7 +831,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/include/session/T3SessionLastRunTime.py
   T3SimpleDataLoader:
     fqn: ampel.t3.supply.load.T3SimpleDataLoader
@@ -850,7 +849,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/load/T3SimpleDataLoader.py
   T3SimpleStager:
     fqn: ampel.t3.stage.T3SimpleStager
@@ -871,7 +870,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/T3SimpleStager.py
   T3StockSelector:
     fqn: ampel.t3.supply.select.T3StockSelector
@@ -889,7 +888,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/supply/select/T3StockSelector.py
   T4RunTimeContextUpdater:
     fqn: ampel.t4.T4RunTimeContextUpdater
@@ -908,7 +907,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t4/T4RunTimeContextUpdater.py
   TiMongoMuxer:
     fqn: ampel.timewise.ingest.TiMongoMuxer
@@ -955,7 +954,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/filter/BasicMultiFilter.py
   CompareTimewiseToLegacySurvey:
     fqn: ampel.legacy_survey.CompareTimewiseToLegacySurvey
@@ -1057,7 +1056,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/demo/DemoFirstPointT2Unit.py
   DemoFirstUpperLimitT2Unit:
     fqn: ampel.demo.DemoFirstUpperLimitT2Unit
@@ -1116,7 +1115,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/demo/DemoPointT2Unit.py
   DemoT3Unit:
     fqn: ampel.demo.DemoT3Unit
@@ -1131,7 +1130,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/demo/DemoT3Unit.py
   DemoT4RunTimeAliasGenerator:
     fqn: ampel.demo.DemoT4RunTimeAliasGenerator
@@ -1145,7 +1144,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/demo/DemoT4RunTimeAliasGenerator.py
   DemoTiedLightCurveT2Unit:
     fqn: ampel.demo.DemoTiedLightCurveT2Unit
@@ -1176,7 +1175,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/test/DummyStateT2Unit.py
   LegacySurveyDatapointShaper:
     fqn: ampel.legacy_survey.LegacySurveyDatapointShaper
@@ -1204,7 +1203,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/dev/NoShaper.py
   PlotAllWISEvsNEOWISE:
     fqn: ampel.airgn.t3.PlotAllWISEvsNEOWISE
@@ -1365,7 +1364,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t1/T1SimpleCombiner.py
   T1SimpleRetroCombiner:
     fqn: ampel.t1.T1SimpleRetroCombiner
@@ -1379,7 +1378,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t1/T1SimpleRetroCombiner.py
   T2CalculateChi2:
     fqn: ampel.airgn.t2.T2CalculateChi2
@@ -1388,7 +1387,7 @@ unit:
     - AbsLightCurveT2Unit
     - AbsCustomStateT2Unit
     - LogicalUnit
-    xxh64: 12816329637284195157
+    xxh64: 14342955935056689713
     dependencies:
     - annotated_types
     - cloudpickle
@@ -1476,7 +1475,7 @@ unit:
     - AbsTiedCustomStateT2Unit
     - AbsTiedT2Unit
     - LogicalUnit
-    xxh64: 13454432750154606515
+    xxh64: 15766727956380055157
     dependencies:
     - annotated_types
     - cloudpickle
@@ -1573,7 +1572,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/cli/T3BufferExporterUnit.py
   T3LogAggregatedStocks:
     fqn: ampel.t3.unit.T3LogAggregatedStocks
@@ -1588,7 +1587,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/unit/T3LogAggregatedStocks.py
   T4DemoSavePlot:
     fqn: ampel.demo.T4DemoSavePlot
@@ -1710,7 +1709,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/ComboDictModifier.py
   SimpleTagFilter:
     fqn: ampel.aux.SimpleTagFilter
@@ -1724,7 +1723,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/SimpleTagFilter.py
   FlatDictArrayFilter:
     fqn: ampel.aux.filter.FlatDictArrayFilter
@@ -1740,7 +1739,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/filter/FlatDictArrayFilter.py
   PrimitiveTypeArrayFilter:
     fqn: ampel.aux.filter.PrimitiveTypeArrayFilter
@@ -1756,7 +1755,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/filter/PrimitiveTypeArrayFilter.py
   SimpleDictArrayFilter:
     fqn: ampel.aux.filter.SimpleDictArrayFilter
@@ -1772,7 +1771,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/filter/SimpleDictArrayFilter.py
   HashT2Config:
     fqn: ampel.config.alter.HashT2Config
@@ -1788,7 +1787,7 @@ unit:
     - schedule
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/config/alter/HashT2Config.py
   ResolveRunTimeAliases:
     fqn: ampel.config.alter.ResolveRunTimeAliases
@@ -1803,7 +1802,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/config/alter/ResolveRunTimeAliases.py
   StockCompiler:
     fqn: ampel.ingest.StockCompiler
@@ -1817,7 +1816,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ingest/StockCompiler.py
   T0Compiler:
     fqn: ampel.ingest.T0Compiler
@@ -1830,7 +1829,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ingest/T0Compiler.py
   T1Compiler:
     fqn: ampel.ingest.T1Compiler
@@ -1843,7 +1842,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ingest/T1Compiler.py
   T2Compiler:
     fqn: ampel.ingest.T2Compiler
@@ -1856,7 +1855,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/ingest/T2Compiler.py
   AmpelLogger:
     fqn: ampel.log.AmpelLogger
@@ -1870,8 +1869,23 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/log/AmpelLogger.py
+  CompilerOptions:
+    fqn: ampel.model.ingest.CompilerOptions
+    base:
+    - CompilerOptions
+    - AuxAliasableModel
+    - AmpelBaseModel
+    xxh64: 9506026783406404614
+    dependencies:
+    - annotated_types
+    - packaging
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-core
+    version: 0.10.6a21
+    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/model/ingest/CompilerOptions.py
   MongoStockIngester:
     fqn: ampel.mongo.update.MongoStockIngester
     base:
@@ -1890,7 +1904,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/update/MongoStockIngester.py
   MongoT0Ingester:
     fqn: ampel.mongo.update.MongoT0Ingester
@@ -1910,7 +1924,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/update/MongoT0Ingester.py
   MongoT1Ingester:
     fqn: ampel.mongo.update.MongoT1Ingester
@@ -1930,7 +1944,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/update/MongoT1Ingester.py
   MongoT2Ingester:
     fqn: ampel.mongo.update.MongoT2Ingester
@@ -1950,7 +1964,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/update/MongoT2Ingester.py
   MongoT3Ingester:
     fqn: ampel.mongo.update.MongoT3Ingester
@@ -1965,7 +1979,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/update/MongoT3Ingester.py
   MongoAndView:
     fqn: ampel.mongo.view.MongoAndView
@@ -1980,7 +1994,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/view/MongoAndView.py
   MongoOneView:
     fqn: ampel.mongo.view.MongoOneView
@@ -1994,7 +2008,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/view/MongoOneView.py
   MongoOrView:
     fqn: ampel.mongo.view.MongoOrView
@@ -2009,7 +2023,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/mongo/view/MongoOrView.py
   NullProducer:
     fqn: ampel.queue.NullProducer
@@ -2023,7 +2037,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/queue/NullProducer.py
   DictSecretProvider:
     fqn: ampel.secret.DictSecretProvider
@@ -2036,7 +2050,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/secret/DictSecretProvider.py
   DirSecretProvider:
     fqn: ampel.secret.DirSecretProvider
@@ -2049,7 +2063,7 @@ unit:
     - pydantic_core
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/secret/DirSecretProvider.py
   PotemkinSecretProvider:
     fqn: ampel.secret.PotemkinSecretProvider
@@ -2058,7 +2072,7 @@ unit:
     - AbsSecretProvider
     xxh64: 11131903779470022296
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/secret/PotemkinSecretProvider.py
   T3AmpelBufferFilter:
     fqn: ampel.t3.stage.filter.T3AmpelBufferFilter
@@ -2073,7 +2087,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/filter/T3AmpelBufferFilter.py
   T3BaseProjector:
     fqn: ampel.t3.stage.project.T3BaseProjector
@@ -2088,7 +2102,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/project/T3BaseProjector.py
   T3ChannelProjector:
     fqn: ampel.t3.stage.project.T3ChannelProjector
@@ -2104,7 +2118,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/t3/stage/project/T3ChannelProjector.py
   ChannelWithProcsTemplate:
     fqn: ampel.template.ChannelWithProcsTemplate
@@ -2123,7 +2137,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/template/ChannelWithProcsTemplate.py
   PeriodicSummaryT3:
     fqn: ampel.template.PeriodicSummaryT3
@@ -2139,8 +2153,127 @@ unit:
     - schedule
     - typing_inspection
     distrib: ampel-core
-    version: 0.10.6a17
+    version: 0.10.6a21
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/template/PeriodicSummaryT3.py
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
+    base:
+    - PPSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 252807104807642313
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/PPSFilter.py
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
+    base:
+    - ULSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 14523103307642547590
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/ULSFilter.py
+  TimewiseAlertSimulator:
+    fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
+    base:
+    - TimewiseAlertSimulator
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 15988811724111479624
+    dependencies:
+    - annotated_types
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - schedule
+    - scipy
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/alert/load/TimewiseAlertSimulator.py
+  LegacySurveyBrickLoader:
+    fqn: ampel.legacy_survey.LegacySurveyBrickLoader
+    base:
+    - LegacySurveyBrickLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 16306718741933483207
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - backoff
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - google_crc32c
+    - idna
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - pyvo
+    - requests
+    - rich
+    - schedule
+    - tqdm
+    - typing_inspection
+    - urllib3
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyBrickLoader.py
+  LegacySurveySupplier:
+    fqn: ampel.legacy_survey.LegacySurveySupplier
+    base:
+    - LegacySurveySupplier
+    - BaseAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 12943264248883137962
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
   FilteringAlertSupplier:
     fqn: ampel.alert.FilteringAlertSupplier
     base:
@@ -2155,7 +2288,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/FilteringAlertSupplier.py
   DirAlertLoader:
     fqn: ampel.alert.load.DirAlertLoader
@@ -2170,7 +2303,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/load/DirAlertLoader.py
   DirFileNamesLoader:
     fqn: ampel.alert.load.DirFileNamesLoader
@@ -2185,7 +2318,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/load/DirFileNamesLoader.py
   DirTaggedAlertLoader:
     fqn: ampel.alert.load.DirTaggedAlertLoader
@@ -2201,7 +2334,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/load/DirTaggedAlertLoader.py
   FileAlertLoader:
     fqn: ampel.alert.load.FileAlertLoader
@@ -2216,7 +2349,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/load/FileAlertLoader.py
   TarAlertLoader:
     fqn: ampel.alert.load.TarAlertLoader
@@ -2231,7 +2364,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/alert/load/TarAlertLoader.py
   UnitTestAlertSupplier:
     fqn: ampel.dev.UnitTestAlertSupplier
@@ -2246,7 +2379,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/dev/UnitTestAlertSupplier.py
   EasyAlertConsumerTemplate:
     fqn: ampel.template.EasyAlertConsumerTemplate
@@ -2264,7 +2397,7 @@ unit:
     - rich
     - typing_inspection
     distrib: ampel-alerts
-    version: 0.10.3a6
+    version: 0.10.4a0
     source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/template/EasyAlertConsumerTemplate.py
   TiCompilerOptions:
     fqn: ampel.timewise.ingest.TiCompilerOptions
@@ -2385,125 +2518,6 @@ unit:
     distrib: timewise
     version: 1.0.0a9
     source: /home/necker/Software/timewise/ampel/timewise/util/AuxDiagnosticPlotter.py
-  TimewiseAlertSimulator:
-    fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
-    base:
-    - TimewiseAlertSimulator
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 15988811724111479624
-    dependencies:
-    - annotated_types
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - rich
-    - schedule
-    - scipy
-    - typing_inspection
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/airgn/alert/load/TimewiseAlertSimulator.py
-  LegacySurveyBrickLoader:
-    fqn: ampel.legacy_survey.LegacySurveyBrickLoader
-    base:
-    - LegacySurveyBrickLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 16311100249176028755
-    dependencies:
-    - annotated_types
-    - astropy
-    - astropy_iers_data
-    - backoff
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - google_crc32c
-    - idna
-    - msgpack
-    - numcodecs
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - pyvo
-    - requests
-    - rich
-    - schedule
-    - tqdm
-    - typing_inspection
-    - urllib3
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyBrickLoader.py
-  LegacySurveySupplier:
-    fqn: ampel.legacy_survey.LegacySurveySupplier
-    base:
-    - LegacySurveySupplier
-    - BaseAlertSupplier
-    - AbsAlertSupplier
-    - AbsContextManager
-    xxh64: 12943264248883137962
-    dependencies:
-    - annotated_types
-    - cloudpickle
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - rich
-    - typing_inspection
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
-  PPSFilter:
-    fqn: ampel.aux.PPSFilter
-    base:
-    - PPSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 252807104807642313
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/PPSFilter.py
-  ULSFilter:
-    fqn: ampel.aux.ULSFilter
-    base:
-    - ULSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 14523103307642547590
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /home/necker/miniconda3/envs/airgn/lib/python3.13/site-packages/ampel/aux/ULSFilter.py
 process:
   t0: {}
   t1: {}
@@ -2570,27 +2584,27 @@ environment:
     matplotlib: 3.10.8
     numpy: 2.3.5
     pyparsing: 3.3.1
-    astropy: 7.2.0
-    astropy_iers_data: 0.2026.1.12.0.42.13
-    backoff: 2.2.1
     charset_normalizer: 3.4.4
     cloudpickle: 3.1.2
+    numexpr: 2.14.1
+    pandas: 2.3.3
+    platformdirs: 4.5.1
+    psutil: 7.2.1
+    pyarrow: 22.0.0
+    scipy: 1.17.0
+    astropy: 7.2.0
+    astropy_iers_data: 0.2026.1.12.0.42.13
     google_crc32c: 1.8.0
     idna: '3.11'
     msgpack: 1.1.2
     numcodecs: 0.16.5
-    numexpr: 2.14.1
-    pandas: 2.3.3
-    pyarrow: 22.0.0
-    pyvo: '1.8'
     requests: 2.32.5
+    tqdm: 4.67.1
     urllib3: 2.6.3
-    platformdirs: 4.5.1
-    psutil: 7.2.1
-    scipy: 1.17.0
+    backoff: 2.2.1
+    pyvo: '1.8'
     joblib: 1.5.3
     threadpoolctl: 3.6.0
-    tqdm: 4.67.1
 template:
   hash_t2_config: ampel.config.alter.HashT2Config
   resolve_run_time_aliases: ampel.config.alter.ResolveRunTimeAliases

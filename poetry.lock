@@ -2,14 +2,14 @@
 
 [[package]]
 name = "ampel-alerts"
-version = "0.10.3a6"
+version = "0.10.4a0"
 description = "Alert support for the Ampel system"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "ampel_alerts-0.10.3a6-py3-none-any.whl", hash = "sha256:193af767616bea4f0cbcc1d9991cd2c2dfc06a906fccdc13efd5a31570dcf9f2"},
-    {file = "ampel_alerts-0.10.3a6.tar.gz", hash = "sha256:b509b775c4171bcdfb2d06bad1ca034d24c8bda0583a3525e32b457e533ee2cf"},
+    {file = "ampel_alerts-0.10.4a0-py3-none-any.whl", hash = "sha256:c0911bc08ad7b856dcb3a5be16121979ef0317557cb821121ccf2a0dbdcdc9fe"},
+    {file = "ampel_alerts-0.10.4a0.tar.gz", hash = "sha256:05603c26a9833b913fca18c158d4609b6645ed46f54364526ef6f1c5ebee3171"},
 ]
 
 [package.dependencies]
@@ -17,14 +17,14 @@ ampel-core = ">=0.10.6a12,<0.11"
 
 [[package]]
 name = "ampel-core"
-version = "0.10.6a17"
+version = "0.10.6a21"
 description = "Alice in Modular Provenance-Enabled Land"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "ampel_core-0.10.6a17-py3-none-any.whl", hash = "sha256:db2607d3f9e212acf8f634d3c8075cc94ccd56065a17ef0e551d3e9d6d1cf06d"},
-    {file = "ampel_core-0.10.6a17.tar.gz", hash = "sha256:78906c7fa30833f579fd583867a9b5336dfffe70e17ba94c2a8dea97326f5d30"},
+    {file = "ampel_core-0.10.6a21-py3-none-any.whl", hash = "sha256:aca13160770e8e77dccd4bc8b142dce8da46ff84993766ffb145bd3e7172f4d7"},
+    {file = "ampel_core-0.10.6a21.tar.gz", hash = "sha256:9999d709f03afda2f99f7aa7bb7c100636146c6512f14241bc5c066ffb0f2369"},
 ]
 
 [package.dependencies]
@@ -37,7 +37,6 @@ schedule = ">=1.0.0,<2.0.0"
 xxhash = ">=3.0.0,<4.0.0"
 
 [package.extras]
-encrypted-secrets = ["sjcl (>=0.2.1,<0.3.0)"]
 queue = ["mongomock (>=4.3,<5.0)"]
 
 [[package]]
@@ -6162,8 +6161,8 @@ files = []
 develop = false
 
 [package.dependencies]
-ampel-alerts = {version = "0.10.3a6", optional = true}
-ampel-core = {version = "0.10.6a17", optional = true}
+ampel-alerts = {version = "0.10.4a0", optional = true}
+ampel-core = {version = "0.10.6a21", optional = true}
 ampel-interface = {version = "0.10.5a8", optional = true}
 ampel-photometry = {version = "0.10.2a1", optional = true}
 ampel-plot = {version = ">=0.9.1,<0.10.0", optional = true}
@@ -6194,7 +6193,7 @@ urllib3 = ">=2.5.0,<3.0.0"
 virtualenv = ">=20.16.3,<21.0.0"
 
 [package.extras]
-ampel = ["ampel-alerts (==0.10.3a6)", "ampel-core (==0.10.6a17)", "ampel-interface (==0.10.5a8)", "ampel-photometry (==0.10.2a1)", "ampel-plot (>=0.9.1,<0.10.0)"]
+ampel = ["ampel-alerts (==0.10.4a0)", "ampel-core (==0.10.6a21)", "ampel-interface (==0.10.5a8)", "ampel-photometry (==0.10.2a1)", "ampel-plot (>=0.9.1,<0.10.0)"]
 dev = ["coveralls (>=3.3.1,<4.0.0)", "mongomock (>=4.3.0,<5.0.0)", "mypy (>=1.18.2,<2.0.0)", "pandas-stubs (>=2.3.2.250926,<3.0.0.0)", "pytest (>=7.2.2,<8.0.0)", "ruff (>=0.13.0,<0.14.0)", "scipy-stubs (>=1.16.2.0,<2.0.0.0)", "types-pyyaml (>=6.0.12.20250915,<7.0.0.0)", "types-requests (>=2.32.4.20250913,<3.0.0.0)"]
 docs = ["autodoc_pydantic[erdantic] (>=2.2.0,<3.0.0)", "myst-parser (>=1,<3)", "sphinx-rtd-theme (>=1.3.0,<2.0.0)"]
 
