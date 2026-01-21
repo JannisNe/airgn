@@ -34,7 +34,7 @@ class T2CalculateChi2(AbsLightCurveT2Unit):
             data = data[nan_msak]
             f = data[f"w{i}{keys.FLUX_EXT}"]
             fe = data[f"w{i}{keys.ERROR_EXT}{keys.FLUX_EXT}"]
-            t = data["mean_mjd"]
+            t = data["mjd"]
             res[f"npoints_w{i}_{keys.FLUX_EXT}"] = npoints(f, fe, t)
             res[f"red_chi2_w{i}_{keys.FLUX_EXT}"] = red_chi2(f, fe, t)
 
