@@ -11,18 +11,32 @@ from ampel.view.LightCurve import LightCurve
 from ampel.view.T2DocView import T2DocView
 from ampel.model.StateT2Dependency import StateT2Dependency
 
-
+from airgn.legacy_survey.util import align_legacy_survey_photometry
 from timewise.process import keys
 
 
-class MetricOptions(TypedDict):
+class MetricMeta(TypedDict):
     log: bool
     range: tuple[float, float]
     pretty_name: str
+    multiband: bool
 
 
 float_arr = npt.NDArray[np.floating]
-MetricFunc = Callable[[float_arr, float_arr, float_arr], float | None]
+
+MetricSingleFunc = Callable[[float_arr, float_arr, float_arr], float | None]
+MetricMultiFunc = Callable[
+    [
+        float_arr,
+        float_arr,
+        float_arr,
+        float_arr,
+        float_arr,
+        float_arr,
+    ],
+    float | None,
+]
+
 
 MJD_COLNAMES = {
     "T2StackVisits": "mean_mjd",
@@ -37,21 +51,57 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
     metric_names: list[str] = []
 
     _metrics = {}
-    _metric_options = {}
+    _metric_meta = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.metric_names:
             self.metric_names = list(self._metrics.keys())
+        self._single_band_metric_names = [
+            n for n in self.metric_names if not self._metric_meta[n]["multiband"]
+        ]
+        self._multi_band_metric_names = [
+            n for n in self.metric_names if self._metric_meta[n]["multiband"]
+        ]
+        self._mjd_colname = {
+            i: MJD_COLNAMES[self.t2_dependency[0].unit].format(band=i)
+            for i in range(1, 3)
+        }
+
+    from typing import Callable, overload, Literal
+
+    @classmethod
+    @overload
+    def register(
+        cls,
+        log: bool,
+        range: tuple[float, float],
+        pretty_name: str,
+        multiband: Literal[False],
+    ) -> Callable[[MetricSingleFunc], MetricSingleFunc]: ...
+
+    @classmethod
+    @overload
+    def register(
+        cls,
+        log: bool,
+        range: tuple[float, float],
+        pretty_name: str,
+        multiband: Literal[True],
+    ) -> Callable[[MetricMultiFunc], MetricMultiFunc]: ...
 
     @classmethod
     def register(
-        cls, log: bool, range: tuple[float, float], pretty_name: str
-    ) -> Callable:
-        def decorator(func: MetricFunc) -> MetricFunc:
+        cls,
+        log: bool,
+        range: tuple[float, float],
+        pretty_name: str,
+        multiband: bool,
+    ):
+        def decorator(func):
             cls._metrics[func.__name__] = func
-            cls._metric_options[func.__name__] = MetricOptions(
-                log=log, range=range, pretty_name=pretty_name
+            cls._metric_meta[func.__name__] = MetricMeta(
+                log=log, range=range, pretty_name=pretty_name, multiband=multiband
             )
             return func
 
@@ -64,27 +114,52 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
         stacked_lightcurve = pd.DataFrame.from_records(records)
 
         res = {}
-        for i in range(1, 3):
-            for key in [keys.FLUX_EXT, keys.FLUX_DENSITY_EXT]:
+        for key in [keys.FLUX_EXT, keys.FLUX_DENSITY_EXT]:
+            # ---------------- calculate single band metrics ---------------- #
+
+            for i in range(1, 3):
                 nan_msak = (
                     stacked_lightcurve[f"w{i}{keys.MEAN}{key}"].notna()
                     | stacked_lightcurve[f"w{i}{key}{keys.RMS}"].notna()
                 )
-                stacked_lightcurve = stacked_lightcurve[nan_msak]
+                sel_data = stacked_lightcurve[nan_msak]
 
-                f = stacked_lightcurve[f"w{i}{keys.MEAN}{key}"].values
-                fe = stacked_lightcurve[f"w{i}{key}{keys.RMS}"].values
-                t = stacked_lightcurve[
-                    MJD_COLNAMES[self.t2_dependency[0].unit].format(band=i)
-                ].values
-                for metric_name, metric_func in self._metrics.items():
-                    res[f"{metric_name}_w{i}_{key}"] = metric_func(f, fe, t)
+                f = sel_data[f"w{i}{keys.MEAN}{key}"].values
+                fe = sel_data[f"w{i}{key}{keys.RMS}"].values
+                t = sel_data[self._mjd_colname[i]].values
+                for metric_name in self._single_band_metric_names:
+                    res[f"{metric_name}_w{i}_{key}"] = self._metrics[metric_name](
+                        f, fe, t
+                    )
+
+            # ---------------- calculate multi band metrics ---------------- #
+            nan_msak = (
+                stacked_lightcurve[f"w1{keys.MEAN}{key}"].notna()
+                | stacked_lightcurve[f"w1{key}{keys.RMS}"].notna()
+                | stacked_lightcurve[f"w2{keys.MEAN}{key}"].notna()
+                | stacked_lightcurve[f"w2{key}{keys.RMS}"].notna()
+            )
+            sel_data = stacked_lightcurve[nan_msak]
+            if self.t2_dependency[0].unit == "T2MaggyToFluxDensity":
+                sel_data = align_legacy_survey_photometry(sel_data)
+
+            f1 = sel_data[f"w1{keys.MEAN}{key}"].values
+            fe1 = sel_data[f"w1{key}{keys.RMS}"].values
+            t1 = sel_data[self._mjd_colname[1]].values
+            f2 = sel_data[f"w2{keys.MEAN}{key}"].values
+            fe2 = sel_data[f"w2{key}{keys.RMS}"].values
+            t2 = sel_data[self._mjd_colname[2]].values
+
+            for metric_name in self._multi_band_metric_names:
+                res[f"{metric_name}_{key}"] = self._metrics[metric_name](
+                    f1, fe1, t1, f2, fe2, t2
+                )
 
         return res
 
 
 @T2CalculateVarMetrics.register(
-    log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$"
+    log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$", multiband=False
 )
 def red_chi2(f: float_arr, fe: float_arr, t: float_arr) -> float | None:
     if len(f) > 1:
@@ -94,14 +169,14 @@ def red_chi2(f: float_arr, fe: float_arr, t: float_arr) -> float | None:
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(0, 30), pretty_name=r"$N_\mathrm{points}$"
+    log=False, range=(0, 30), pretty_name=r"$N_\mathrm{points}$", multiband=False
 )
 def npoints(f: float_arr, fe: float_arr, t: float_arr) -> float:
     return len(f)
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"IQR$_\mathrm{rel}$"
+    log=False, range=(-1, 1), pretty_name=r"IQR$_\mathrm{rel}$", multiband=False
 )
 def relative_inter_quartile_range(
     f: float_arr, fe: float_arr, t: float_arr
@@ -113,7 +188,9 @@ def relative_inter_quartile_range(
     return None
 
 
-@T2CalculateVarMetrics.register(log=True, range=(-1, 2), pretty_name=r"$1/\eta$")
+@T2CalculateVarMetrics.register(
+    log=True, range=(-1, 2), pretty_name=r"$1/\eta$", multiband=False
+)
 def inverse_von_neumann_ratio(
     f: float_arr, fe: float_arr, t: float_arr
 ) -> float | None:
@@ -127,7 +204,7 @@ def inverse_von_neumann_ratio(
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"$\sigma^2_\mathrm{rms}$"
+    log=False, range=(-1, 1), pretty_name=r"$\sigma^2_\mathrm{rms}$", multiband=False
 )
 def normalized_excess_variance(
     f: float_arr, fe: float_arr, t: float_arr

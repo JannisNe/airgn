@@ -14,7 +14,7 @@ from ampel.view.TransientView import TransientView
 
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
-from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics, MetricOptions
+from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics, MetricMeta
 
 
 # AB offset to Vega for WISE bands from Jarrett et al. (2011)
@@ -42,7 +42,6 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
     iter_max: int | None = None
     file_format: str = "pdf"
     metric_names: list[str] = list(T2CalculateVarMetrics._metrics.keys())
-    metric_options: dict[str, MetricOptions] = {}
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -51,10 +50,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
         self._agn_bitmask = get_agn_bitmask()
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
-        self._metric_options = {
-            mn: self.metric_options.get(mn, T2CalculateVarMetrics._metric_options[mn])
-            for mn in self.metric_names
-        }
+        self._metric_meta = T2CalculateVarMetrics._metric_meta
 
     def iter_npoints_binned(
         self, df: pd.DataFrame
@@ -111,14 +107,20 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
         # ---------------------- histograms ---------------------- #
 
         for metric_name in self.metric_names:
-            log = self._metric_options[metric_name]["log"]
-            lim = self._metric_options[metric_name]["range"]
-            pn = self._metric_options[metric_name]["pretty_name"]
+            meta = self._metric_meta[metric_name]
+            pn = meta["pretty_name"]
+            log = meta["log"]
+            mb = meta["multiband"]
             pl = r"$\log_{10}($" + pn + "$)$" if log else pn
             pdir = self._path / metric_name
             pdir.mkdir(parents=True, exist_ok=True)
 
-            cols = [f"{metric_name}_w{i}_fluxdensity" for i in range(1, 3)]
+            cols = (
+                [f"{metric_name}_w{i}_fluxdensity" for i in range(1, 3)]
+                if not mb
+                else [f"{metric_name}_fluxdensity"]
+            )
+
             fig, ax = plt.subplots()
             vals = res[cols].min(axis=1)
             if log:
@@ -148,7 +150,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                     ix[0] for ix in self._agn_bitmask["AGN_MASKBITS"]
                 ]
 
-                fig, axs = plt.subplots(nrows=3, sharex="all")
+                fig, axs = plt.subplots(nrows=len(cols) + 1, sharex="all")
                 axs[0].bar(np.arange(-1, len(labels) - 1), n, alpha=0.5, ec="none")
                 axs[0].set_yscale("log")
                 axs[0].set_ylabel("counts")
@@ -176,10 +178,14 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                     ax.violinplot(
                         dataset=y, positions=x, showextrema=False, showmedians=True
                     )
-                    ax.set_ylabel(f"W{i + 1}")
-                    ax.set_ylim(*lim)
+                    if not mb:
+                        ax.set_ylabel(f"W{i + 1}")
+                    ax.set_ylim(*meta["range"])
 
-                fig.supylabel(pl)
+                if mb:
+                    axs[-1].set_ylabel(pl)
+                else:
+                    fig.supylabel(pl)
                 axs[-1].set_xticks(np.arange(-1, len(labels) - 1))
                 axs[-1].set_xticklabels(labels, rotation=60, ha="right")
 
@@ -191,7 +197,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
             # ---------------------- metric vs color ---------------------- #
 
-            metric_threshs = np.linspace(*lim, 100)
+            metric_threshs = np.linspace(*meta["range"], 100)
 
             for res_bin, s, e in self.iter_npoints_binned(res):
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
