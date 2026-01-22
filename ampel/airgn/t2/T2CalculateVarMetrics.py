@@ -101,7 +101,7 @@ def npoints(f: float_arr, fe: float_arr, t: float_arr) -> float:
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(-10, 10), pretty_name=r"IQR$_\mathrm{rel}$"
+    log=False, range=(-1, 1), pretty_name=r"IQR$_\mathrm{rel}$"
 )
 def relative_inter_quartile_range(
     f: float_arr, fe: float_arr, t: float_arr
@@ -113,7 +113,7 @@ def relative_inter_quartile_range(
     return None
 
 
-@T2CalculateVarMetrics.register(log=False, range=(0, 5), pretty_name=r"$1/\eta$")
+@T2CalculateVarMetrics.register(log=True, range=(-1, 2), pretty_name=r"$1/\eta$")
 def inverse_von_neumann_ratio(
     f: float_arr, fe: float_arr, t: float_arr
 ) -> float | None:
