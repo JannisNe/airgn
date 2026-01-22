@@ -124,3 +124,15 @@ def inverse_von_neumann_ratio(
         f_mean = np.average(f, weights=1 / fe**2)
         return sum((f - f_mean) ** 2) / sum((f[1:] - f[:-1]) ** 2)
     return None
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-1, 1), pretty_name=r"$\sigma^2_\mathrm{rms}$"
+)
+def normalized_excess_variance(
+    f: float_arr, fe: float_arr, t: float_arr
+) -> float | None:
+    if len(f) > 0:
+        mu = np.average(f, weights=1 / fe**2)
+        return float(sum((f - mu) ** 2 - fe**2) / (len(f) * mu**2))
+    return None
