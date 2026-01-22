@@ -14,6 +14,7 @@ dependencies = [
     "wget (>=3.2,<4.0)",
     "rubin-sim (>=2.6.0,<3.0.0)",
     "ligo-skymap (>=2.5.3,<3.0.0)",
+    "seaborn (>=0.13.2,<0.14.0)",
 ]
 
 

@@ -5,6 +5,7 @@ from pymongo import MongoClient
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.T3Store import T3Store
@@ -102,6 +103,34 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
         wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(bool)
         res["wise_agn"] = wise_agn_mask
         res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
+
+        # ---------------------- corner plot ---------------------- #
+
+        var_names = []
+        for m in self.metric_names:
+            meta = self._metric_meta[m]
+            cols = (
+                [f"{m}_w{i}_fluxdensity" for i in range(1, 3)]
+                if not meta["multiband"]
+                else [f"{m}_fluxdensity"]
+            )
+            for col in cols:
+                if meta["log"]:
+                    res[col + "_log"] = np.log10(res[col])
+                    var_names.append(col + "_log")
+                else:
+                    var_names.append(col)
+
+        nam = res[var_names].isna().any(axis=1)
+        inm = np.isfinite(res[var_names].to_numpy()).all(axis=1)
+        good_mask = ~nam & inm
+
+        fig = sns.pairplot(
+            res[good_mask], vars=var_names, kind="kde", corner=True, hue="agn"
+        )
+        fn = self._path / f"corner.{self.file_format}"
+        fig.savefig(fn)
+        plt.close()
 
         # ---------------------- histograms ---------------------- #
 
