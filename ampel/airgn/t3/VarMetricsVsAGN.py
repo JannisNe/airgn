@@ -1,6 +1,5 @@
 from collections.abc import Generator
 from itertools import pairwise
-from typing import TypedDict
 
 from pymongo import MongoClient
 import pandas as pd
@@ -195,7 +194,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                 fig.savefig(fn)
                 plt.close()
 
-            # ---------------------- metric vs color ---------------------- #
+            # ---------------------- metric cuts ---------------------- #
 
             metric_threshs = np.linspace(*meta["range"], 100)
 
