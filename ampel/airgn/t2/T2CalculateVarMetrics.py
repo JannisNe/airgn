@@ -99,6 +99,9 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
         multiband: bool,
     ):
         def decorator(func):
+            n = func.__name__
+            if (n in cls._metrics) or (n in cls._metric_meta):
+                raise RuntimeError(f"Metric {n} already exists!")
             cls._metrics[func.__name__] = func
             cls._metric_meta[func.__name__] = MetricMeta(
                 log=log, range=range, pretty_name=pretty_name, multiband=multiband
