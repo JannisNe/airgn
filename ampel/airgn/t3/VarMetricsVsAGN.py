@@ -100,6 +100,14 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
         res = pd.DataFrame.from_dict(res, orient="index")
 
+        # ---------------------- select agn and non-agn ---------------------- #
+
+        res["agn"] = ~(res["decoded_agn_mask"] == "0")
+        wise_agn_bit = res["decoded_agn_mask"].str[15]
+        wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(bool)
+        res["wise_agn"] = wise_agn_mask
+        res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
+
         # ---------------------- histograms ---------------------- #
 
         for metric_name in self.metric_names:
@@ -119,6 +127,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
             ax.hist(vals, ec="white", alpha=0.8)
             ax.set_xlabel(pl)
             ax.set_ylabel("counts")
+            ax.set_yscale("log")
             fn = self._path / f"{metric_name}_hist.{self.file_format}"
             self.logger.info(f"saving {fn}")
             fig.tight_layout()
@@ -144,8 +153,8 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                 axs[0].set_yscale("log")
                 axs[0].set_ylabel("counts")
 
-                for i, ax in enumerate(axs[1:]):
-                    m = res_bin[f"{metric_name}_w{i + 1}_fluxdensity"].notna()
+                for i, (ax, col) in enumerate(zip(axs[1:], cols)):
+                    m = res_bin[col].notna()
                     x = []
                     y = []
                     for ix in self._agn_bitmask["AGN_MASKBITS"]:
@@ -154,7 +163,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                         if any(ixm):
                             vals = res_bin.loc[
                                 ixm,
-                                f"{metric_name}_w{i + 1}_fluxdensity",
+                                col,
                             ].values.tolist()
                             y.append(np.log10(vals) if log else vals)
                             x.append(
@@ -162,11 +171,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                             )  # bits 8 and 9 are skipped
                     not_agn_mask = m & (res_bin["decoded_agn_mask"] == "0")
                     x.append(-1)
-                    not_agn_vals = np.log10(
-                        res_bin.loc[
-                            not_agn_mask, f"{metric_name}_w{i + 1}_fluxdensity"
-                        ].values.tolist()
-                    )
+                    not_agn_vals = res_bin.loc[not_agn_mask, col].values.tolist()
                     y.append(np.log10(not_agn_vals) if log else not_agn_vals)
                     ax.violinplot(
                         dataset=y, positions=x, showextrema=False, showmedians=True
@@ -187,13 +192,6 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
             # ---------------------- metric vs color ---------------------- #
 
             metric_threshs = np.linspace(*lim, 100)
-            res["agn"] = ~(res["decoded_agn_mask"] == "0")
-            wise_agn_bit = res["decoded_agn_mask"].str[15]
-            wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(
-                bool
-            )
-            res["wise_agn"] = wise_agn_mask
-            res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
 
             for res_bin, s, e in self.iter_npoints_binned(res):
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
@@ -221,17 +219,24 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                             .all(axis=1)
                             .sum()
                         )
-                        completeness.append(n_selected_agn / n_agn)
-                        purity.append(
-                            n_selected_agn / (n_selected_agn + n_selected_non_agn)
-                        )
+                        if n_agn > 0:
+                            completeness.append(n_selected_agn / n_agn)
+                        else:
+                            completeness.append(np.nan)
+                        if (total := n_selected_agn + n_selected_non_agn) > 0:
+                            purity.append(n_selected_agn / total)
+                        else:
+                            purity.append(np.nan)
 
                         n_selected_wise_agn = (
                             (type_res_bin.loc[type_res_bin["wise_agn"], cols] > thresh)
                             .all(axis=1)
                             .sum()
                         )
-                        percentage_wise_agn.append(n_selected_wise_agn / n_wise_agn)
+                        if n_wise_agn > 0:
+                            percentage_wise_agn.append(n_selected_wise_agn / n_wise_agn)
+                        else:
+                            percentage_wise_agn.append(np.nan)
                         n_selected_non_wise_agn = (
                             (
                                 type_res_bin.loc[type_res_bin["non_wise_agn"], cols]
@@ -240,9 +245,12 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                             .all(axis=1)
                             .sum()
                         )
-                        percentage_non_wise_agn.append(
-                            n_selected_non_wise_agn / n_non_wise_agn
-                        )
+                        if n_non_wise_agn > 0:
+                            percentage_non_wise_agn.append(
+                                n_selected_non_wise_agn / n_non_wise_agn
+                            )
+                        else:
+                            percentage_non_wise_agn.append(np.nan)
 
                     fig, ax = plt.subplots()
                     ax.plot(
