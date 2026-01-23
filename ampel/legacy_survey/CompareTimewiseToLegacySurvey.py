@@ -80,9 +80,7 @@ class CompareTimewiseToLegacySurvey(AbsPhotoT3Unit):
         )
         ax.set_ylabel("Count")
         ax.legend()
-        fn = self._plot_dir / (
-            self._name + "compare_timewise_legacy_survey_median_ratio_hist.pdf"
-        )
+        fn = self._plot_dir / (self._name + "_median_ratio_hist.pdf")
         fig.suptitle("Median Flux Ratio: Legacy Survey vs Timewise")
         fig.tight_layout()
         fig.savefig(fn)
