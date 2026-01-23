@@ -15,7 +15,8 @@ from ampel.view.TransientView import TransientView
 
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
-from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics, MetricMeta
+from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics
+from ampel.util.NPointsIterator import NPointsIterator
 
 
 # AB offset to Vega for WISE bands from Jarrett et al. (2011)
@@ -31,18 +32,18 @@ def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
     return [am[0] for im, am in zip(mask, agn_mask["AGN_MASKBITS"]) if im]
 
 
-class VarMetricsVsAGN(AbsPhotoT3Unit):
+class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
     """
     Plot lightcurves of transients using matplotlib
     """
 
     path: str
     input_mongo_db_name: str
-    n_points_bins: tuple[int, ...] = (0, 10, 20, 30)
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
     file_format: str = "pdf"
     metric_names: list[str] = list(T2CalculateVarMetrics._metrics.keys())
+    n_point_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -52,19 +53,6 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
         self._metric_meta = T2CalculateVarMetrics._metric_meta
-
-    def iter_npoints_binned(
-        self, df: pd.DataFrame
-    ) -> Generator[tuple[pd.DataFrame, float, float], None, None]:
-        npoints_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
-        bins = list(pairwise(self.n_points_bins)) + [
-            (min(self.n_points_bins), max(self.n_points_bins))
-        ]
-        for s, e in bins:
-            bin_mask = (df[npoints_cols] >= s).all(axis=1) & (df[npoints_cols] < e).any(
-                axis=1
-            )
-            yield df[bin_mask], s, e
 
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None

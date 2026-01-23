@@ -14,6 +14,7 @@ from ampel.view.TransientView import TransientView
 from ampel.timewise.util.pdutil import datapoints_to_dataframe
 from ampel.struct.UnitResult import UnitResult
 from ampel.types import T3Send, UBson
+from ampel.util.NPointsIterator import NPointsIterator
 
 from timewise.plot.lightcurve import plot_lightcurve, BAND_PLOT_COLORS
 from timewise.process import keys
@@ -21,7 +22,7 @@ from timewise.process.stacking import FLUX_ZEROPOINTS
 from timewise.util.path import expand
 
 
-class PlotChi2Distribution(AbsPhotoT3Unit):
+class PlotChi2Distribution(AbsPhotoT3Unit, NPointsIterator):
     """
     Plot lightcurves of transients using matplotlib
     """
@@ -33,8 +34,8 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
     plot_dir: str = "./"
     upper_lim: float = 6
     cumulative: bool = False
-    n1: float = 10
-    n2: float = 8
+    n2: float = 12
+    n_point_cols: list[str] = [f"npoints_{b}_fluxdensity_sdom-1" for b in ["w1", "w2"]]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -100,6 +101,8 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
                                 unit_key += f"_{std_name}"
                             if t2res and (k := f"red_chi2_{b}_{lk}") in t2res:
                                 row[f"{b}_{unit_key}"] = t2res[k]
+                            if t2res and (k := f"npoints_{b}_fluxdensity") in t2res:
+                                row[f"npoints_{b}_fluxdensity_{unit_key}"] = t2res[k]
 
                     if any(
                         self.chi2_range_to_plot is not None
@@ -127,57 +130,63 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         df = pd.DataFrame(t2_reses)
 
         # -----------------------------------------------------------
-        # PLOT FULL CHI2 DISTRIBUTION
+        # PLOT CHI2 DISTRIBUTION IN NPOINT BINS
         # -----------------------------------------------------------
 
-        fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
-        bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
-        x = np.linspace(0, self.upper_lim, 1000)
-
-        # set up result structure
-        res = {}
         cols = [c for c in df.columns if "T2CalculateChi2" in c]
         chi2_units = {c.replace("w1_", "").replace("w2_", "") for c in cols}
         colors = {c: f"C{i}" for i, c in enumerate(chi2_units)}
+        bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
+        x = np.linspace(0, self.upper_lim, 1000)
 
-        for i, u in enumerate(cols):
-            b = u[:2]
-            ax = axs[int(b[1]) - 1]
-            chi2_dist = df[u]
-            ax.hist(
-                chi2_dist,
-                density=True,
-                bins=bins,
-                cumulative=self.cumulative,
-                alpha=0.5,
-                label=u,
-                color=colors[u[3:]],
+        for res_df, s, e in self.iter_npoints_binned(df):
+            fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
+            n1 = int((s + e) / 2)
+
+            # set up result structure
+            res = {}
+
+            for i, u in enumerate(cols):
+                b = u[:2]
+                ax = axs[int(b[1]) - 1]
+                chi2_dist = res_df[u]
+                ax.hist(
+                    chi2_dist,
+                    density=True,
+                    bins=bins,
+                    cumulative=self.cumulative,
+                    alpha=0.5,
+                    label=u,
+                    color=colors[u[3:]],
+                )
+                chi2_dist = np.array(chi2_dist)
+                m = ~np.isnan(chi2_dist) & np.isfinite(chi2_dist)
+                ffit = stats.f.fit(chi2_dist[m], n1, self.n2, floc=0)
+                key_base = f"bin{s}_{e}_{u}_{b}"
+                for p, p_name in zip(ffit, ["d1", "d2", "loc", "scale"]):
+                    res[f"{key_base}_{p_name}"] = p
+
+                ax.plot(
+                    x,
+                    stats.f(*ffit).__getattribute__(self._method_name)(x),
+                    color=colors[u[3:]],
+                    linestyle="dotted",
+                )
+
+            for i, ax in enumerate(axs):
+                self.add_expected_dist(ax, x, n1=n1)
+                ax.set_xlim(0, self.upper_lim)
+                ax.set_ylabel(f"w{i + 1}")
+
+            axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
+            axs[-1].set_xlabel("Reduced Chi-Squared")
+            fig.supylabel("Probability Density")
+            fig.tight_layout()
+            fig.savefig(
+                self._base_path.parent
+                / (self._base_path.name + f"bin{s}_{e}_full_chi2.pdf")
             )
-            chi2_dist = np.array(chi2_dist)
-            m = ~np.isnan(chi2_dist) & np.isfinite(chi2_dist)
-            ffit = stats.f.fit(chi2_dist[m], self.n1, self.n2, floc=0)
-            key_base = f"{u}_{b}"
-            for p, p_name in zip(ffit, ["d1", "d2", "loc", "scale"]):
-                res[f"{key_base}_{p_name}"] = p
-
-            ax.plot(
-                x,
-                stats.f(*ffit).__getattribute__(self._method_name)(x),
-                color=colors[u[3:]],
-                linestyle="dotted",
-            )
-
-        for i, ax in enumerate(axs):
-            self.add_expected_dist(ax, x)
-            ax.set_xlim(0, self.upper_lim)
-            ax.set_ylabel(f"w{i + 1}")
-
-        axs[0].legend(ncols=2, bbox_to_anchor=(0.5, 1.05), loc="lower center")
-        axs[-1].set_xlabel("Reduced Chi-Squared")
-        fig.supylabel("Probability Density")
-        fig.tight_layout()
-        fig.savefig(self._base_path.parent / (self._base_path.name + "_full_chi2.pdf"))
-        plt.close()
+            plt.close()
 
         # -----------------------------------------------------------
         # PLOT CHI2 IN MAG BINS
@@ -324,34 +333,33 @@ class PlotChi2Distribution(AbsPhotoT3Unit):
         self,
         ax: plt.Axes,
         x: Sequence[float],
+        n1: int,
         which: Literal["all", "stacked", "raw"] = "all",
     ):
         if ("all" in which) or ("raw" in which):
             ax.plot(
                 x,
                 stats.chi2(
-                    self.n1 * self.n2 - 1, 0, 1 / (self.n1 * self.n2 - 1)
+                    n1 * self.n2 - 1, 0, 1 / (n1 * self.n2 - 1)
                 ).__getattribute__(self._method_name)(x),
                 color="k",
                 ls="--",
-                label=rf"$\chi^2_{{{self.n1 * self.n2 - 1:.0f}}}$",
+                label=rf"$\chi^2_{{{n1 * self.n2 - 1:.0f}}}$",
             )
         if ("all" in which) or ("stacked" in which):
             ax.plot(
                 x,
-                stats.chi2(self.n1 - 1, 0, 1 / (self.n1 - 1)).__getattribute__(
-                    self._method_name
-                )(x),
-                color="k",
-                ls=":",
-                label=rf"$\chi^2_{{{self.n1 - 1:.0f}}}$",
-            )
-            ax.plot(
-                x,
-                stats.f(self.n1 - 1, self.n2 - 1).__getattribute__(self._method_name)(
+                stats.chi2(n1 - 1, 0, 1 / (n1 - 1)).__getattribute__(self._method_name)(
                     x
                 ),
                 color="k",
+                ls=":",
+                label=rf"$\chi^2_{{{n1 - 1:.0f}}}$",
+            )
+            ax.plot(
+                x,
+                stats.f(n1 - 1, self.n2 - 1).__getattribute__(self._method_name)(x),
+                color="k",
                 ls="-.",
-                label=f"F({self.n1 - 1:.0f},{self.n2 - 1:.0f})",
+                label=f"F({n1 - 1:.0f},{self.n2 - 1:.0f})",
             )
