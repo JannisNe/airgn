@@ -35,7 +35,9 @@ class PlotChi2Distribution(AbsPhotoT3Unit, NPointsIterator):
     upper_lim: float = 6
     cumulative: bool = False
     n2: float = 12
-    n_point_cols: list[str] = [f"npoints_{b}_fluxdensity_sdom-1" for b in ["w1", "w2"]]
+    n_point_cols: list[str] = [
+        f"npoints_{b}_T2CalculateChi2Stacked_fluxdensity_sdom-1" for b in ["w1", "w2"]
+    ]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -102,7 +104,7 @@ class PlotChi2Distribution(AbsPhotoT3Unit, NPointsIterator):
                             if t2res and (k := f"red_chi2_{b}_{lk}") in t2res:
                                 row[f"{b}_{unit_key}"] = t2res[k]
                             if t2res and (k := f"npoints_{b}_fluxdensity") in t2res:
-                                row[f"npoints_{b}_fluxdensity_{unit_key}"] = t2res[k]
+                                row[f"npoints_{b}_{unit_key}"] = t2res[k]
 
                     if any(
                         self.chi2_range_to_plot is not None
@@ -133,7 +135,11 @@ class PlotChi2Distribution(AbsPhotoT3Unit, NPointsIterator):
         # PLOT CHI2 DISTRIBUTION IN NPOINT BINS
         # -----------------------------------------------------------
 
-        cols = [c for c in df.columns if "T2CalculateChi2" in c]
+        cols = [
+            c
+            for c in df.columns
+            if "T2CalculateChi2" in c and not c.startswith("npoints")
+        ]
         chi2_units = {c.replace("w1_", "").replace("w2_", "") for c in cols}
         colors = {c: f"C{i}" for i, c in enumerate(chi2_units)}
         bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
