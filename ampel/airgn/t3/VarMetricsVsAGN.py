@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import umap
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.T3Store import T3Store
@@ -106,7 +107,8 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
         # ---------------------- corner plot ---------------------- #
 
-        var_names = []
+        corner_df = pd.DataFrame(index=res.index)
+        corner_df["agn"] = res["agn"]
         for m in self.metric_names:
             # exclude npoints because it's not a real variability metric
             # and has not enough variance so the KDE will collapse
@@ -118,21 +120,51 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
                 if not meta["multiband"]
                 else [f"{m}_fluxdensity"]
             )
-            for col in cols:
+            pn = meta["pretty_name"]
+            lim = meta["range"]
+            for i, col in enumerate(cols):
                 if meta["log"]:
-                    res[col + "_log"] = np.log10(res[col])
-                    var_names.append(col + "_log")
+                    pl = r"$\log_{10}($" + pn + "$)$"
+                    vals = np.log10(res[col])
                 else:
-                    var_names.append(col)
+                    pl = pn
+                    vals = res[col]
+                if not meta["multiband"]:
+                    pl += f" W{i + 1}"
+                m = (vals > lim[0]) & (vals < lim[1])
+                pd.options.mode.chained_assignment = None
+                vals.loc[~m] = np.nan
+                pd.options.mode.chained_assignment = "warn"
+                corner_df[pl] = vals
 
-        nam = res[var_names].isna().any(axis=1)
-        inm = np.isfinite(res[var_names].to_numpy()).all(axis=1)
-        good_mask = ~nam & inm
-
-        fig = sns.pairplot(
-            res[good_mask], vars=var_names, kind="kde", corner=True, hue="agn"
-        )
+        fig = sns.pairplot(corner_df, kind="kde", corner=True, hue="agn")
         fn = self._path / f"corner.{self.file_format}"
+        fig.savefig(fn)
+        plt.close()
+
+        # ---------------------- UMAP ---------------------- #
+
+        reducer = umap.UMAP(random_state=42)
+        nan_mask = corner_df.isna().any(axis=1)
+        reducer.fit(corner_df.loc[~nan_mask, [c for c in corner_df if c != "agn"]])
+        embedding = reducer.embedding_
+
+        agn_mask = corner_df.loc[~nan_mask, "agn"]
+        fig, ax = plt.subplots()
+        ax.scatter(
+            embedding[agn_mask, 0],
+            embedding[agn_mask, 1],
+            c="C1",
+            label="AGN",
+        )
+        ax.scatter(
+            embedding[~agn_mask, 0],
+            embedding[~agn_mask, 1],
+            c="C0",
+            label="non-AGN",
+        )
+        ax.legend()
+        fn = self._path / f"umap.{self.file_format}"
         fig.savefig(fn)
         plt.close()
 
