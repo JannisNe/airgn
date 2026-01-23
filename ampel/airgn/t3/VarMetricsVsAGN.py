@@ -108,6 +108,10 @@ class VarMetricsVsAGN(AbsPhotoT3Unit):
 
         var_names = []
         for m in self.metric_names:
+            # exclude npoints because it's not a real variability metric
+            # and has not enough variance so the KDE will collapse
+            if m.startswith("npoints"):
+                continue
             meta = self._metric_meta[m]
             cols = (
                 [f"{m}_w{i}_fluxdensity" for i in range(1, 3)]
