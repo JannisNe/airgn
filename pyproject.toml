@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "timewise[ampel,dev]  @ file:///home/necker/Software/timewise",
     "jupyterlab (>=4.4.6,<5.0.0)",
@@ -15,6 +15,8 @@ dependencies = [
     "rubin-sim (>=2.6.0,<3.0.0)",
     "ligo-skymap (>=2.5.3,<3.0.0)",
     "seaborn (>=0.13.2,<0.14.0)",
+    "umap-learn (>=0.5.11,<0.6.0)",
+    "coverage (>=7.0.0,<8.0.0)",
 ]
 
 
