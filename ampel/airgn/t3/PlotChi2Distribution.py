@@ -145,12 +145,12 @@ class PlotChi2Distribution(AbsPhotoT3Unit, NPointsIterator):
         bins = list(np.linspace(0, self.upper_lim, 100)) + [1e9]
         x = np.linspace(0, self.upper_lim, 1000)
 
+        # set up result structure
+        res = {}
+
         for res_df, s, e in self.iter_npoints_binned(df):
             fig, axs = plt.subplots(nrows=2, sharex="all", sharey="all")
             n1 = int((s + e) / 2)
-
-            # set up result structure
-            res = {}
 
             for i, u in enumerate(cols):
                 b = u[:2]
