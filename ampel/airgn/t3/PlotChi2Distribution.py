@@ -258,10 +258,12 @@ class PlotChi2Distribution(AbsPhotoT3Unit, NPointsIterator):
                     )
                     ax.set_xlim(0, self.upper_lim)
 
+                    if any(m):
+                        med_n1 = int(df.loc[m, f"npoints_{b}_{c}"].median())
+                        self.add_expected_dist(ax, x, med_n1, "stacked")
+
             xlim = axs[0, 0].get_xlim()
             x = np.linspace(*xlim, 100)
-            for ax in axs.flatten():
-                self.add_expected_dist(ax, x, "stacked")
 
             axs[0][0].legend(ncols=3, bbox_to_anchor=[1, 1.05], loc="lower center")
             fig.supxlabel("Reduced Chi-Squared")
