@@ -230,11 +230,13 @@ def pearsons_r(
     t2: float_arr,
 ):
     assert len(f1) == len(f2), "Both flux arrays must have same length!"
-    mean1 = np.average(f1, weights=1 / fe1**2)
-    diff1 = f1 - mean1
-    mean2 = np.average(f2, weights=1 / fe2**2)
-    diff2 = f2 - mean2
-    return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
+    if len(f1) > 0:
+        mean1 = np.average(f1, weights=1 / fe1**2)
+        diff1 = f1 - mean1
+        mean2 = np.average(f2, weights=1 / fe2**2)
+        diff2 = f2 - mean2
+        return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
+    return None
 
 
 @T2CalculateVarMetrics.register(
@@ -249,12 +251,14 @@ def pearsons_r_log(
     t2: float_arr,
 ):
     assert len(f1) == len(f2), "Both flux arrays must have same length!"
-    both_detections = (f1 > 0) & (f2 > 0)
-    N = sum(both_detections)
-    m1 = 2.5 * np.log10(f1[both_detections])
-    m2 = 2.5 * np.log10(f2[both_detections])
-    mean1 = sum(m1) / N
-    mean2 = sum(m2) / N
-    diff1 = m1 - mean1
-    diff2 = m2 - mean2
-    return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
+    if len(f1) > 0:
+        both_detections = (f1 > 0) & (f2 > 0)
+        N = sum(both_detections)
+        m1 = 2.5 * np.log10(f1[both_detections])
+        m2 = 2.5 * np.log10(f2[both_detections])
+        mean1 = sum(m1) / N
+        mean2 = sum(m2) / N
+        diff1 = m1 - mean1
+        diff2 = m2 - mean2
+        return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
+    return None
