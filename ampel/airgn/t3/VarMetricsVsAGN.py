@@ -136,7 +136,13 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         corner_df[pl] = vals
 
                 if self.corner:
-                    fig = sns.pairplot(corner_df, kind="kde", corner=True, hue="agn")
+                    fig = sns.pairplot(
+                        corner_df,
+                        kind="kde",
+                        corner=True,
+                        hue="agn",
+                        plot_kws={"levels": [0.5, 0.68, 0.9, 0.99]},
+                    )
                     fn = self._path / f"bin_{s}_{e}" / f"corner.{self.file_format}"
                     fn.parent.mkdir(parents=True, exist_ok=True)
                     fig.savefig(fn)
