@@ -1,6 +1,7 @@
 from collections.abc import Generator
 from itertools import pairwise
 
+from matplotlib.colors import Normalize
 from pymongo import MongoClient
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -44,6 +45,8 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
     file_format: str = "pdf"
     metric_names: list[str] = list(T2CalculateVarMetrics._metrics.keys())
     n_point_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
+    corner: bool = True
+    umap: bool = True
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -73,6 +76,11 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
             if not latest_body:
                 continue
             ires = dict(latest_body)
+
+            # do not include objects that are outside the specified range of npoint bins
+            if not all([self.is_in_range(ires[c]) for c in self.n_point_cols]):
+                continue
+
             ires.update(input_res)
             mask = str(bin(int(input_res["AGN_MASKBITS"]))).replace("0b", "")[::-1]
             ires["decoded_agn_mask"] = mask
@@ -95,68 +103,76 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- corner plot ---------------------- #
 
-        for res_bin, s, e in self.iter_npoints_binned(res):
-            corner_df = pd.DataFrame(index=res_bin.index)
-            corner_df["agn"] = res_bin["agn"]
-            for m in self.metric_names:
-                # exclude npoints because it's not a real variability metric
-                # and has not enough variance so the KDE will collapse
-                if m.startswith("npoints"):
-                    continue
-                meta = self._metric_meta[m]
-                cols = (
-                    [f"{m}_w{i}_fluxdensity" for i in range(1, 3)]
-                    if not meta["multiband"]
-                    else [f"{m}_fluxdensity"]
-                )
-                pn = meta["pretty_name"]
-                lim = meta["range"]
-                for i, col in enumerate(cols):
-                    if meta["log"]:
-                        pl = r"$\log_{10}($" + pn + "$)$"
-                        vals = np.log10(res_bin[col])
-                    else:
-                        pl = pn
-                        vals = res_bin[col]
-                    if not meta["multiband"]:
-                        pl += f" W{i + 1}"
-                    m = (vals > lim[0]) & (vals < lim[1])
-                    pd.options.mode.chained_assignment = None
-                    vals.loc[~m] = np.nan
-                    pd.options.mode.chained_assignment = "warn"
-                    corner_df[pl] = vals
+        if self.corner or self.umap:
+            for res_bin, s, e in self.iter_npoints_binned(res):
+                corner_df = pd.DataFrame(index=res_bin.index)
+                corner_df["agn"] = res_bin["agn"]
+                for m in self.metric_names:
+                    # exclude npoints because it's not a real variability metric
+                    # and has not enough variance so the KDE will collapse
+                    if m.startswith("npoints"):
+                        continue
+                    meta = self._metric_meta[m]
+                    cols = (
+                        [f"{m}_w{i}_fluxdensity" for i in range(1, 3)]
+                        if not meta["multiband"]
+                        else [f"{m}_fluxdensity"]
+                    )
+                    pn = meta["pretty_name"]
+                    lim = meta["range"]
+                    for i, col in enumerate(cols):
+                        if meta["log"]:
+                            pl = r"$\log_{10}($" + pn + "$)$"
+                            vals = np.log10(res_bin[col])
+                        else:
+                            pl = pn
+                            vals = res_bin[col]
+                        if not meta["multiband"]:
+                            pl += f" W{i + 1}"
+                        m = (vals > lim[0]) & (vals < lim[1])
+                        pd.options.mode.chained_assignment = None
+                        vals.loc[~m] = np.nan
+                        pd.options.mode.chained_assignment = "warn"
+                        corner_df[pl] = vals
 
-            fig = sns.pairplot(corner_df, kind="kde", corner=True, hue="agn")
-            fn = self._path / f"bin_{s}_{e}" / f"corner.{self.file_format}"
-            fn.parent.mkdir(parents=True, exist_ok=True)
-            fig.savefig(fn)
-            plt.close()
+                if self.corner:
+                    fig = sns.pairplot(corner_df, kind="kde", corner=True, hue="agn")
+                    fn = self._path / f"bin_{s}_{e}" / f"corner.{self.file_format}"
+                    fn.parent.mkdir(parents=True, exist_ok=True)
+                    fig.savefig(fn)
+                    plt.close()
 
-            # ---------------------- UMAP ---------------------- #
+                # ---------------------- UMAP ---------------------- #
 
-            reducer = umap.UMAP(random_state=42)
-            nan_mask = corner_df.isna().any(axis=1)
-            reducer.fit(corner_df.loc[~nan_mask, [c for c in corner_df if c != "agn"]])
-            embedding = reducer.embedding_
+                if self.umap:
+                    reducer = umap.UMAP(random_state=42)
+                    nan_mask = corner_df.isna().any(axis=1)
+                    reducer.fit(
+                        corner_df.loc[~nan_mask, [c for c in corner_df if c != "agn"]]
+                    )
+                    embedding = reducer.embedding_
+                    agn_mask = corner_df.loc[~nan_mask, "agn"]
 
-            agn_mask = corner_df.loc[~nan_mask, "agn"]
-            fig, ax = plt.subplots()
-            ax.scatter(
-                embedding[agn_mask, 0],
-                embedding[agn_mask, 1],
-                c="C1",
-                label="AGN",
-            )
-            ax.scatter(
-                embedding[~agn_mask, 0],
-                embedding[~agn_mask, 1],
-                c="C0",
-                label="non-AGN",
-            )
-            ax.legend()
-            fn = self._path / f"bin_{s}_{e}" / f"umap.{self.file_format}"
-            fig.savefig(fn)
-            plt.close()
+                    bins = [np.linspace(np.min(e), np.max(e), 20) for e in embedding.T]
+                    agn_h, _, _ = np.histogram2d(*embedding[agn_mask].T, bins=bins)
+                    non_agn_h, _, _ = np.histogram2d(*embedding[~agn_mask].T, bins=bins)
+                    rh = agn_h / (non_agn_h + agn_h)
+                    X, Y = np.meshgrid(*bins)
+
+                    fig, ax = plt.subplots()
+                    ax.pcolormesh(X, Y, rh, cmap="RdBu", vmin=0, vmax=1)
+                    norm = Normalize(vmin=0, vmax=1)
+                    fig.colorbar(
+                        ax=ax,
+                        location="right",
+                        mappable=plt.cm.ScalarMappable(norm=norm, cmap="RdBu"),
+                        label="purity",
+                        extend="both",
+                        pad=0.1,
+                    )
+                    fn = self._path / f"bin_{s}_{e}" / f"umap_2dhist.{self.file_format}"
+                    fig.savefig(fn)
+                    plt.close()
 
         # ---------------------- histograms ---------------------- #
 
