@@ -141,7 +141,10 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         kind="kde",
                         corner=True,
                         hue="agn",
-                        plot_kws={"levels": [0.5, 0.68, 0.9, 0.99]},
+                        plot_kws={
+                            "levels": [0.5, 0.68, 0.9, 0.99],
+                            "linestyles": ["-", "--", "-.", ":"],
+                        },
                     )
                     fn = self._path / f"bin_{s}_{e}" / f"corner.{self.file_format}"
                     fn.parent.mkdir(parents=True, exist_ok=True)
@@ -159,26 +162,63 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     embedding = reducer.embedding_
                     agn_mask = corner_df.loc[~nan_mask, "agn"]
 
-                    bins = [np.linspace(np.min(e), np.max(e), 20) for e in embedding.T]
+                    bins = [np.linspace(np.min(e), np.max(e), 40) for e in embedding.T]
                     agn_h, _, _ = np.histogram2d(*embedding[agn_mask].T, bins=bins)
                     non_agn_h, _, _ = np.histogram2d(*embedding[~agn_mask].T, bins=bins)
-                    rh = agn_h / (non_agn_h + agn_h)
+                    agn_h_rel = agn_h / np.nansum(agn_h)
+                    non_agn_h_rel = non_agn_h / np.nansum(non_agn_h)
+                    rh = agn_h_rel / non_agn_h_rel
+                    rh[non_agn_h_rel == 0] = np.nanmax(rh)
+                    p = agn_h / (agn_h + non_agn_h)
                     X, Y = np.meshgrid(*bins)
 
-                    fig, ax = plt.subplots()
-                    ax.pcolormesh(X, Y, rh, cmap="RdBu", vmin=0, vmax=1)
-                    norm = Normalize(vmin=0, vmax=1)
-                    fig.colorbar(
-                        ax=ax,
-                        location="right",
-                        mappable=plt.cm.ScalarMappable(norm=norm, cmap="RdBu"),
-                        label="purity",
-                        extend="both",
-                        pad=0.1,
-                    )
-                    fn = self._path / f"bin_{s}_{e}" / f"umap_2dhist.{self.file_format}"
-                    fig.savefig(fn)
-                    plt.close()
+                    itr = [
+                        (
+                            agn_h_rel,
+                            "Reds",
+                            None,
+                            None,
+                            "agn_distribution",
+                            "percentage",
+                        ),
+                        (
+                            non_agn_h_rel,
+                            "Blues",
+                            None,
+                            None,
+                            "non_agn_distribution",
+                            "percentage",
+                        ),
+                        (p, "viridis", None, None, "purity", "purity"),
+                        (
+                            np.log10(rh),
+                            "RdBu_r",
+                            -1,
+                            1,
+                            "relative_efficiency",
+                            r"$\log_{10}(relative efficiency)$",
+                        ),
+                    ]
+
+                    for i, (h, cmap, vmin, vmax, fext, l) in enumerate(itr):
+                        fig, ax = plt.subplots()
+                        ax.pcolormesh(X, Y, h, cmap=cmap, vmin=vmin, vmax=vmax)
+                        norm = Normalize(vmin=vmin, vmax=vmax)
+                        fig.colorbar(
+                            ax=ax,
+                            location="right",
+                            mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
+                            label=l,
+                            extend="both",
+                            pad=0.1,
+                        )
+                        fn = (
+                            self._path
+                            / f"bin_{s}_{e}"
+                            / f"umap_2d{fext}.{self.file_format}"
+                        )
+                        fig.savefig(fn)
+                        plt.close()
 
         # ---------------------- histograms ---------------------- #
 
