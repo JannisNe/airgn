@@ -207,7 +207,7 @@ def inverse_von_neumann_ratio(
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"$\sigma^2_\mathrm{rms}$", multiband=False
+    log=True, range=(-2, 1), pretty_name=r"$\sigma^2_\mathrm{rms}$", multiband=False
 )
 def normalized_excess_variance(
     f: float_arr, fe: float_arr, t: float_arr
