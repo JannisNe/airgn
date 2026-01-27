@@ -358,7 +358,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     fn = (
                         self._path
                         / f"bin_{s}_{e}"
-                        / f"bin_{s}_{e}_{ix[0]}.{self.file_format}"
+                        / f"{metric_name}_bin_{s}_{e}_{ix[0]}.{self.file_format}"
                     )
                     self.logger.info(f"saving {fn}")
                     fig.tight_layout()
