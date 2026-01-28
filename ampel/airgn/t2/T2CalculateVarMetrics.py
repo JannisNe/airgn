@@ -265,3 +265,26 @@ def pearsons_r_log(
         diff2 = m2 - mean2
         return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
     return None
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-1, 1), pretty_name=r"$L$", multiband=True
+)
+def stetson_index(
+    f1: float_arr,
+    fe1: float_arr,
+    t1: float_arr,
+    f2: float_arr,
+    fe2: float_arr,
+    t2: float_arr,
+):
+    assert len(f1) == len(f2), "Both flux arrays must have same length!"
+    if (n := len(f1)) > 0:
+        mean1 = np.average(f1, weights=1 / fe1**2)
+        diff1 = f1 - mean1
+        mean2 = np.average(f2, weights=1 / fe2**2)
+        diff2 = f2 - mean2
+        f = n / (n - 1)
+        p_k = diff1 * diff2 * f / fe1 / fe2
+        return sum(np.sign(p_k) * np.sqrt(np.abs(p_k)))
+    return None
