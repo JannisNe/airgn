@@ -101,7 +101,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         res["wise_agn"] = wise_agn_mask
         res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
 
-        # ---------------------- corner plot ---------------------- #
+        # ---------------------- umap and corner plot ---------------------- #
 
         if self.corner or self.umap:
             for res_bin, s, e in self.iter_npoints_binned(res):
@@ -135,23 +135,10 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         pd.options.mode.chained_assignment = "warn"
                         corner_df[pl] = vals
 
-                if self.corner:
-                    fig = sns.pairplot(
-                        corner_df,
-                        kind="kde",
-                        corner=True,
-                        hue="agn",
-                        plot_kws={
-                            "levels": [0.5, 0.68, 0.9, 0.99],
-                            "linestyles": ["-", "--", "-.", ":"],
-                        },
-                    )
-                    fn = self._path / f"bin_{s}_{e}" / f"corner.{self.file_format}"
-                    fn.parent.mkdir(parents=True, exist_ok=True)
-                    fig.savefig(fn)
-                    plt.close()
-
                 # ---------------------- UMAP ---------------------- #
+
+                bindir = self._path / f"bin_{s}_{e}"
+                bindir.mkdir(parents=True, exist_ok=True)
 
                 if self.umap:
                     reducer = umap.UMAP(random_state=42)
@@ -162,14 +149,38 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     embedding = reducer.embedding_
                     agn_mask = corner_df.loc[~nan_mask, "agn"]
 
+                    # make bins in feature space
                     bins = [np.linspace(np.min(e), np.max(e), 40) for e in embedding.T]
+
+                    # calculate 2d histograms for AGN and non-AGN
                     agn_h, _, _ = np.histogram2d(*embedding[agn_mask].T, bins=bins)
                     non_agn_h, _, _ = np.histogram2d(*embedding[~agn_mask].T, bins=bins)
+
+                    # check their distributions with relative histograms
                     agn_h_rel = agn_h / np.nansum(agn_h)
                     non_agn_h_rel = non_agn_h / np.nansum(non_agn_h)
+
+                    # define a relative efficiency
                     rh = agn_h_rel / non_agn_h_rel
                     rh[non_agn_h_rel == 0] = np.nanmax(rh)
+
+                    # purity histogram
                     p = agn_h / (agn_h + non_agn_h)
+
+                    # come up with a 90% contour by weighting the AGN distribution by the purity
+                    weighted_agn_dist = agn_h_rel * p
+                    pdist = weighted_agn_dist / np.nansum(weighted_agn_dist)
+
+                    flat = pdist.ravel()
+                    order = np.argsort(flat)[::-1]
+                    flat_sorted = flat[order]
+
+                    # Map from density → cumulative probability
+                    containment = np.empty_like(flat_sorted)
+                    containment[order] = np.cumsum(flat_sorted)
+
+                    containment = containment.reshape(pdist.shape)
+
                     X, Y = np.meshgrid(*bins)
 
                     itr = [
@@ -198,12 +209,21 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                             "relative_efficiency",
                             r"$\log_{10}(relative efficiency)$",
                         ),
+                        (
+                            weighted_agn_dist,
+                            "Reds",
+                            None,
+                            None,
+                            "weighted_agn_distribution",
+                            "percentage",
+                        ),
+                        (containment, "viridis", 0, 1, "contours", "containment level"),
                     ]
 
                     for i, (h, cmap, vmin, vmax, fext, l) in enumerate(itr):
                         fig, ax = plt.subplots()
-                        ax.pcolormesh(X, Y, h, cmap=cmap, vmin=vmin, vmax=vmax)
                         norm = Normalize(vmin=vmin, vmax=vmax)
+                        ax.pcolormesh(X, Y, h, cmap=cmap, norm=norm)
                         fig.colorbar(
                             ax=ax,
                             location="right",
@@ -212,13 +232,26 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                             extend="both",
                             pad=0.1,
                         )
-                        fn = (
-                            self._path
-                            / f"bin_{s}_{e}"
-                            / f"umap_2d{fext}.{self.file_format}"
-                        )
+                        fn = bindir / f"umap_2d{fext}.{self.file_format}"
                         fig.savefig(fn)
                         plt.close()
+
+                # ---------------------- corner ---------------------- #
+
+                if self.corner:
+                    fig = sns.pairplot(
+                        corner_df,
+                        kind="kde",
+                        corner=True,
+                        hue="agn",
+                        plot_kws={
+                            "levels": [0.5, 0.68, 0.9, 0.99],
+                            "linestyles": ["-", "--", "-.", ":"],
+                        },
+                    )
+                    fn = bindir / f"corner.{self.file_format}"
+                    fig.savefig(fn)
+                    plt.close()
 
         # ---------------------- histograms ---------------------- #
 
