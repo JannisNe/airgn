@@ -24,7 +24,7 @@ task:
                   - unit: T2StackVisits
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 100000
+    iter_max: 1000000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -45,7 +45,7 @@ task:
 
 - config:
     log_profile: default
-  multiplier: 10
+  multiplier: 1
   title: t2
   unit: T2Worker
 
@@ -67,7 +67,7 @@ task:
               - T2DOC
               - STOCK
             channel: "wise"
-        chunk_size: 100000
+        chunk_size: 10000
     stage:
       unit: T3SimpleStager
       config:
@@ -76,3 +76,10 @@ task:
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn
               input_mongo_db_name: desi_agn_vac
+              file_format: "pdf"
+              n_points_bins: [25, 30]
+              metric_names:
+                - pearsons_r
+                - red_chi2
+                - normalized_excess_variance
+                - inverse_von_neumann_ratio
