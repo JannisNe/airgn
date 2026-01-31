@@ -128,7 +128,7 @@ task:
 
 - config:
     log_profile: prod
-  multiplier: 10
+  multiplier: 1
   title: t2
   unit: T2Worker
 
@@ -163,12 +163,11 @@ task:
         execute:
           - unit: PlotChi2Distribution
             config:
-              base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots_dr10_new/chi2_full
+              base_path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots_dr10_new/chi2
               input_mongodb_name: nedlvs
               cumulative: true
               upper_lim: 6
-              n1: 15
-              n2: 20
+              n2: 12
           - unit: PlotAllWISEvsNEOWISE
             config:
               path: $AIRGNDATA/legacy_survey/legacy_survey_dr10/sweep0/plots_dr10_new/allwise_vs_neowise.png
