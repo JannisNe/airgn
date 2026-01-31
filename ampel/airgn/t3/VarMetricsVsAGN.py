@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from itertools import pairwise
 
 from matplotlib.colors import Normalize
 from pymongo import MongoClient
@@ -16,7 +15,7 @@ from ampel.view.TransientView import TransientView
 
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
-from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics
+from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics, MetricMeta
 from ampel.util.NPointsIterator import NPointsIterator
 
 
@@ -26,6 +25,9 @@ WISE_AB_OFFSET = {
     "W1": 2.699,
     "W2": 3.339,
 }
+
+
+ContainmentMeta = MetricMeta(log=False, range=(0, 1), multiband=True, pretty_name="CL")
 
 
 def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
@@ -56,6 +58,9 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
         self._metric_meta = T2CalculateVarMetrics._metric_meta
+        if self.umap:
+            self._metric_meta["containment"] = ContainmentMeta
+            self.metric_names.append("containment")
 
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
@@ -110,7 +115,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                 for m in self.metric_names:
                     # exclude npoints because it's not a real variability metric
                     # and has not enough variance so the KDE will collapse
-                    if m.startswith("npoints"):
+                    if m.startswith("npoints") or m.startswith("containment"):
                         continue
                     meta = self._metric_meta[m]
                     cols = (
@@ -177,9 +182,26 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
 
                     # Map from density → cumulative probability
                     containment = np.empty_like(flat_sorted)
-                    containment[order] = np.cumsum(flat_sorted)
+                    containment[order] = np.nancumsum(flat_sorted)
 
                     containment = containment.reshape(pdist.shape)
+
+                    # map containment back to original points
+                    xbin = np.digitize(embedding[:, 0], bins[0]) - 1
+                    ybin = np.digitize(embedding[:, 1], bins[1]) - 1
+
+                    nx, ny = containment.shape
+                    xbin = np.clip(xbin, 0, nx - 1)
+                    ybin = np.clip(ybin, 0, ny - 1)
+                    corner_df[ContainmentMeta["pretty_name"]] = np.nan
+                    corner_df.loc[~nan_mask, ContainmentMeta["pretty_name"]] = (
+                        containment[xbin, ybin]
+                    )
+
+                    # also map back to original results data to make histograms later
+                    res.loc[corner_df.index, "containment_fluxdensity"] = corner_df[
+                        ContainmentMeta["pretty_name"]
+                    ]
 
                     X, Y = np.meshgrid(*bins)
 
