@@ -195,7 +195,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     ybin = np.clip(ybin, 0, ny - 1)
                     corner_df[ContainmentMeta["pretty_name"]] = np.nan
                     corner_df.loc[~nan_mask, ContainmentMeta["pretty_name"]] = (
-                        containment[xbin, ybin]
+                        1 - containment[xbin, ybin]
                     )
 
                     # also map back to original results data to make histograms later
