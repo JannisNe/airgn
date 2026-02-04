@@ -49,6 +49,7 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
         StateT2Dependency[Literal["T2StackVisits", "T2MaggyToFluxDensity"]]
     ]
     metric_names: list[str] = []
+    mag: bool = False
 
     _metrics = {}
     _metric_meta = {}
@@ -130,6 +131,12 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
                 f = sel_data[f"w{i}{keys.MEAN}{key}"].values
                 fe = sel_data[f"w{i}{key}{keys.RMS}"].values
                 t = sel_data[self._mjd_colname[i]].values
+
+                # use logarithmic fluxes as magnitude representation
+                if self.mag:
+                    fe = 2.5 / np.log(10) * fe / f
+                    f = -2.5 * np.log10(f)
+
                 for metric_name in self._single_band_metric_names:
                     res[f"{metric_name}_w{i}_{key}"] = self._metrics[metric_name](
                         f, fe, t
@@ -152,6 +159,12 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
             f2 = sel_data[f"w2{keys.MEAN}{key}"].values
             fe2 = sel_data[f"w2{key}{keys.RMS}"].values
             t2 = sel_data[self._mjd_colname[2]].values
+
+            if self.mag:
+                fe1 = 2.5 / np.log(10) * fe1 / f1
+                f1 = -2.5 * np.log10(f1)
+                fe2 = 2.5 / np.log(10) * fe2 / f2
+                f2 = -2.5 * np.log10(f2)
 
             for metric_name in self._multi_band_metric_names:
                 res[f"{metric_name}_{key}"] = self._metrics[metric_name](
@@ -238,31 +251,6 @@ def pearsons_r(
         diff1 = f1 - mean1
         mean2 = np.average(f2, weights=1 / fe2**2)
         diff2 = f2 - mean2
-        return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
-    return None
-
-
-@T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"$r_\mathrm{log}$", multiband=True
-)
-def pearsons_r_log(
-    f1: float_arr,
-    fe1: float_arr,
-    t1: float_arr,
-    f2: float_arr,
-    fe2: float_arr,
-    t2: float_arr,
-):
-    assert len(f1) == len(f2), "Both flux arrays must have same length!"
-    if len(f1) > 0:
-        both_detections = (f1 > 0) & (f2 > 0)
-        N = sum(both_detections)
-        m1 = 2.5 * np.log10(f1[both_detections])
-        m2 = 2.5 * np.log10(f2[both_detections])
-        mean1 = sum(m1) / N
-        mean2 = sum(m2) / N
-        diff1 = m1 - mean1
-        diff2 = m2 - mean2
         return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
     return None
 
