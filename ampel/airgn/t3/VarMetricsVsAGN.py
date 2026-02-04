@@ -42,6 +42,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
 
     path: str
     input_mongo_db_name: str
+    mag: bool = False
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
     file_format: str = "pdf"
@@ -71,7 +72,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         n_iter = 0
         for view in gen:
             input_res = None
-            for t2 in view.get_t2_views("T2CalculateVarMetrics"):
+            for t2 in view.get_t2_views("T2CalculateVarMetrics", code=0):
                 input_res = self._col.find_one({"orig_id": t2.stock})
                 break
             if not input_res:
