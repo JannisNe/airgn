@@ -13,11 +13,11 @@ task:
     compiler_opts: TiCompilerOptions
     directives:
     - channel: wise
+      filter:
+        unit: TimewiseFilter
+        config:
+          n_visits: 25
       ingest:
-        filter:
-          T1TimewiseFilter:
-            config:
-              n_visits: 25
         mux:
           combine:
           - state_t2:
@@ -26,6 +26,7 @@ task:
               config:
                 t2_dependency:
                   - unit: T2StackVisits
+                mag: false
             - unit: T2CalculateVarMetrics
               config:
                 t2_dependency:
@@ -33,7 +34,7 @@ task:
                 mag: true
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 10000
+    iter_max: 100000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -83,7 +84,13 @@ task:
         execute:
           - unit: VarMetricsVsAGN
             config:
-              path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn_bright
+              path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn_bright_flux
+              mag: false
               input_mongo_db_name: desi_agn_vac
-              file_format: "pdf"
               n_points_bins: [25, 30]
+          - unit: VarMetricsVsAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn_bright_mag
+              mag: true
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 25, 30 ]
