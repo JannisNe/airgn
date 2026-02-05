@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import cast
 
 from matplotlib.colors import Normalize
 from pymongo import MongoClient
@@ -73,6 +74,8 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         for view in gen:
             input_res = None
             for t2 in view.get_t2_views("T2CalculateVarMetrics", code=0):
+                if not (t2.config["mag"] == self.mag):
+                    continue
                 input_res = self._col.find_one({"orig_id": t2.stock})
                 break
             if not input_res:
