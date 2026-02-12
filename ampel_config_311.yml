@@ -1,6 +1,6 @@
 build:
-  date: 23/01/2026
-  time: '16:48:48'
+  date: 06/02/2026
+  time: 08:52:18
   by: necker
   conda: airgn311
   stop_on_errors: 0
@@ -13,11 +13,11 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a8
   ampel-core: 0.10.6a21
-  ampel-plot: 0.9.1
-  ampel-alerts: 0.10.4a0
-  ampel-photometry: 0.10.2a1
-  timewise: 1.0.0a9
   airgn: 0.1.0
+  ampel-plot: 0.9.1
+  ampel-photometry: 0.10.2a1
+  ampel-alerts: 0.10.4a0
+  timewise: 1.0.0a9
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -941,7 +941,7 @@ unit:
     - urllib3
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/ingest/TiMongoMuxer.py
+    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiMongoMuxer.py
   BasicMultiFilter:
     fqn: ampel.alert.filter.BasicMultiFilter
     base:
@@ -1256,7 +1256,7 @@ unit:
     - AbsT3Unit
     - LogicalUnit
     - NPointsIterator
-    xxh64: 6820081487339698751
+    xxh64: 16418100228709527937
     dependencies:
     - annotated_types
     - astropy
@@ -1299,7 +1299,7 @@ unit:
     - T1HDBSCAN
     - AbsT1CombineUnit
     - LogicalUnit
-    xxh64: 7172513885837246157
+    xxh64: 11923040677247207213
     dependencies:
     - annotated_types
     - astropy
@@ -1338,7 +1338,7 @@ unit:
     - urllib3
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/t1/T1HDBSCAN.py
+    source: /home/necker/Software/timewise/ampel/timewise/t1/T1HDBSCAN.py
   T1PhotoRetroCombiner:
     fqn: ampel.t1.T1PhotoRetroCombiner
     base:
@@ -1476,7 +1476,7 @@ unit:
     - AbsTiedCustomStateT2Unit
     - AbsTiedT2Unit
     - LogicalUnit
-    xxh64: 5124060475721188905
+    xxh64: 10568418725422162572
     dependencies:
     - annotated_types
     - cloudpickle
@@ -1556,7 +1556,7 @@ unit:
     - typing_inspection
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/t2/T2StackVisits.py
+    source: /home/necker/Software/timewise/ampel/timewise/t2/T2StackVisits.py
   T3BufferExporterUnit:
     fqn: ampel.cli.T3BufferExporterUnit
     base:
@@ -1590,6 +1590,59 @@ unit:
     distrib: ampel-core
     version: 0.10.6a21
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/t3/unit/T3LogAggregatedStocks.py
+  T3WriteStackedLightcurves:
+    fqn: ampel.airgn.t3.T3WriteStackedLightcurves
+    base:
+    - T3WriteStackedLightcurves
+    - AbsPhotoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 4253038183069356770
+    dependencies:
+    - annotated_types
+    - asttokens
+    - cffi
+    - charset_normalizer
+    - cloudpickle
+    - comm
+    - coverage
+    - cryptography
+    - cycler
+    - decorator
+    - defusedxml
+    - executing
+    - ipywidgets
+    - jedi
+    - joblib
+    - kiwisolver
+    - llvmlite
+    - matplotlib
+    - numba
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - parso
+    - prompt_toolkit
+    - psutil
+    - pure_eval
+    - pyarrow
+    - pycparser
+    - pydantic_core
+    - pynndescent
+    - pyparsing
+    - pytz
+    - scipy
+    - seaborn
+    - stack_data
+    - threadpoolctl
+    - tqdm
+    - traitlets
+    - typing_inspection
+    - wcwidth
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t3/T3WriteStackedLightcurves.py
   T4DemoSavePlot:
     fqn: ampel.demo.T4DemoSavePlot
     base:
@@ -1625,14 +1678,14 @@ unit:
     - typing_inspection
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/ingest/TiDataPointShaper.py
+    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiDataPointShaper.py
   TimewiseFilter:
     fqn: ampel.timewise.t1.TimewiseFilter
     base:
     - TimewiseFilter
     - AbsAlertFilter
     - LogicalUnit
-    xxh64: 3143678810639488032
+    xxh64: 15746686852454742180
     dependencies:
     - annotated_types
     - cloudpickle
@@ -1652,7 +1705,7 @@ unit:
     - typing_inspection
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/t1/TimewiseFilter.py
+    source: /home/necker/Software/timewise/ampel/timewise/t1/TimewiseFilter.py
   VarMetricsVsAGN:
     fqn: ampel.airgn.t3.VarMetricsVsAGN
     base:
@@ -1661,7 +1714,7 @@ unit:
     - AbsT3Unit
     - LogicalUnit
     - NPointsIterator
-    xxh64: 8142061064444784144
+    xxh64: 13254774421791533391
     dependencies:
     - annotated_types
     - astropy
@@ -2179,6 +2232,34 @@ unit:
     distrib: ampel-core
     version: 0.10.6a21
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/template/PeriodicSummaryT3.py
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
+    base:
+    - PPSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 252807104807642313
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/PPSFilter.py
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
+    base:
+    - ULSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 14523103307642547590
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/ULSFilter.py
   TimewiseAlertSimulator:
     fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
     base:
@@ -2212,7 +2293,7 @@ unit:
     fqn: ampel.util.NPointsIterator
     base:
     - NPointsIterator
-    xxh64: 12697040164660288763
+    xxh64: 10383223017690701110
     dependencies:
     - cloudpickle
     - numexpr
@@ -2285,34 +2366,6 @@ unit:
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
-  PPSFilter:
-    fqn: ampel.aux.PPSFilter
-    base:
-    - PPSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 252807104807642313
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/PPSFilter.py
-  ULSFilter:
-    fqn: ampel.aux.ULSFilter
-    base:
-    - ULSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 14523103307642547590
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/ULSFilter.py
   FilteringAlertSupplier:
     fqn: ampel.alert.FilteringAlertSupplier
     base:
@@ -2438,6 +2491,22 @@ unit:
     distrib: ampel-alerts
     version: 0.10.4a0
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/template/EasyAlertConsumerTemplate.py
+  TiCompilerOptions:
+    fqn: ampel.timewise.ingest.TiCompilerOptions
+    base:
+    - TiCompilerOptions
+    - CompilerOptions
+    - AuxAliasableModel
+    - AmpelBaseModel
+    xxh64: 12962718940109995425
+    dependencies:
+    - annotated_types
+    - packaging
+    - pydantic_core
+    - typing_inspection
+    distrib: timewise
+    version: 1.0.0a9
+    source: /home/necker/Software/timewise/ampel/timewise/ingest/TiCompilerOptions.py
   TimewiseAlertSupplier:
     fqn: ampel.timewise.alert.TimewiseAlertSupplier
     base:
@@ -2460,7 +2529,7 @@ unit:
     - typing_inspection
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/alert/TimewiseAlertSupplier.py
+    source: /home/necker/Software/timewise/ampel/timewise/alert/TimewiseAlertSupplier.py
   TimewiseFileLoader:
     fqn: ampel.timewise.alert.load.TimewiseFileLoader
     base:
@@ -2498,23 +2567,7 @@ unit:
     - urllib3
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/alert/load/TimewiseFileLoader.py
-  TiCompilerOptions:
-    fqn: ampel.timewise.ingest.TiCompilerOptions
-    base:
-    - TiCompilerOptions
-    - CompilerOptions
-    - AuxAliasableModel
-    - AmpelBaseModel
-    xxh64: 12962718940109995425
-    dependencies:
-    - annotated_types
-    - packaging
-    - pydantic_core
-    - typing_inspection
-    distrib: timewise
-    version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/ingest/TiCompilerOptions.py
+    source: /home/necker/Software/timewise/ampel/timewise/alert/load/TimewiseFileLoader.py
   AuxDiagnosticPlotter:
     fqn: ampel.timewise.util.AuxDiagnosticPlotter
     base:
@@ -2556,7 +2609,7 @@ unit:
     - urllib3
     distrib: timewise
     version: 1.0.0a9
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/util/AuxDiagnosticPlotter.py
+    source: /home/necker/Software/timewise/ampel/timewise/util/AuxDiagnosticPlotter.py
 process:
   t0: {}
   t1: {}
@@ -2609,9 +2662,9 @@ environment:
     annotated_types: 0.7.0
     packaging: '26.0'
     pydantic_core: 2.41.5
-    rich: 14.2.0
+    rich: 14.3.2
     typing_inspection: 0.4.2
-    cryptography: 46.0.3
+    cryptography: 46.0.4
     prometheus_client: 0.24.1
     schedule: 1.2.2
     mongomock: 4.3.0
@@ -2623,44 +2676,44 @@ environment:
     numpy: 2.3.5
     pandas: 2.3.3
     platformdirs: 4.5.1
-    psutil: 7.2.1
+    psutil: 7.2.2
     pyarrow: 23.0.0
     scipy: 1.17.0
-    astropy: 7.2.0
-    astropy_iers_data: 0.2026.1.19.0.42.31
     asttokens: 3.0.1
     cffi: 2.0.0
     comm: 0.2.3
-    coverage: 7.13.1
+    coverage: 7.13.3
     cycler: 0.12.1
     decorator: 5.2.1
     defusedxml: 0.7.1
     executing: 2.2.1
-    google_crc32c: 1.8.0
-    idna: '3.11'
     ipywidgets: 8.1.8
     jedi: 0.19.2
     joblib: 1.5.3
     kiwisolver: 1.4.9
     llvmlite: 0.46.0
     matplotlib: 3.10.8
-    msgpack: 1.1.2
     numba: 0.63.1
-    numcodecs: 0.16.5
     parso: 0.8.5
     prompt_toolkit: 3.0.52
     pure_eval: 0.2.3
     pycparser: '3.0'
     pynndescent: 0.6.0
     pyparsing: 3.3.2
-    requests: 2.32.5
     seaborn: 0.13.2
     stack_data: 0.6.3
     threadpoolctl: 3.6.0
-    tqdm: 4.67.1
+    tqdm: 4.67.3
     traitlets: 5.14.3
+    wcwidth: 0.5.3
+    astropy: 7.2.0
+    astropy_iers_data: 0.2026.2.2.0.48.1
+    google_crc32c: 1.8.0
+    idna: '3.11'
+    msgpack: 1.1.2
+    numcodecs: 0.16.5
+    requests: 2.32.5
     urllib3: 2.6.3
-    wcwidth: 0.3.1
     backoff: 2.2.1
     pyvo: '1.8'
 template:
