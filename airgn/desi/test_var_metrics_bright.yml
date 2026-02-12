@@ -16,7 +16,7 @@ task:
       filter:
         unit: TimewiseFilter
         config:
-          n_visits: 25
+          n_visits: 20
       ingest:
         mux:
           combine:
@@ -87,10 +87,10 @@ task:
               path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn_bright_flux
               mag: false
               input_mongo_db_name: desi_agn_vac
-              n_points_bins: [25, 30]
+              n_points_bins: [20, 30]
           - unit: VarMetricsVsAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/test_var_vs_agn_bright_mag
               mag: true
               input_mongo_db_name: desi_agn_vac
-              n_points_bins: [ 25, 30 ]
+              n_points_bins: [ 20, 30 ]
