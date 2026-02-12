@@ -73,27 +73,27 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         n_iter = 0
         for view in gen:
             input_res = None
+            body = None
             for t2 in view.get_t2_views("T2CalculateVarMetrics", code=0):
                 if not (t2.config["mag"] == self.mag):
                     continue
+                body = dict(t2.get_payload())
                 input_res = self._col.find_one({"orig_id": t2.stock})
                 break
             if not input_res:
                 continue
 
-            latest_body = view.get_latest_t2_body("T2CalculateVarMetrics")
-            if not latest_body:
+            if not body:
                 continue
-            ires = dict(latest_body)
 
             # do not include objects that are outside the specified range of npoint bins
-            if not all([self.is_in_range(ires[c]) for c in self.n_point_cols]):
+            if not all([self.is_in_range(body[c]) for c in self.n_point_cols]):
                 continue
 
-            ires.update(input_res)
+            body.update(input_res)
             mask = str(bin(int(input_res["AGN_MASKBITS"]))).replace("0b", "")[::-1]
-            ires["decoded_agn_mask"] = mask
-            res[view.stock["stock"]] = ires
+            body["decoded_agn_mask"] = mask
+            res[view.stock["stock"]] = body
 
             n_iter += 1
             if self.iter_max and n_iter >= self.iter_max:
