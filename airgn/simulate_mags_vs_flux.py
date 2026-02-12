@@ -1,4 +1,5 @@
-from scipy.stats import chi2
+from PIL.ImageOps import scale
+from scipy.stats import chi2, f
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -30,7 +31,7 @@ def simulate_mags_vs_flux(
     fluxes = np.mean(raw_fluxes, axis=2, where=det_mask)
     flux_errors = np.sqrt(
         np.sum((raw_fluxes - fluxes[:, :, np.newaxis]) ** 2, axis=2, where=det_mask)
-    ) / np.sum(det_mask, axis=2)
+    ) / (np.sum(det_mask, axis=2) - 1)
 
     # calculate chi2 per light curve based on raw fluxes
     flat_raw_fluxes = raw_fluxes.reshape(
@@ -78,7 +79,7 @@ def simulate_mags_vs_flux(
             n_visits_per_sample,
             n_visits_per_sample * n_points_per_visit,
         ],
-        [(0.5, 1.5), [0, 10], [0.5, 1.5]],
+        [(0.5, 1.5), [0, 2], [0.5, 1.5]],
     ):
         x = np.linspace(*xlim, 100)
         chi2_exp = chi2.cdf(x, df=n - 1, scale=1 / (n - 1))
