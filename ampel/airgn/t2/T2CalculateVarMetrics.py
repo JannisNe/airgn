@@ -267,7 +267,7 @@ def stetson_index(
     t2: float_arr,
 ):
     assert len(f1) == len(f2), "Both flux arrays must have same length!"
-    if (n := len(f1)) > 0:
+    if (n := len(f1)) > 2:
         mean1 = np.average(f1, weights=1 / fe1**2)
         diff1 = f1 - mean1
         mean2 = np.average(f2, weights=1 / fe2**2)
