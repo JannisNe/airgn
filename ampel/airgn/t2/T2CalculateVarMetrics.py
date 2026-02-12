@@ -256,7 +256,7 @@ def pearsons_r(
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"$L$", multiband=True
+    log=False, range=(-10, 100), pretty_name=r"$L$", multiband=True
 )
 def stetson_index(
     f1: float_arr,
@@ -275,4 +275,30 @@ def stetson_index(
         f = n / (n - 1)
         p_k = diff1 * diff2 * f / fe1 / fe2
         return sum(np.sign(p_k) * np.sqrt(np.abs(p_k)))
+    return None
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-10, 10), pretty_name="RWB", multiband=True
+)
+def redder_when_brighter(
+    f1: float_arr,
+    fe1: float_arr,
+    t1: float_arr,
+    f2: float_arr,
+    fe2: float_arr,
+    t2: float_arr,
+    mag: bool,
+):
+    assert len(f1) == len(f2), "Both flux arrays must have same length!"
+    if len(f1) > 1:
+        if mag:
+            color = f1 - f2
+            color_e = np.sqrt(fe1**2 + fe2**2)
+            a, b = np.polyfit(color, -f1, 1, w=1 / color_e)
+        else:
+            color = f2 / f1
+            color_e = np.sqrt((f2 / fe2) ** 2 + (f1 / fe1) ** 2) * color
+            a, b = np.polyfit(color, f1, 1, w=1 / color_e)
+        return a
     return None
