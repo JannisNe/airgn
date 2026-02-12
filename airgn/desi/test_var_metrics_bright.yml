@@ -34,7 +34,7 @@ task:
                 mag: true
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 100000
+    iter_max: 1000000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -79,7 +79,7 @@ task:
             channel: "wise"
         chunk_size: 10000
     stage:
-      unit: T3SimpleStager
+      unit: T3SequentialStager
       config:
         execute:
           - unit: VarMetricsVsAGN
