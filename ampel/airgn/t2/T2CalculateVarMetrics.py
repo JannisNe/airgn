@@ -298,10 +298,14 @@ def redder_when_brighter(
         if mag:
             color = f1 - f2
             color_e = np.sqrt(fe1**2 + fe2**2)
-            a, b = np.polyfit(color, -f1, 1, w=1 / color_e)
+            x = -f1
         else:
             color = f2 / f1
             color_e = np.sqrt((f2 / fe2) ** 2 + (f1 / fe1) ** 2) * color
-            a, b = np.polyfit(color, f1, 1, w=1 / color_e)
+            x = f1
+        try:
+            a, b = np.polyfit(x, color, 1, w=1 / color_e)
+        except np.linalg.LinAlgError:
+            return -999
         return a
     return None
