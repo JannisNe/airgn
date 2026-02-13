@@ -167,8 +167,11 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
                 f2 = -2.5 * np.log10(f2)
 
             for metric_name in self._multi_band_metric_names:
+                kwargs = (
+                    {"mag": self.mag} if metric_name == "redder_when_brighter" else {}
+                )
                 res[f"{metric_name}_{key}"] = self._metrics[metric_name](
-                    f1, fe1, t1, f2, fe2, t2
+                    f1, fe1, t1, f2, fe2, t2, **kwargs
                 )
 
         return res
