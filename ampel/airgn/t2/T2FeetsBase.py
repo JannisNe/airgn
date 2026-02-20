@@ -81,8 +81,13 @@ class T2FeetsBase(LogicalUnit):
         super().__init__(**kwargs)
         if self.row_per_filter and (self.filter_col is None):
             raise ValueError("filter_col must be specified if row_per_filter is True")
-        self._single_band_extractor = feets.FeatureSpace(only=self.single_band_features)
-        self._multi_band_extractor = feets.FeatureSpace(only=self.multi_band_features)
+        dask_options = {"scheduler": "synchronous"}
+        self._single_band_extractor = feets.FeatureSpace(
+            only=self.single_band_features, dask_options=dask_options
+        )
+        self._multi_band_extractor = feets.FeatureSpace(
+            only=self.multi_band_features, dask_options=dask_options
+        )
 
     # --------------------------------------------------------
 
@@ -115,7 +120,7 @@ class T2FeetsBase(LogicalUnit):
         results = {}
 
         for band in self.filters:
-            df = self._prepare_band_df(light_curve, band)
+            df = self._prepare_band_df(light_curve, band).dropna()
 
             # extract features
             features = self._single_band_extractor.extract(**df.to_dict("list"))
@@ -142,19 +147,19 @@ class T2FeetsBase(LogicalUnit):
 
         results = {}
         for b1, b2 in pairs:
-            df1 = self._prepare_band_df(light_curve, b1)
-            df2 = self._prepare_band_df(light_curve, b2)
+            df1 = self._prepare_band_df(light_curve, b1).dropna()
+            df2 = self._prepare_band_df(light_curve, b2).dropna()
 
             if df1 is None or df2 is None:
                 continue
 
             lc = {
-                "time": df1.time,
-                "magnitude": df1.magnitude,
-                "error": df1.error,
-                "time2": df2.time,
-                "magnitude2": df2.magnitude,
-                "error2": df2.error,
+                "time": df1.time.values,
+                "magnitude": df1.magnitude.values,
+                "error": df1.error.values,
+                "time2": df2.time.values,
+                "magnitude2": df2.magnitude.values,
+                "error2": df2.error.values,
             }
 
             # Synchronize the data from the two bands
