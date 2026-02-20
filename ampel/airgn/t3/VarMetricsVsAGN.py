@@ -48,6 +48,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
     iter_max: int | None = None
     file_format: str = "pdf"
     metric_names: list[str] = list(T2CalculateVarMetrics._metrics.keys())
+    exclude_metric_names: list[str] = []
     n_point_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
     corner: bool = True
     umap: bool = True
@@ -119,7 +120,11 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                 for m in self.metric_names:
                     # exclude npoints because it's not a real variability metric
                     # and has not enough variance so the KDE will collapse
-                    if m.startswith("npoints") or m.startswith("containment"):
+                    if (
+                        m.startswith("npoints")
+                        or m.startswith("containment")
+                        or any([m.startswith(mn) for mn in self.exclude_metric_names])
+                    ):
                         continue
                     meta = self._metric_meta[m]
                     cols = (
@@ -276,6 +281,34 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         },
                     )
                     fn = bindir / f"corner.{self.file_format}"
+                    fig.savefig(fn)
+                    plt.close()
+
+                    # make the same plot in magnitude bins
+                    w1_means = res_bin.loc[~res_bin.agn, "mean_w1_fluxdensity"]
+                    w1_bins = np.quantile(w1_means, [0, 0.33, 0.66, 1])
+                    w1_bins[-1] *= 1.1
+                    w1_bins_labels = np.array(
+                        [
+                            f"{sb:.1f} < W1 < {eb:.1f}"
+                            for sb, eb in zip(w1_bins[:-1], w1_bins[1:])
+                        ]
+                    )
+                    w1_bin = np.digitize(w1_means, bins=w1_bins)
+                    corner_non_agn = corner_df[~corner_df.agn].drop(columns=["agn"])
+                    corner_non_agn["W1 mean"] = w1_bins_labels[w1_bin - 1]
+
+                    fig = sns.pairplot(
+                        corner_non_agn,
+                        kind="kde",
+                        corner=True,
+                        hue="W1 mean",
+                        plot_kws={
+                            "levels": [0.5, 0.68, 0.9],
+                            "linestyles": ["-", "--", ":"],
+                        },
+                    )
+                    fn = bindir / f"corner_non_agn.{self.file_format}"
                     fig.savefig(fn)
                     plt.close()
 
