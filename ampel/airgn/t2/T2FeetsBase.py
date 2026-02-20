@@ -70,7 +70,7 @@ class T2FeetsBase(LogicalUnit):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if (not self.row_per_filter) and (self.filter_col is None):
+        if self.row_per_filter and (self.filter_col is None):
             raise ValueError("filter_col must be specified if row_per_filter is True")
         self._single_band_extractor = feets.FeatureSpace(only=self.single_band_features)
         self._multi_band_extractor = feets.FeatureSpace(only=self.multi_band_features)
