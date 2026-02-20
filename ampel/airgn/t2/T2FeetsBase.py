@@ -3,7 +3,7 @@ import numpy as np
 from typing import Optional, Sequence
 
 import feets
-
+from feets import extractor_registry
 from ampel.base.LogicalUnit import LogicalUnit
 
 
@@ -25,6 +25,9 @@ class PearsonsR(feets.Extractor):
         }
 
 
+extractor_registry.register_extractor(PearsonsR)
+
+
 class RedderWhenBrighter(feets.Extractor):
     """Linear fit to color vs magnitude"""
 
@@ -42,6 +45,9 @@ class RedderWhenBrighter(feets.Extractor):
             results[f"RedderWhenBrighter{i}"] = a
 
         return results
+
+
+extractor_registry.register_extractor(RedderWhenBrighter)
 
 
 class T2FeetsBase(LogicalUnit):
