@@ -285,7 +285,8 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     plt.close()
 
                     # make the same plot in magnitude bins
-                    w1_means = res_bin.loc[~res_bin.agn, "mean_w1_fluxdensity"]
+                    mask = ~res_bin.agn & res_bin["mean_w1_fluxdensity"].notna()
+                    w1_means = res_bin.loc[mask, "mean_w1_fluxdensity"]
                     w1_bins = np.quantile(w1_means, [0, 0.33, 0.66, 1])
                     w1_bins[-1] *= 1.1
                     w1_bins_labels = np.array(
@@ -295,7 +296,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         ]
                     )
                     w1_bin = np.digitize(w1_means, bins=w1_bins)
-                    corner_non_agn = corner_df[~corner_df.agn].drop(columns=["agn"])
+                    corner_non_agn = corner_df[mask].drop(columns=["agn"])
                     corner_non_agn["W1 mean"] = w1_bins_labels[w1_bin - 1]
 
                     fig = sns.pairplot(

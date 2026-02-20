@@ -13,6 +13,7 @@ from ampel.model.StateT2Dependency import StateT2Dependency
 
 from airgn.legacy_survey.util import align_legacy_survey_photometry
 from timewise.process import keys
+from timewise.process.stacking import FLUX_ZEROPOINTS
 
 
 class MetricMeta(TypedDict):
@@ -135,7 +136,7 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
                 # use logarithmic fluxes as magnitude representation
                 if self.mag:
                     fe = 2.5 / np.log(10) * fe / f
-                    f = -2.5 * np.log10(f)
+                    f = -2.5 * np.log10(f / FLUX_ZEROPOINTS[f"w{i}"])
 
                 for metric_name in self._single_band_metric_names:
                     res[f"{metric_name}_w{i}_{key}"] = self._metrics[metric_name](
@@ -162,9 +163,9 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
 
             if self.mag:
                 fe1 = 2.5 / np.log(10) * fe1 / f1
-                f1 = -2.5 * np.log10(f1)
+                f1 = -2.5 * np.log10(f1 / FLUX_ZEROPOINTS["w1"])
                 fe2 = 2.5 / np.log(10) * fe2 / f2
-                f2 = -2.5 * np.log10(f2)
+                f2 = -2.5 * np.log10(f2 / FLUX_ZEROPOINTS["w1"])
 
             for metric_name in self._multi_band_metric_names:
                 kwargs = (
