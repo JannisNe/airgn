@@ -34,11 +34,11 @@ task:
                   - Mean
                   - MeanVariance
                   - ReducedChi2
-                  - StetsonL
                 multi_band_features:
                   - PearsonsR
+                  - RedderWhenBrighter0
                   - RedderWhenBrighter1
-                  - RedderWhenBrighter2
+                  - StetsonL
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
     iter_max: 10000

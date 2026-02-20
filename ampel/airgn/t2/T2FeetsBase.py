@@ -31,7 +31,7 @@ extractor_registry.register_extractor(PearsonsR)
 class RedderWhenBrighter(feets.Extractor):
     """Linear fit to color vs magnitude"""
 
-    features = ["RedderWhenBrighter1", "RedderWhenBrighter2"]
+    features = ["RedderWhenBrighter0", "RedderWhenBrighter1"]
 
     def extract(
         self, aligned_magnitude, aligned_magnitude2, aligned_error, aligned_error2
@@ -41,7 +41,10 @@ class RedderWhenBrighter(feets.Extractor):
 
         results = {}
         for i, x in enumerate([aligned_magnitude, aligned_magnitude2]):
-            a, b = np.polyfit(x, color, 1, w=1 / color_e)
+            try:
+                a, b = np.polyfit(x, color, 1, w=1 / color_e)
+            except np.linalg.LinAlgError:
+                a = np.nan
             results[f"RedderWhenBrighter{i}"] = a
 
         return results
@@ -108,11 +111,11 @@ class T2FeetsBase(LogicalUnit):
 
     # --------------------------------------------------------
 
-    def _extract_single_band(self, df: pd.DataFrame):
+    def _extract_single_band(self, light_curve: pd.DataFrame):
         results = {}
 
         for band in self.filters:
-            df = self._prepare_band_df(df, band)
+            df = self._prepare_band_df(light_curve, band)
 
             # extract features
             features = self._single_band_extractor.extract(**df.to_dict("list"))
@@ -151,7 +154,7 @@ class T2FeetsBase(LogicalUnit):
                 "error": df1.error,
                 "time2": df2.time,
                 "magnitude2": df2.magnitude,
-                "error2": df2.error2,
+                "error2": df2.error,
             }
 
             # Synchronize the data from the two bands
