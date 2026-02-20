@@ -309,3 +309,14 @@ def redder_when_brighter(
             return -999
         return a
     return None
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-10, 10), pretty_name="mean", multiband=False
+)
+def mean(
+    f: float_arr,
+    fe: float_arr,
+    t: float_arr,
+):
+    return np.average(f, weights=1 / fe**2)
