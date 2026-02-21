@@ -36,7 +36,9 @@ class T2FeetsBase(LogicalUnit):
             raise ValueError("filter_col must be specified if row_per_filter is True")
         dask_options = {"scheduler": "synchronous"}
         self._single_band_extractor = feets.FeatureSpace(
-            only=self.single_band_features, dask_options=dask_options
+            only=self.single_band_features,
+            dask_options=dask_options,
+            ReducedChi2={"transform": "identity"},
         )
         self._multi_band_extractor = feets.FeatureSpace(
             only=self.multi_band_features, dask_options=dask_options
