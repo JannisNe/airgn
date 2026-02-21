@@ -13,11 +13,60 @@ from ampel.model.StateT2Dependency import StateT2Dependency
 from ampel.airgn.t2.T2FeetsBase import T2FeetsBase
 from timewise.process.stacking import FLUX_ZEROPOINTS
 
+import feets
+from feets import extractor_registry
+
 
 MJD_COLNAMES = {
     "T2StackVisits": "mean_mjd",
     "T2MaggyToFluxDensity": "LC_MJD_W{band}",
 }
+
+
+class PearsonsR(feets.Extractor):
+    """Pearson's r coefficient"""
+
+    features = ["PearsonsR"]
+
+    def extract(
+        self, aligned_magnitude, aligned_magnitude2, aligned_error, aligned_error2
+    ):
+        mean1 = np.average(aligned_magnitude, weights=1 / aligned_error**2)
+        diff1 = aligned_magnitude - mean1
+        mean2 = np.average(aligned_magnitude2, weights=1 / aligned_error2**2)
+        diff2 = aligned_magnitude2 - mean2
+        return {
+            "PearsonsR": sum(diff1 * diff2)
+            / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
+        }
+
+
+extractor_registry.register_extractor(PearsonsR)
+
+
+class RedderWhenBrighter(feets.Extractor):
+    """Linear fit to color vs magnitude"""
+
+    features = ["RedderWhenBrighter0", "RedderWhenBrighter1"]
+
+    def extract(
+        self, aligned_magnitude, aligned_magnitude2, aligned_error, aligned_error2
+    ):
+        color = aligned_magnitude - aligned_magnitude2
+        color_e = np.sqrt(aligned_error**2 + aligned_error2**2)
+
+        results = {}
+        for i, x in enumerate([aligned_magnitude, aligned_magnitude2]):
+            try:
+                a, b = np.polyfit(x, color, 1, w=1 / color_e)
+            except np.linalg.LinAlgError:
+                a = np.nan
+            results[f"RedderWhenBrighter{i}"] = a
+
+        return results
+
+
+extractor_registry.register_extractor(RedderWhenBrighter)
 
 
 class T2FeetsTimewise(AbsTiedLightCurveT2Unit, T2FeetsBase):
