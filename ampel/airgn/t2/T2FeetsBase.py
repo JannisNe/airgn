@@ -138,7 +138,7 @@ class T2FeetsBase(LogicalUnit):
             features = self._multi_band_extractor.extract(**lc)
 
             for k, v in features.as_frame().loc[0].items():
-                results[f"{b1}_{b2}{k}"] = v
+                results[f"{b1}_{b2}_{k}"] = v
 
         return results
 
