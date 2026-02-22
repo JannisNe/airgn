@@ -94,6 +94,6 @@ task:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [20, 30]
-              exclude_metric_names:
+              exclude_features:
                 - Mean
                 - NPoints
