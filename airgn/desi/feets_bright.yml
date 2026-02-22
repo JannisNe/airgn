@@ -34,6 +34,7 @@ task:
                   - Mean
                   - MeanVariance
                   - ReducedChi2
+                  - NPoints
                 multi_band_features:
                   - PearsonsR
                   - RedderWhenBrighter0
