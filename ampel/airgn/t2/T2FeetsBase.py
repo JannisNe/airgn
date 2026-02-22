@@ -49,16 +49,20 @@ class T2FeetsBase(LogicalUnit):
     def _prepare_band_df(self, light_curve: pd.DataFrame, band: str) -> pd.DataFrame:
         if self.row_per_filter:
             band_mask = light_curve[self.filter_col] == band
-            df = light_curve[band_mask]
+            df = light_curve[band_mask].copy()
             value_col = self.value_col
             error_col = self.error_col
             time_col = self.time_col
 
         else:
-            df = light_curve
+            df = light_curve.copy()
             time_col = self.time_col.format(band=band)
             value_col = self.value_col.format(band=band)
             error_col = self.error_col.format(band=band)
+
+        # Feets expect the inverse sqrt of sigma as the error
+        # see https://github.com/quatrope/feets/issues/59
+        df[error_col] = 1 / np.sqrt(df[error_col])
 
         # bring data in feets-required format
         return df[[time_col, value_col, error_col]].rename(
