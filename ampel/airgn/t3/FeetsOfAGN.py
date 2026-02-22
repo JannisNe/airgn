@@ -62,6 +62,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     path: str
     input_mongo_db_name: str
     exclude_features: Optional[list[str]] = None
+    n_points_col: list[str] = [f"w{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
     file_format: str = "pdf"
