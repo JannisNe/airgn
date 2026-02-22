@@ -134,7 +134,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     if (
                         m.startswith("npoints")
                         or m.startswith("containment")
-                        or any([m.startswith(mn) for mn in self.exclude_metric_names])
+                        or any([m.startswith(mn) for mn in self.exclude_features])
                     ):
                         continue
                     meta = metric_params[m]
