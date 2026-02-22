@@ -57,6 +57,7 @@ metric_params = {
         pretty_name=r"$\sigma_\mathrm{\mu} / \mu$",
         multiband=False,
     ),
+    "Containment": dict(log=False, range=(0, 1), multiband=True, pretty_name="CL"),
 }
 
 
@@ -136,15 +137,25 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 corner_df = pd.DataFrame(index=res_bin.index)
                 corner_df["agn"] = res_bin["agn"]
                 for m in metric_names:
-                    # exclude npoints because it's not a real variability metric
-                    # and has not enough variance so the KDE will collapse
+                    mn = {s for s in metric_params.keys() if s in m}
+
                     if (
+                        # exclude npoints because it's not a real variability metric
+                        # and has not enough variance so the KDE will collapse
                         (m in self.n_point_cols)
-                        or m.startswith("containment")
+                        # containment will be calculated l8er :-)
+                        or m.startswith("Containment")
+                        # skip features if requested
                         or any([m.endswith(mn) for mn in self.exclude_features])
+                        # other calumns from the parent sample are present in the dataframe as well
+                        # skip those
+                        or len(mn) == 0
                     ):
                         continue
-                    meta = metric_params[m.split("_")[-1]]
+
+                    assert len(mn) == 1, f"More than one matching metric found for {m}"
+
+                    meta = metric_params[list(mn)[0]]
                     pn = meta["pretty_name"]
                     lim = meta["range"]
                     if meta["log"]:
@@ -217,12 +228,12 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     nx, ny = containment.shape
                     xbin = np.clip(xbin, 0, nx - 1)
                     ybin = np.clip(ybin, 0, ny - 1)
-                    cpn = metric_params["containment"]["pretty_name"]
+                    cpn = metric_params["Containment"]["pretty_name"]
                     corner_df[cpn] = np.nan
                     corner_df.loc[~nan_mask, cpn] = 1 - containment[xbin, ybin]
 
                     # also map back to original results data to make histograms later
-                    res.loc[corner_df.index, "containment"] = corner_df[cpn]
+                    res.loc[corner_df.index, "Containment"] = corner_df[cpn]
 
                     X, Y = np.meshgrid(*bins)
 
