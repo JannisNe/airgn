@@ -51,6 +51,12 @@ metric_params = {
     "Autocor_length": dict(
         log=True, range=(-2, 2), pretty_name=r"$\tau$", multiband=False
     ),
+    "MeanVariance": dict(
+        log=True,
+        range=(-2, 2),
+        pretty_name=r"$\sigma_\mathrm{\mu} / \mu$",
+        multiband=False,
+    ),
 }
 
 
@@ -62,7 +68,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     path: str
     input_mongo_db_name: str
     exclude_features: Optional[list[str]] = None
-    n_point_cols: list[str] = [f"w{i + 1}_NPoints" for i in range(2)]
+    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
     file_format: str = "pdf"
@@ -133,33 +139,30 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     # exclude npoints because it's not a real variability metric
                     # and has not enough variance so the KDE will collapse
                     if (
-                        m.startswith("npoints")
+                        (m in self.n_point_cols)
                         or m.startswith("containment")
                         or any([m.startswith(mn) for mn in self.exclude_features])
                     ):
                         continue
-                    meta = metric_params[m]
-                    cols = (
-                        [f"{m}_w{i}" for i in range(1, 3)]
-                        if not meta["multiband"]
-                        else [f"w1_w2_{m}"]
-                    )
+                    meta = metric_params[m.split("_")[-1]]
                     pn = meta["pretty_name"]
                     lim = meta["range"]
-                    for i, col in enumerate(cols):
-                        if meta["log"]:
-                            pl = r"$\log_{10}($" + pn + "$)$"
-                            vals = np.log10(res_bin[col])
-                        else:
-                            pl = pn
-                            vals = res_bin[col]
-                        if not meta["multiband"]:
-                            pl += f" W{i + 1}"
-                        m = (vals > lim[0]) & (vals < lim[1])
-                        pd.options.mode.chained_assignment = None
-                        vals.loc[~m] = np.nan
-                        pd.options.mode.chained_assignment = "warn"
-                        corner_df[pl] = vals
+                    if meta["log"]:
+                        pl = r"$\log_{10}($" + pn + "$)$"
+                        vals = np.log10(res_bin[m])
+                    else:
+                        pl = pn
+                        vals = res_bin[m]
+                    if meta["multiband"]:
+                        pl += " " + " - ".join(m.split("_")[:-1])
+                    else:
+                        pl += " " + m.split("_")[0]
+
+                    vals_mask = (vals > lim[0]) & (vals < lim[1])
+                    pd.options.mode.chained_assignment = None
+                    vals.loc[~vals_mask] = np.nan
+                    pd.options.mode.chained_assignment = "warn"
+                    corner_df[pl] = vals
 
                 # ---------------------- UMAP ---------------------- #
 
