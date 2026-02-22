@@ -23,6 +23,10 @@ MJD_COLNAMES = {
 }
 
 
+# --------------------------------------------------------
+# DEFINE NEW FEATURES
+
+
 class PearsonsR(feets.Extractor):
     """Pearson's r coefficient"""
 
@@ -72,8 +76,15 @@ class NPoints(feets.Extractor):
         return {"NPoints": len(magnitude)}
 
 
+# --------------------------------------------------------
+# REGISTER FEATURES
+
+
 for ext in [PearsonsR, RedderWhenBrighter, NPoints]:
     extractor_registry.register_extractor(ext)
+
+
+# --------------------------------------------------------
 
 
 class T2FeetsTimewise(AbsTiedLightCurveT2Unit, T2FeetsBase):
