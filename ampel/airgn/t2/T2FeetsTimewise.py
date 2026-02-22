@@ -41,9 +41,6 @@ class PearsonsR(feets.Extractor):
         }
 
 
-extractor_registry.register_extractor(PearsonsR)
-
-
 class RedderWhenBrighter(feets.Extractor):
     """Linear fit to color vs magnitude"""
 
@@ -66,7 +63,17 @@ class RedderWhenBrighter(feets.Extractor):
         return results
 
 
-extractor_registry.register_extractor(RedderWhenBrighter)
+class NPoints(feets.Extractor):
+    """Count number of detections"""
+
+    features = ["NPoints"]
+
+    def extract(self, magnitude):
+        return {"NPoints": len(magnitude)}
+
+
+for ext in [PearsonsR, RedderWhenBrighter, NPoints]:
+    extractor_registry.register_extractor(ext)
 
 
 class T2FeetsTimewise(AbsTiedLightCurveT2Unit, T2FeetsBase):
