@@ -1,3 +1,4 @@
+import re
 from collections.abc import Generator
 from typing import Optional
 
@@ -33,7 +34,10 @@ def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
 
 
 metric_params = {
-    "RedderWhenBrighter": dict(
+    "RedderWhenBrighter0": dict(
+        log=False, range=(-10, 10), pretty_name="RWB", multiband=True
+    ),
+    "RedderWhenBrighter1": dict(
         log=False, range=(-10, 10), pretty_name="RWB", multiband=True
     ),
     "StetsonL": dict(log=False, range=(-10, 100), pretty_name=r"$L$", multiband=True),
@@ -58,6 +62,8 @@ metric_params = {
         multiband=False,
     ),
     "Containment": dict(log=False, range=(0, 1), multiband=True, pretty_name="CL"),
+    "NPoints": dict(log=False, range=(0, 30), pretty_name=r"$N$", multiband=False),
+    "Mean": dict(log=False, range=(20, 4), pretty_name=r"$\mu$", multiband=False),
 }
 
 
@@ -83,6 +89,13 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
         self._agn_bitmask = get_agn_bitmask()
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
+
+    def _get_metric_name(self, raw_name) -> str | None:
+        mns = {s for s in metric_params.keys() if s in raw_name}
+        if len(mns) == 0:
+            return None
+        match_length = [len(re.search(imn, raw_name).group()) for imn in mns]
+        return list(mns)[np.argmax(match_length)]
 
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
@@ -137,25 +150,22 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 corner_df = pd.DataFrame(index=res_bin.index)
                 corner_df["agn"] = res_bin["agn"]
                 for m in metric_names:
-                    mn = {s for s in metric_params.keys() if s in m}
+                    mn = self._get_metric_name(m)
 
                     if (
+                        # Skip if no matching metric was found for the column name
+                        not mn
                         # exclude npoints because it's not a real variability metric
                         # and has not enough variance so the KDE will collapse
-                        (m in self.n_point_cols)
+                        or (m in self.n_point_cols)
                         # containment will be calculated l8er :-)
-                        or m.startswith("Containment")
+                        or m.endswith("Containment")
                         # skip features if requested
                         or any([m.endswith(mn) for mn in self.exclude_features])
-                        # other calumns from the parent sample are present in the dataframe as well
-                        # skip those
-                        or len(mn) == 0
                     ):
                         continue
 
-                    assert len(mn) == 1, f"More than one matching metric found for {m}"
-
-                    meta = metric_params[list(mn)[0]]
+                    meta = metric_params[mn]
                     pn = meta["pretty_name"]
                     lim = meta["range"]
                     if meta["log"]:
@@ -308,8 +318,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     plt.close()
 
                     # make the same plot in magnitude bins
-                    mask = ~res_bin.agn & res_bin["w1_mean"].notna()
-                    w1_means = res_bin.loc[mask, "w1_mean"]
+                    mask = ~res_bin.agn & res_bin["W1_Mean"].notna()
+                    w1_means = res_bin.loc[mask, "W1_Mean"]
                     w1_bins = np.quantile(w1_means, [0, 0.33, 0.66, 1])
                     w1_bins[-1] *= 1.1
                     w1_bins_labels = np.array(
@@ -338,17 +348,22 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- histograms ---------------------- #
 
-        for metric_name in metric_names:
-            meta = metric_params[metric_name]
+        for metric_name, meta in metric_params.items():
+            if metric_name in self.exclude_features:
+                continue
             pn = meta["pretty_name"]
             log = meta["log"]
             mb = meta["multiband"]
             pl = r"$\log_{10}($" + pn + "$)$" if log else pn
 
             cols = (
-                [f"w{i}_{metric_name}" for i in range(1, 3)]
-                if not mb
-                else [f"w1_w2_{metric_name}"]
+                (
+                    [f"W{i}_{metric_name}" for i in range(1, 3)]
+                    if not mb
+                    else [f"W1_W2_{metric_name}"]
+                )
+                if not metric_name == "Containment"
+                else ["Containment"]
             )
 
             fig, ax = plt.subplots()
