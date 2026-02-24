@@ -423,7 +423,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
             ax.set_ylabel("counts")
             ax.set_yscale("log")
             fn = self._path / f"{metric_name}_hist.{self.file_format}"
-            self.logger.info(f"saving {fn}")
+            self.logger.debug(f"saving {fn}")
             fig.tight_layout()
             fig.savefig(fn)
             plt.close()
@@ -600,7 +600,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         / f"bin_{s}_{e}"
                         / f"{metric_name}_bin_{s}_{e}_{ix[0]}.{self.file_format}"
                     )
-                    self.logger.info(f"saving {fn}")
+                    self.logger.debug(f"saving {fn}")
                     fig.tight_layout()
                     fig.savefig(fn)
                     plt.close()
