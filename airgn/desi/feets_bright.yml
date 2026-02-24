@@ -98,3 +98,12 @@ task:
               exclude_features:
                 - Mean
                 - NPoints
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_autocorr
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features:
+                - Mean
+                - NPoints
+                - Autocorr_length
