@@ -82,7 +82,18 @@ class T2FeetsBase(LogicalUnit):
             df = self._prepare_band_df(light_curve, band).dropna()
 
             # extract features
-            features = self._single_band_extractor.extract(**df.to_dict("list"))
+            try:
+                features = self._single_band_extractor.extract(**df.to_dict("list"))
+            except feets.runner.DataRequiredError as e:
+                if (
+                    "Missing required data vectors in light curve: aligned_time, aligned_magnitude, aligned_magnitude2"
+                    in str(e)
+                ):
+                    raise RuntimeError(
+                        "One of the single band features is in fact a multi band feature!"
+                    )
+                else:
+                    raise e
 
             # write to results including the band
             results.update(
