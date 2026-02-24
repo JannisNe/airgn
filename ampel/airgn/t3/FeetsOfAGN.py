@@ -60,7 +60,7 @@ metric_params = {
         log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$", multiband=False
     ),
     "Autocor_length": dict(
-        log=True, range=(0, 5), pretty_name=r"$\tau$", multiband=False
+        log=False, range=(0, 5), pretty_name=r"$\tau$", multiband=False
     ),
     "MeanVariance": dict(
         log=True,
