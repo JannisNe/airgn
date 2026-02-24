@@ -251,8 +251,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     bins = [np.linspace(np.min(e), np.max(e), 40) for e in embedding.T]
 
                     # calculate 2d histograms for AGN and non-AGN
-                    agn_h, _, _ = np.histogram2d(*embedding[agn_mask].T, bins=bins)
-                    non_agn_h, _, _ = np.histogram2d(*embedding[~agn_mask].T, bins=bins)
+                    agn_h, _ = np.histogramdd(embedding[agn_mask], bins=bins)
+                    non_agn_h, _ = np.histogramdd(embedding[~agn_mask], bins=bins)
 
                     # check their distributions with relative histograms
                     agn_h_rel = agn_h / np.nansum(agn_h)
@@ -280,20 +280,23 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     containment = containment.reshape(pdist.shape)
 
                     # map containment back to original points
-                    xbin = np.digitize(embedding[:, 0], bins[0]) - 1
-                    ybin = np.digitize(embedding[:, 1], bins[1]) - 1
+                    bin_maps = [
+                        np.clip(
+                            np.digitize(embedding[:, i], bins[i]) - 1,
+                            0,
+                            containment.shape[i] - 1,
+                        )
+                        for i in range(embedding.shape[1])
+                    ]
 
-                    nx, ny = containment.shape
-                    xbin = np.clip(xbin, 0, nx - 1)
-                    ybin = np.clip(ybin, 0, ny - 1)
                     cpn = metric_params["Containment"]["pretty_name"]
                     corner_df[cpn] = np.nan
-                    corner_df.loc[~nan_mask, cpn] = 1 - containment[xbin, ybin]
+                    corner_df.loc[~nan_mask, cpn] = 1 - containment[*bin_maps]
 
                     # also map back to original results data to make histograms later
                     res.loc[corner_df.index, "Containment"] = corner_df[cpn]
 
-                    X, Y = np.meshgrid(*bins)
+                    meshbins = np.meshgrid(*bins)
 
                     itr = [
                         (
@@ -332,19 +335,28 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         (containment, "viridis", 0, 1, "contours", "containment level"),
                     ]
 
-                    for i, (h, cmap, vmin, vmax, fext, l) in enumerate(itr):
+                    for i, (h, cmap, vmin, vmax, fext, label) in enumerate(itr):
                         fig, ax = plt.subplots()
-                        norm = Normalize(vmin=vmin, vmax=vmax)
-                        ax.pcolormesh(X, Y, h, cmap=cmap, norm=norm)
-                        fig.colorbar(
-                            ax=ax,
-                            location="right",
-                            mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
-                            label=l,
-                            extend="both",
-                            pad=0.1,
-                        )
-                        fn = bindir / f"umap_2d{fext}.{self.file_format}"
+
+                        if (ndim := embedding.shape[1]) == 2:
+                            norm = Normalize(vmin=vmin, vmax=vmax)
+                            ax.pcolormesh(*meshbins, h, cmap=cmap, norm=norm)
+                            fig.colorbar(
+                                ax=ax,
+                                location="right",
+                                mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
+                                label=label,
+                                extend="both",
+                                pad=0.1,
+                            )
+                            fn = bindir / f"umap_2d{fext}.{self.file_format}"
+                        elif ndim == 1:
+                            hb = meshbins[0]
+                            ax.bar(hb[:-1], h, width=np.diff(hb), alpha=0.8, ec="white")
+                            fn = bindir / f"umap_1d{fext}.{self.file_format}"
+                        else:
+                            raise NotImplementedError()
+
                         fig.savefig(fn)
                         plt.close()
 
