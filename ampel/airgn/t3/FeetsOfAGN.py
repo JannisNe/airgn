@@ -88,6 +88,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     file_format: str = "pdf"
     corner: bool = True
     umap: bool = True
+    umap_parameters: dict[str, Any] = {}
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -203,7 +204,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 bindir.mkdir(parents=True, exist_ok=True)
 
                 if self.umap:
-                    reducer = umap.UMAP(random_state=42)
+                    reducer = umap.UMAP(random_state=42, **self.umap_parameters)
                     corner_df_nans = corner_df.isna()
                     nan_mask = corner_df_nans.any(axis=1)
                     reducer.fit(
@@ -396,8 +397,6 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
         # ---------------------- histograms ---------------------- #
 
         for metric_name, meta in metric_params.items():
-            if metric_name in self.exclude_features:
-                continue
             pn = meta["pretty_name"]
             log = meta["log"]
             mb = meta["multiband"]
@@ -418,7 +417,26 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
             if log:
                 m = vals > 0
                 vals = np.log10(vals[m])
-            ax.hist(vals, ec="white", alpha=0.8)
+            else:
+                m = np.array([True] * len(vals))
+            bins = np.linspace(vals.min(), vals.max(), 20)
+            ax.hist(
+                vals[res.agn & m],
+                ec="white",
+                alpha=0.5,
+                color="C1",
+                label=f"{(res.agn & m).sum() / res.agn.sum() * 100:.1f}% of AGN",
+                bins=bins,
+            )
+            ax.hist(
+                vals[~res.agn & m],
+                ec="white",
+                alpha=0.5,
+                color="C0",
+                label=f"{(~res.agn & m).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN",
+                bins=bins,
+            )
+            ax.legend()
             ax.set_xlabel(pl)
             ax.set_ylabel("counts")
             ax.set_yscale("log")
