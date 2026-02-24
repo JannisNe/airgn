@@ -232,8 +232,13 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         pdf = (
                             corner_df_nans.loc[m].drop(columns=["agn"]).sum() / m.sum()
                         )
-                        ax.bar(pdf.index, pdf.values, label=label, ec="white")
+                        ax.bar(
+                            pdf.index, pdf.values, label=label, ec="white", alpha=0.5
+                        )
+                    xticklabels = pdf.index
                     ax.set_ylabel("Percentage")
+                    ax.set_xticks(np.arange(0, len(xticklabels)))
+                    ax.set_xticklabels(xticklabels, rotation=60, ha="right")
                     fig.tight_layout()
                     fn = bindir / f"nan_percentages.{self.file_format}"
                     self.logger.debug(f"Saving {fn}")
