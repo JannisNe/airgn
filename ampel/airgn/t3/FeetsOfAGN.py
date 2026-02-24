@@ -227,7 +227,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     # plot features that are nan per class
                     fig, ax = plt.subplots()
                     for m, label in zip(
-                        [corner_df.agn, ~corner_df.agn], ["AGN", "non-AGN"]
+                        [~corner_df.agn, corner_df.agn], ["non-AGN", "AGN"]
                     ):
                         pdf = (
                             corner_df_nans.loc[m].drop(columns=["agn"]).sum() / m.sum()
@@ -239,6 +239,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     ax.set_ylabel("Percentage")
                     ax.set_xticks(np.arange(0, len(xticklabels)))
                     ax.set_xticklabels(xticklabels, rotation=60, ha="right")
+                    ax.legend()
                     fig.tight_layout()
                     fn = bindir / f"nan_percentages.{self.file_format}"
                     self.logger.debug(f"Saving {fn}")
