@@ -28,8 +28,7 @@ task:
                   - unit: T2StackVisits
                 single_band_features:
                   - Autocor_length
-                  - EtaE
-                  - Eta
+                  - InverseEta
                   - ExcessVariance
                   - Mean
                   - MeanVariance
@@ -40,9 +39,10 @@ task:
                   - RedderWhenBrighter0
                   - RedderWhenBrighter1
                   - StetsonL
+                  - InverseEtaColor
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 10000
+    iter_max: 100000
     shaper: TiDataPointShaper
     supplier:
       config:
