@@ -92,6 +92,16 @@ task:
         execute:
           - unit: FeetsOfAGN
             config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_1comp
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              umap_parameters:
+                n_components: 1
+              exclude_features:
+                - Mean
+                - NPoints
+          - unit: FeetsOfAGN
+            config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [20, 30]
@@ -107,3 +117,18 @@ task:
                 - Mean
                 - NPoints
                 - Autocor_length
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_minimal
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features:
+                  - Autocor_length
+                  - InverseEta
+                  - ExcessVariance
+                  - Mean
+                  - NPoints
+                  - RedderWhenBrighter0
+                  - RedderWhenBrighter1
+                  - StetsonL
+                  - InverseEtaColor
