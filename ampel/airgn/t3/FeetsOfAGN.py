@@ -1,6 +1,8 @@
+import json
 import re
 from collections.abc import Generator
-from typing import Optional
+from collections import defaultdict
+from typing import Optional, Any
 
 from matplotlib.colors import Normalize
 from pymongo import MongoClient
@@ -40,7 +42,7 @@ metric_params = {
     "RedderWhenBrighter1": dict(
         log=False, range=(-10, 10), pretty_name="RWB", multiband=True
     ),
-    "StetsonL": dict(log=False, range=(-10, 100), pretty_name=r"$L$", multiband=True),
+    "StetsonL": dict(log=False, range=(-0.1, 0.1), pretty_name=r"$L$", multiband=True),
     "PearsonsR": dict(log=False, range=(-1, 1), pretty_name="$r$", multiband=True),
     "ExcessVariance": dict(
         log=False,
@@ -52,7 +54,7 @@ metric_params = {
         log=True, range=(-1, 1), pretty_name=r"$1/\eta$", multiband=False
     ),
     "InverseEtaColor": dict(
-        log=True, range=(-1, 1), pretty_name=r"$1/\eta_\mathrm{color}$", multiband=False
+        log=True, range=(-1, 1), pretty_name=r"$1/\eta_\mathrm{color}$", multiband=True
     ),
     "ReducedChi2": dict(
         log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$", multiband=False
@@ -102,9 +104,12 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
         match_length = [len(re.search(imn, raw_name).group()) for imn in mns]
         return list(mns)[np.argmax(match_length)]
 
+    def _bin_key(self, s, e):
+        return f"bin_{s}_{e}"
+
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
-    ) -> None:
+    ) -> dict[str, dict[str, Any]]:
         # ---------------------- aggregate results ---------------------- #
 
         res = {}
@@ -150,6 +155,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- umap and corner plot ---------------------- #
 
+        t3res = defaultdict(dict)
+
         if self.corner or self.umap:
             for res_bin, s, e in self.iter_npoints_binned(res):
                 corner_df = pd.DataFrame(index=res_bin.index)
@@ -192,17 +199,46 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
                 # ---------------------- UMAP ---------------------- #
 
-                bindir = self._path / f"bin_{s}_{e}"
+                bindir = self._path / self._bin_key(s, e)
                 bindir.mkdir(parents=True, exist_ok=True)
 
                 if self.umap:
                     reducer = umap.UMAP(random_state=42)
-                    nan_mask = corner_df.isna().any(axis=1)
+                    corner_df_nans = corner_df.isna()
+                    nan_mask = corner_df_nans.any(axis=1)
                     reducer.fit(
                         corner_df.loc[~nan_mask, [c for c in corner_df if c != "agn"]]
                     )
                     embedding = reducer.embedding_
                     agn_mask = corner_df.loc[~nan_mask, "agn"]
+
+                    # check percentages of objects that are valid
+                    umap_res = {
+                        "total": nan_mask.sum() / len(nan_mask),
+                        "agn": (nan_mask & corner_df.agn).sum() / corner_df.agn.sum(),
+                        "non_agn": (nan_mask & ~corner_df.agn).sum()
+                        / (~corner_df.agn).sum(),
+                    }
+                    self.logger.info(
+                        f"UMAP bin ({s}, {e}): {json.dumps(umap_res, indent=4)}"
+                    )
+                    t3res[self._bin_key(s, e)]["umap"] = umap_res
+
+                    # plot features that are nan per class
+                    fig, ax = plt.subplots()
+                    for m, label in zip(
+                        [corner_df.agn, ~corner_df.agn], ["AGN", "non-AGN"]
+                    ):
+                        pdf = (
+                            corner_df_nans.loc[m].drop(columns=["agn"]).sum() / m.sum()
+                        )
+                        ax.bar(pdf.index, pdf.values, label=label, ec="white")
+                    ax.set_ylabel("Percentage")
+                    fig.tight_layout()
+                    fn = bindir / f"nan_percentages.{self.file_format}"
+                    self.logger.debug(f"Saving {fn}")
+                    fig.savefig(fn)
+                    plt.close()
 
                     # make bins in feature space
                     bins = [np.linspace(np.min(e), np.max(e), 40) for e in embedding.T]
@@ -445,7 +481,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     / f"{metric_name}_bin_{s}_{e}.{self.file_format}"
                 )
                 fn.parent.mkdir(parents=True, exist_ok=True)
-                self.logger.info(f"saving {fn}")
+                self.logger.debug(f"saving {fn}")
                 fig.tight_layout()
                 fig.savefig(fn)
                 plt.close()
@@ -562,3 +598,5 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     fig.tight_layout()
                     fig.savefig(fn)
                     plt.close()
+
+        return t3res
