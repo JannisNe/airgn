@@ -59,7 +59,7 @@ class RedderWhenBrighter(feets.Extractor):
         results = {}
         for i, x in enumerate([aligned_magnitude, aligned_magnitude2]):
             try:
-                a, b = np.polyfit(x, color, 1, w=1 / color_e)
+                a, b = np.polyfit(-x, color, 1, w=1 / color_e)
             except np.linalg.LinAlgError:
                 a = np.nan
             results[f"RedderWhenBrighter{i}"] = a
@@ -76,11 +76,29 @@ class NPoints(feets.Extractor):
         return {"NPoints": len(magnitude)}
 
 
+class InverseEta(feets.Extractor):
+    """Inverse of Eta"""
+
+    features = ["InverseEta"]
+
+    def extract(self, Eta):
+        return {"InverseEta": 1 / Eta}
+
+
+class InverseEtaColor(feets.Extractor):
+    """Inverse of EtaColor"""
+
+    features = ["InverseEtaColor"]
+
+    def extract(self, Eta_color):
+        return {"InverseEtaColor": 1 / Eta_color}
+
+
 # --------------------------------------------------------
 # REGISTER FEATURES
 
 
-for ext in [PearsonsR, RedderWhenBrighter, NPoints]:
+for ext in [PearsonsR, RedderWhenBrighter, NPoints, InverseEta, InverseEtaColor]:
     extractor_registry.register_extractor(ext)
 
 
