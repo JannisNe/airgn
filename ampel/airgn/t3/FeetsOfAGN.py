@@ -44,20 +44,25 @@ metric_params = {
     "PearsonsR": dict(log=False, range=(-1, 1), pretty_name="$r$", multiband=True),
     "ExcessVariance": dict(
         log=False,
-        range=(-0.1, 0.1),
+        range=(-0.001, 0.001),
         pretty_name=r"$\sigma^2_\mathrm{rms}$",
         multiband=False,
     ),
-    "Eta": dict(log=True, range=(-1, 2), pretty_name=r"$\eta$", multiband=False),
+    "InverseEta": dict(
+        log=True, range=(-1, 1), pretty_name=r"$1/\eta$", multiband=False
+    ),
+    "InverseEtaColor": dict(
+        log=True, range=(-1, 1), pretty_name=r"$1/\eta_\mathrm{color}$", multiband=False
+    ),
     "ReducedChi2": dict(
         log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$", multiband=False
     ),
     "Autocor_length": dict(
-        log=True, range=(-2, 2), pretty_name=r"$\tau$", multiband=False
+        log=True, range=(0, 5), pretty_name=r"$\tau$", multiband=False
     ),
     "MeanVariance": dict(
         log=True,
-        range=(-2, 2),
+        range=(-4, 4),
         pretty_name=r"$\sigma_\mathrm{\mu} / \mu$",
         multiband=False,
     ),
