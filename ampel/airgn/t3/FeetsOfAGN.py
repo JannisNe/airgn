@@ -70,7 +70,7 @@ metric_params = {
     ),
     "Containment": dict(log=False, range=(0, 1), multiband=True, pretty_name="CL"),
     "NPoints": dict(log=False, range=(0, 30), pretty_name=r"$N$", multiband=False),
-    "Mean": dict(log=False, range=(20, 4), pretty_name=r"$\mu$", multiband=False),
+    "Mean": dict(log=False, range=(4, 20), pretty_name=r"$\mu$", multiband=False),
 }
 
 
@@ -81,7 +81,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
     path: str
     input_mongo_db_name: str
-    exclude_features: Optional[list[str]] = None
+    exclude_features_fit: Optional[list[str]] = None
+    exclude_features_corner: Optional[list[str]] = None
     n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
@@ -97,6 +98,9 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
         self._agn_bitmask = get_agn_bitmask()
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
+
+        if self.exclude_features_fit and not self.exclude_features_corner:
+            self.exclude_features_corner = self.exclude_features_fit
 
     def _get_metric_name(self, raw_name) -> str | None:
         mns = {s for s in metric_params.keys() if s in raw_name}
@@ -174,7 +178,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         # containment will be calculated l8er :-)
                         or m.endswith("Containment")
                         # skip features if requested
-                        or any([m.endswith(mn) for mn in self.exclude_features])
+                        or any([m.endswith(mn) for mn in self.exclude_features_corner])
                     ):
                         continue
 
@@ -207,9 +211,12 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     reducer = umap.UMAP(random_state=42, **self.umap_parameters)
                     corner_df_nans = corner_df.isna()
                     nan_mask = corner_df_nans.any(axis=1)
-                    reducer.fit(
-                        corner_df.loc[~nan_mask, [c for c in corner_df if c != "agn"]]
+                    not_fit_columns = list(self.exclude_features_fit) + ["agn"]
+                    fit_df = corner_df.loc[~nan_mask].drop(
+                        columns=corner_df.columns.intersection(not_fit_columns)
                     )
+
+                    reducer.fit(fit_df)
                     embedding = reducer.embedding_
                     agn_mask = corner_df.loc[~nan_mask, "agn"]
 
@@ -363,8 +370,13 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 # ---------------------- corner ---------------------- #
 
                 if self.corner:
+                    plot_df = corner_df.drop(
+                        columns=corner_df.columns.intersection(
+                            self.exclude_features_corner
+                        )
+                    )
                     fig = sns.pairplot(
-                        corner_df,
+                        plot_df,
                         kind="kde",
                         corner=True,
                         hue="agn",
@@ -389,7 +401,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         ]
                     )
                     w1_bin = np.digitize(w1_means, bins=w1_bins)
-                    corner_non_agn = corner_df[mask].drop(columns=["agn"])
+                    corner_non_agn = plot_df[mask].drop(columns=["agn"])
                     corner_non_agn["W1 mean"] = w1_bins_labels[w1_bin - 1]
 
                     fig = sns.pairplot(

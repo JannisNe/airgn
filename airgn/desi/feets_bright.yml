@@ -97,36 +97,52 @@ task:
               n_points_bins: [ 20, 30 ]
               umap_parameters:
                 n_components: 1
-              exclude_features:
+              exclude_features_fit:
                 - Mean
+                - NPoints
+              exclude_features_corner:
                 - NPoints
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [20, 30]
-              exclude_features:
+              exclude_features_fit:
                 - Mean
+                - NPoints
+              exclude_features_corner:
                 - NPoints
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_autocorr
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
-              exclude_features:
+              exclude_features_fit:
                 - Mean
                 - NPoints
                 - Autocor_length
+              exclude_features_corner:
+                - Autocor_length
+                - NPoints
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_minimal
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
-              exclude_features:
+              exclude_features_fit:
                   - Autocor_length
                   - InverseEta
                   - ExcessVariance
                   - Mean
+                  - NPoints
+                  - RedderWhenBrighter0
+                  - RedderWhenBrighter1
+                  - StetsonL
+                  - InverseEtaColor
+              exclude_features_corner:
+                  - Autocor_length
+                  - InverseEta
+                  - ExcessVariance
                   - NPoints
                   - RedderWhenBrighter0
                   - RedderWhenBrighter1
