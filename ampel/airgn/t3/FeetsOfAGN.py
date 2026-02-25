@@ -485,11 +485,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         ixb = res_bin["decoded_agn_mask"].str[ix[1]]
                         ixm = m & ixb.notna() & ixb.astype(float).astype(bool)
                         if any(ixm):
-                            vals = res_bin.loc[
-                                ixm,
-                                col,
-                            ].values.tolist()
-                            y.append(np.log10(vals) if log else vals)
+                            vals = res_bin.loc[ixm, col].values
+                            y.append(np.log10(vals[vals > 0]) if log else vals)
                             x.append(
                                 ix[1] if ix[1] < 10 else ix[1] - 2
                             )  # bits 8 and 9 are skipped
@@ -542,27 +539,48 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     percentage_non_wise_agn = []
 
                     for thresh in metric_threshs:
+                        if log:
+                            vals_mask = (type_res_bin[cols] > 0).all(axis=1)
+                            vals = np.log10(type_res_bin.loc[vals_mask, cols])
+                        else:
+                            vals_mask = type_res_bin[cols].notna().all(axis=1)
+                            vals = type_res_bin.loc[vals_mask, cols]
+
+                        # number of agn passing cut
                         n_selected_agn = (
-                            (type_res_bin.loc[type_res_bin["agn"], cols] > thresh)
+                            (vals[type_res_bin.loc[vals_mask, "agn"]] > thresh)
                             .all(axis=1)
                             .sum()
                         )
+
+                        # number of non agn passing cut
+                        if log:
+                            res_bin_mask = (res_bin[cols] > 0).all(axis=1)
+                            res_bin_non_agn_vals = np.log10(
+                                res_bin.loc[~res_bin["agn"] & res_bin_mask, cols]
+                            )
+                        else:
+                            res_bin_mask = res_bin[cols].notna().all(axis=1)
+                            res_bin_non_agn_vals = res_bin.loc[
+                                ~res_bin["agn"] & res_bin_mask, cols
+                            ]
+
                         n_selected_non_agn = (
-                            (res_bin.loc[~res_bin["agn"], cols] > thresh)
-                            .all(axis=1)
-                            .sum()
+                            (res_bin_non_agn_vals > thresh).all(axis=1).sum()
                         )
+
                         if n_agn > 0:
                             completeness.append(n_selected_agn / n_agn)
                         else:
                             completeness.append(np.nan)
+
                         if (total := n_selected_agn + n_selected_non_agn) > 0:
                             purity.append(n_selected_agn / total)
                         else:
                             purity.append(np.nan)
 
                         n_selected_wise_agn = (
-                            (type_res_bin.loc[type_res_bin["wise_agn"], cols] > thresh)
+                            (vals[type_res_bin.loc[vals_mask, "wise_agn"]] > thresh)
                             .all(axis=1)
                             .sum()
                         )
@@ -571,10 +589,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         else:
                             percentage_wise_agn.append(np.nan)
                         n_selected_non_wise_agn = (
-                            (
-                                type_res_bin.loc[type_res_bin["non_wise_agn"], cols]
-                                > thresh
-                            )
+                            (vals[type_res_bin.loc[vals_mask, "non_wise_agn"]] > thresh)
                             .all(axis=1)
                             .sum()
                         )
