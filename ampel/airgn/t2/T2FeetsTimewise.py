@@ -127,10 +127,10 @@ class T2FeetsTimewise(AbsTiedLightCurveT2Unit, T2FeetsBase):
         stacked_lightcurve = pd.DataFrame.from_records(records)
 
         for i in range(1, 3):
-            f = stacked_lightcurve[f"w{i}meanfluxdensity"]
-            fe = stacked_lightcurve[f"w{i}fluxdensityrms"]
+            f = stacked_lightcurve[f"w{i}meanfluxdensity"]  # in mJy
+            fe = stacked_lightcurve[f"w{i}fluxdensityrms"]  # in mJy
             stacked_lightcurve[f"W{i}mag"] = -2.5 * np.log10(
-                f / FLUX_ZEROPOINTS[f"w{i}"]
+                f * 1e-3 / FLUX_ZEROPOINTS[f"w{i}"]
             )
             stacked_lightcurve[f"e_W{i}mag"] = 2.5 / np.log(10) * fe / f
 
