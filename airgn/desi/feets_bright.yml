@@ -92,11 +92,10 @@ task:
         execute:
           - unit: FeetsOfAGN
             config:
-              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_1comp
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_resample
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
-              umap_parameters:
-                n_components: 1
+              resample_non_agn: false
               exclude_features_fit:
                 - Mean
                 - NPoints

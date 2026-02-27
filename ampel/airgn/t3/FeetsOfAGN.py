@@ -56,7 +56,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     corner: bool = True
     umap: bool = True
     umap_parameters: dict[str, Any] = {}
-    match_mean_dist: bool = True
+    resample_non_agn: bool = True
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -127,11 +127,19 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- re-sample non-agn to match agn ---------------------- #
         res["sampled"] = True
-        if self.match_mean_dist:
+        if self.resample_non_agn:
             non_agn_w1_dist = res.loc[~res.agn, "W1_Mean"]
             agn_w1_dist = res.loc[res.agn, "W1_Mean"]
-            sampled_non_agn_index = match_distributions(non_agn_w1_dist, agn_w1_dist)
-            res.loc[sampled_non_agn_index] = False
+            # to be able to resample the non-AGN to the AGN ditribution, the AGN distribution has to be
+            # within the bounds of the non-AGN distribution
+            agn_outside = (agn_w1_dist < non_agn_w1_dist.min()) | (
+                agn_w1_dist > non_agn_w1_dist.max()
+            )
+            sampled_non_agn_index = match_distributions(
+                non_agn_w1_dist, agn_w1_dist[~agn_outside]
+            )
+            res.loc[sampled_non_agn_index, "sampled"] = False
+            res.loc[agn_outside.index[agn_outside], "sampled"] = False
 
         # ---------------------- umap and corner plot ---------------------- #
 
@@ -139,8 +147,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
         if self.corner or self.umap:
             for res_bin, s, e in self.iter_npoints_binned(res):
-                corner_df = pd.DataFrame(index=res_bin.index)
-                corner_df["agn"] = res_bin["agn"]
+                corner_df = pd.DataFrame(index=res_bin.index[res_bin.sampled])
+                corner_df["agn"] = res_bin.loc[corner_df.index, "agn"]
                 for m in metric_names:
                     mn = self._get_metric_name(m)
 
@@ -365,8 +373,9 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     plt.close()
 
                     # make the same plot in magnitude bins
-                    mask = ~res_bin.agn & res_bin["W1_Mean"].notna()
-                    w1_means = res_bin.loc[mask, "W1_Mean"]
+                    plot_df["W1_Mean"] = res_bin.loc[plot_df.index, "W1_Mean"]
+                    mask = ~plot_df.agn & plot_df["W1_Mean"].notna()
+                    w1_means = plot_df.loc[mask, "W1_Mean"]
                     w1_bins = np.quantile(w1_means, [0, 0.33, 0.66, 1])
                     w1_bins[-1] *= 1.1
                     w1_bins_labels = np.array(
@@ -420,11 +429,11 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 m = np.array([True] * len(vals))
             bins = np.linspace(vals.min(), vals.max(), 20)
             ax.hist(
-                vals[res.agn & m],
+                vals[res.agn & m & res.sampled],
                 ec="white",
                 alpha=0.5,
                 color="C1",
-                label=f"{(res.agn & m).sum() / res.agn.sum() * 100:.1f}% of AGN",
+                label=f"{(res.agn & m & res.sampled).sum() / res.agn.sum() * 100:.1f}% of AGN",
                 bins=bins,
             )
             ax.hist(
@@ -435,12 +444,22 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 label=f"{(~res.agn & m & res.sampled).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN",
                 bins=bins,
             )
-            if any(~res.sampled):
+            if any(~res.sampled & ~res.agn):
                 ax.hist(
                     vals[m & ~res.sampled],
                     alpha=0.8,
                     color="C0",
-                    label=f"{(m & ~res.sampled).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN ignored",
+                    label=f"{(m & ~res.sampled & ~res.agn).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN ignored",
+                    bins=bins,
+                    histtype="step",
+                    ls=":",
+                )
+            if any(~res.sampled & res.agn):
+                ax.hist(
+                    vals[m & ~res.sampled],
+                    alpha=0.8,
+                    color="C1",
+                    label=f"{(m & ~res.sampled & res.agn).sum() / (res.agn).sum() * 100:.1f}% of non-AGN ignored",
                     bins=bins,
                     histtype="step",
                     ls=":",
