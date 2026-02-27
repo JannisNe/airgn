@@ -31,7 +31,7 @@ task:
                   - InverseEta
                   - ExcessVariance
                   - Mean
-                  - MeanVariance
+                  - Std
                   - ReducedChi2
                   - NPoints
                 multi_band_features:
