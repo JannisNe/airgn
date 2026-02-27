@@ -29,19 +29,61 @@ def match_distributions(s1: pd.Series, s2: pd.Series):
     return s1.index[w < m * u]
 
 
+def repeated_matching(s1: pd.Series, s2: pd.Series, min_samples: int = 10):
+    """
+    Run rejection sampling multiple times to use as much of the
+    proposal distribution as possible
+    """
+    sampled_indices = [[]]
+    n_sampled = np.inf
+    while n_sampled > min_samples:
+        drop = np.concat(sampled_indices)
+        i_proposal = s1.drop(index=drop)
+        i_exclude_indices = match_distributions(i_proposal, s2)
+        i_sampled_indices = i_proposal.index.difference(i_exclude_indices)
+        sampled_indices.append(i_sampled_indices.tolist())
+        n_sampled = len(i_sampled_indices)
+    return s1.index.difference(np.concat(sampled_indices).tolist())
+
+
 if __name__ == "__main__":
     from scipy.stats import norm, kstest
     import matplotlib.pyplot as plt
+    from matplotlib import cm, colors as mcolors
 
-    s1 = pd.Series(norm(0, 1).rvs(10000))
-    s2 = pd.Series(norm(1, 0.5).rvs(1000))
-    s1_sampled = s1.drop(index=match_distributions(s1, s2))
+    s1 = pd.Series(norm(0, 4).rvs(10000))
+    s2 = pd.Series(norm(2, 0.5).rvs(1000))
+
+    sampled_indices = [[]]
+    n_sampled = np.inf
+    while n_sampled > 10:
+        drop = np.concat(sampled_indices)
+        i_proposal = s1.drop(index=drop)
+        i_exclude_indices = match_distributions(i_proposal, s2)
+        i_sampled_indices = i_proposal.index.difference(i_exclude_indices)
+        sampled_indices.append(i_sampled_indices)
+        n_sampled = len(i_sampled_indices)
+        print(n_sampled)
+
+    s1_sampled = s1.loc[np.concat(sampled_indices)]
+    s1_sampled_multi = s1.drop(index=repeated_matching(s1, s2, 10))
 
     pval = kstest(s1_sampled, s2).pvalue
 
     fig, ax = plt.subplots()
     ax.hist(s2, density=True, color="C0", ec="white", alpha=0.8)
-    ax.hist(s1, density=True, color="C1", alpha=1, histtype="step", ls=":")
+    cmap = plt.get_cmap("viridis")
+    for i in range(len(sampled_indices) + 1):
+        excl = np.concat(sampled_indices[: i + 1])
+        c = cmap(i / len(sampled_indices))
+        ax.hist(
+            s1.drop(index=excl),
+            density=True,
+            color=c,
+            alpha=1,
+            histtype="step",
+            ls="-",
+        )
     ax.hist(
         s1_sampled,
         density=True,
@@ -50,5 +92,21 @@ if __name__ == "__main__":
         ls="-",
         histtype="step",
     )
+    ax.hist(
+        s1_sampled_multi,
+        density=True,
+        color="C1",
+        alpha=0.5,
+        ls="-",
+        histtype="step",
+        lw=4,
+    )
     ax.set_title(f"P-value: {pval:.2f}")
+    sm = cm.ScalarMappable(
+        norm=mcolors.Normalize(vmin=0, vmax=len(sampled_indices)), cmap=cmap
+    )
+    fig.colorbar(
+        mappable=sm,
+        ax=ax,
+    )
     plt.show()

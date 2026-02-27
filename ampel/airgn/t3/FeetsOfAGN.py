@@ -21,7 +21,7 @@ from ampel.view.TransientView import TransientView
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
 from ampel.util.NPointsIterator import NPointsIterator
-from airgn.rejection_sampling import match_distributions
+from airgn.rejection_sampling import repeated_matching
 
 
 # AB offset to Vega for WISE bands from Jarrett et al. (2011)
@@ -135,8 +135,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
             target_outside_proposal = (target < proposal.min()) | (
                 target > proposal.max()
             )
-            sampled_proposal_index = match_distributions(
-                proposal, target[~target_outside_proposal]
+            sampled_proposal_index = repeated_matching(
+                proposal, target[~target_outside_proposal], min_samples=10
             )
             res.loc[sampled_proposal_index, "sampled"] = False
             res.loc[
