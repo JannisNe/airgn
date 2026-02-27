@@ -40,6 +40,9 @@ task:
                   - RedderWhenBrighter1
                   - StetsonL
                   - InverseEtaColor
+                  - BrightestColor
+                  - SecondBrightestMeanColor
+                  - ThirdBrightestMeanColor
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
     iter_max: 100000

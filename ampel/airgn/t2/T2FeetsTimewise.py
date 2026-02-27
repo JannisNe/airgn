@@ -94,11 +94,40 @@ class InverseEtaColor(feets.Extractor):
         return {"InverseEtaColor": 1 / Eta_color}
 
 
+class BrightestColor(feets.Extractor):
+    """Color at brightest, the two brightest, etc. epochs"""
+
+    features = ["BrightestColor", "SecondBrightestMeanColor", "ThirdBrightestMeanColor"]
+
+    def extract(
+        self, aligned_magnitude, aligned_magnitude2, aligned_error, aligned_error2
+    ):
+        sorted_args = np.argsort(aligned_magnitude)[::-1]
+        colors = aligned_magnitude[sorted_args] - aligned_magnitude2[sorted_args]
+        colors_error = np.sqrt(aligned_error**2 + aligned_error2**2)
+        return {
+            "BrightestColor": colors[0],
+            "SecondBrightestMeanColor": np.average(
+                colors[:2], weights=1 / colors_error[:2] ** 2
+            ),
+            "ThirdBrightestMeanColor": np.average(
+                colors[:3], weights=1 / colors_error[:3] ** 2
+            ),
+        }
+
+
 # --------------------------------------------------------
 # REGISTER FEATURES
 
 
-for ext in [PearsonsR, RedderWhenBrighter, NPoints, InverseEta, InverseEtaColor]:
+for ext in [
+    PearsonsR,
+    RedderWhenBrighter,
+    NPoints,
+    InverseEta,
+    InverseEtaColor,
+    BrightestColor,
+]:
     extractor_registry.register_extractor(ext)
 
 
