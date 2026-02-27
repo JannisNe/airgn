@@ -7,8 +7,8 @@ ExcessVariance,False,$\sigma^2_\mathrm{rms}$,False,-0.001,0.001
 InverseEta,True,$1/\eta$,False,-1.0,1.0
 InverseEtaColor,True,$1/\eta_\mathrm{color}$,True,-1.0,1.0
 ReducedChi2,True,$\chi_\mathrm{red}^2$,False,-2.0,2.0
-Autocor_length,False,$\tau$,False,0.0,5.0
-Containment,False,CL,True,0.0,1.0 
+Autocor_length,False,$\tau$,False,0.0,10.0
+Containment,False,CL,True,0.0,1.0
 NPoints,False,$N$,False,0.0,30.0
 Mean,False,$\mu$,False,4.0,20.0
 Std,False,$\sigma$,False,-1.0,1.0
