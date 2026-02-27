@@ -128,18 +128,20 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
         # ---------------------- re-sample non-agn to match agn ---------------------- #
         res["sampled"] = True
         if self.resample_non_agn:
-            non_agn_w1_dist = res.loc[~res.agn, "W1_Mean"]
-            agn_w1_dist = res.loc[res.agn, "W1_Mean"]
+            proposal = res.loc[res.agn, "W1_Mean"]
+            target = res.loc[~res.agn, "W1_Mean"]
             # to be able to resample the non-AGN to the AGN ditribution, the AGN distribution has to be
             # within the bounds of the non-AGN distribution
-            agn_outside = (agn_w1_dist < non_agn_w1_dist.min()) | (
-                agn_w1_dist > non_agn_w1_dist.max()
+            target_outside_proposal = (target < proposal.min()) | (
+                target > proposal.max()
             )
-            sampled_non_agn_index = match_distributions(
-                non_agn_w1_dist, agn_w1_dist[~agn_outside]
+            sampled_proposal_index = match_distributions(
+                proposal, target[~target_outside_proposal]
             )
-            res.loc[sampled_non_agn_index, "sampled"] = False
-            res.loc[agn_outside.index[agn_outside], "sampled"] = False
+            res.loc[sampled_proposal_index, "sampled"] = False
+            res.loc[
+                target_outside_proposal.index[target_outside_proposal], "sampled"
+            ] = False
 
         # ---------------------- umap and corner plot ---------------------- #
 
