@@ -3,6 +3,7 @@ import re
 from collections.abc import Generator
 from collections import defaultdict
 from typing import Optional, Any
+from pathlib import Path
 
 from matplotlib.colors import Normalize
 from pymongo import MongoClient
@@ -35,43 +36,7 @@ def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
     return [am[0] for im, am in zip(mask, agn_mask["AGN_MASKBITS"]) if im]
 
 
-metric_params = {
-    "RedderWhenBrighter0": dict(
-        log=False, range=(-10, 10), pretty_name="RWB", multiband=True
-    ),
-    "RedderWhenBrighter1": dict(
-        log=False, range=(-10, 10), pretty_name="RWB", multiband=True
-    ),
-    "StetsonL": dict(log=False, range=(-0.1, 0.1), pretty_name=r"$L$", multiband=True),
-    "PearsonsR": dict(log=False, range=(-1, 1), pretty_name="$r$", multiband=True),
-    "ExcessVariance": dict(
-        log=False,
-        range=(-0.001, 0.001),
-        pretty_name=r"$\sigma^2_\mathrm{rms}$",
-        multiband=False,
-    ),
-    "InverseEta": dict(
-        log=True, range=(-1, 1), pretty_name=r"$1/\eta$", multiband=False
-    ),
-    "InverseEtaColor": dict(
-        log=True, range=(-1, 1), pretty_name=r"$1/\eta_\mathrm{color}$", multiband=True
-    ),
-    "ReducedChi2": dict(
-        log=True, range=(-2, 2), pretty_name=r"$\chi_\mathrm{red}^2$", multiband=False
-    ),
-    "Autocor_length": dict(
-        log=False, range=(0, 5), pretty_name=r"$\tau$", multiband=False
-    ),
-    "MeanVariance": dict(
-        log=True,
-        range=(-4, 4),
-        pretty_name=r"$\sigma_\mathrm{\mu} / \mu$",
-        multiband=False,
-    ),
-    "Containment": dict(log=False, range=(0, 1), multiband=True, pretty_name="CL"),
-    "NPoints": dict(log=False, range=(0, 30), pretty_name=r"$N$", multiband=False),
-    "Mean": dict(log=False, range=(4, 20), pretty_name=r"$\mu$", multiband=False),
-}
+METRIC_PARAMS = pd.read_csv(Path(__file__).parent / "metric_params.csv", index_col=0)
 
 
 class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
@@ -103,7 +68,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
             self.exclude_features_corner = self.exclude_features_fit
 
     def _get_metric_name(self, raw_name) -> str | None:
-        mns = {s for s in metric_params.keys() if s in raw_name}
+        mns = {s for s in METRIC_PARAMS.index if s in raw_name}
         if len(mns) == 0:
             return None
         match_length = [len(re.search(imn, raw_name).group()) for imn in mns]
@@ -182,7 +147,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     ):
                         continue
 
-                    meta = metric_params[mn]
+                    meta = METRIC_PARAMS.loc[mn]
                     pn = meta["pretty_name"]
                     lim = meta["range"]
                     if meta["log"]:
@@ -296,7 +261,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                         for i in range(embedding.shape[1])
                     ]
 
-                    cpn = metric_params["Containment"]["pretty_name"]
+                    cpn = METRIC_PARAMS.loc["Containment", "pretty_name"]
                     corner_df[cpn] = np.nan
                     corner_df.loc[~nan_mask, cpn] = 1 - containment[*bin_maps]
 
@@ -420,7 +385,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- histograms ---------------------- #
 
-        for metric_name, meta in metric_params.items():
+        for metric_name, meta in METRIC_PARAMS.iterrows():
             pn = meta["pretty_name"]
             log = meta["log"]
             mb = meta["multiband"]
