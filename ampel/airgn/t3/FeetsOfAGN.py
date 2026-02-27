@@ -21,6 +21,7 @@ from ampel.view.TransientView import TransientView
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
 from ampel.util.NPointsIterator import NPointsIterator
+from airgn.rejection_sampling import match_distributions
 
 
 # AB offset to Vega for WISE bands from Jarrett et al. (2011)
@@ -55,6 +56,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     corner: bool = True
     umap: bool = True
     umap_parameters: dict[str, Any] = {}
+    match_mean_dist: bool = True
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -123,6 +125,14 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
         res["wise_agn"] = wise_agn_mask
         res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
 
+        # ---------------------- re-sample non-agn to match agn ---------------------- #
+        res["sampled"] = True
+        if self.match_mean_dist:
+            non_agn_w1_dist = res.loc[~res.agn, "W1_Mean"]
+            agn_w1_dist = res.loc[res.agn, "W1_Mean"]
+            sampled_non_agn_index = match_distributions(non_agn_w1_dist, agn_w1_dist)
+            res.loc[sampled_non_agn_index] = False
+
         # ---------------------- umap and corner plot ---------------------- #
 
         t3res = defaultdict(dict)
@@ -152,10 +162,10 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     lim = (meta["lower"], meta["upper"])
                     if meta["log"]:
                         pl = r"$\log_{10}($" + pn + "$)$"
-                        vals = np.log10(res_bin[m])
+                        vals = np.log10(res_bin.loc[res_bin.sampled, m])
                     else:
                         pl = pn
-                        vals = res_bin[m]
+                        vals = res_bin.loc[res_bin.sampled, m]
                     if meta["multiband"]:
                         pl += " " + " - ".join(m.split("_")[:-1])
                     else:
@@ -418,13 +428,23 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                 bins=bins,
             )
             ax.hist(
-                vals[~res.agn & m],
+                vals[~res.agn & m & res.sampled],
                 ec="white",
                 alpha=0.5,
                 color="C0",
-                label=f"{(~res.agn & m).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN",
+                label=f"{(~res.agn & m & res.sampled).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN",
                 bins=bins,
             )
+            if any(~res.sampled):
+                ax.hist(
+                    vals[m & ~res.sampled],
+                    alpha=0.8,
+                    color="C0",
+                    label=f"{(m & ~res.sampled).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN ignored",
+                    bins=bins,
+                    histtype="step",
+                    ls=":",
+                )
             ax.legend()
             ax.set_xlabel(pl)
             ax.set_ylabel("counts")
@@ -438,6 +458,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
             # ---------------------- violinplots ---------------------- #
 
             for res_bin, s, e in self.iter_npoints_binned(res):
+                res_bin = res_bin[res_bin.sampled]
                 both_bands_mask = res_bin[cols].notna().all(axis=1)
                 n = [((res_bin["decoded_agn_mask"] == "0") & both_bands_mask).sum()]
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
@@ -501,6 +522,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
             metric_threshs = np.linspace(meta["lower"], meta["upper"], 100)
 
             for res_bin, s, e in self.iter_npoints_binned(res):
+                res_bin = res_bin[res_bin.sampled]
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
                     ixb = res_bin["decoded_agn_mask"].str[ix[1]]
                     type_mask = ixb.notna() & ixb.astype(float).astype(bool)
