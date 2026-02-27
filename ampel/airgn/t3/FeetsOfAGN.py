@@ -461,7 +461,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     vals[m & ~res.sampled],
                     alpha=0.8,
                     color="C1",
-                    label=f"{(m & ~res.sampled & res.agn).sum() / (res.agn).sum() * 100:.1f}% of non-AGN ignored",
+                    label=f"{(m & ~res.sampled & res.agn).sum() / res.agn.sum() * 100:.1f}% of AGN ignored",
                     bins=bins,
                     histtype="step",
                     ls=":",
