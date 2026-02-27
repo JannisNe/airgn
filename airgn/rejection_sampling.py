@@ -34,15 +34,26 @@ def repeated_matching(s1: pd.Series, s2: pd.Series, min_samples: int = 10):
     Run rejection sampling multiple times to use as much of the
     proposal distribution as possible
     """
+
+    # set up loop variables
     sampled_indices = [[]]
     n_sampled = np.inf
+
+    # run as long as enough objects get sampled
     while n_sampled > min_samples:
+        # drop already sampled values
         drop = np.concat(sampled_indices)
         i_proposal = s1.drop(index=drop)
+
+        # run the sampling for this step
         i_exclude_indices = match_distributions(i_proposal, s2)
+
+        # save sampled indices
         i_sampled_indices = i_proposal.index.difference(i_exclude_indices)
         sampled_indices.append(i_sampled_indices.tolist())
         n_sampled = len(i_sampled_indices)
+
+    # return all rejected indices
     return s1.index.difference(np.concat(sampled_indices).tolist())
 
 
