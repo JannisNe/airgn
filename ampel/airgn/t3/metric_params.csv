@@ -12,3 +12,4 @@ MeanVariance,True,$\sigma_\mathrm{\mu} / \mu$,False,-4.0,4.0
 Containment,False,CL,True,0.0,1.0
 NPoints,False,$N$,False,0.0,30.0
 Mean,False,$\mu$,False,4.0,20.0
+Std,False,$\sigma$,False,-1.0,1.0
