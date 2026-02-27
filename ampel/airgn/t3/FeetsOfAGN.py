@@ -2,7 +2,7 @@ import json
 import re
 from collections.abc import Generator
 from collections import defaultdict
-from typing import Optional, Any
+from typing import Optional, Any, Literal
 from pathlib import Path
 
 from matplotlib.colors import Normalize
@@ -56,7 +56,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     corner: bool = True
     umap: bool = True
     umap_parameters: dict[str, Any] = {}
-    resample_non_agn: bool = True
+    resample: Literal["agn", "non-agn", "none"] = "agn"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -127,9 +127,10 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- re-sample non-agn to match agn ---------------------- #
         res["sampled"] = True
-        if self.resample_non_agn:
-            proposal = res.loc[res.agn, "W1_Mean"]
-            target = res.loc[~res.agn, "W1_Mean"]
+        if self.resample != "none":
+            resample_mask = res.agn if self.resample == "agn" else ~res.agn
+            proposal = res.loc[resample_mask, "W1_Mean"]
+            target = res.loc[~resample_mask, "W1_Mean"]
             # to be able to resample the non-AGN to the AGN ditribution, the AGN distribution has to be
             # within the bounds of the non-AGN distribution
             target_outside_proposal = (target < proposal.min()) | (

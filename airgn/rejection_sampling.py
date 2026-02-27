@@ -42,8 +42,7 @@ def repeated_matching(s1: pd.Series, s2: pd.Series, min_samples: int = 10):
     # run as long as enough objects get sampled
     while n_sampled > min_samples:
         # drop already sampled values
-        drop = np.concat(sampled_indices)
-        i_proposal = s1.drop(index=drop)
+        i_proposal = s1.drop(index=np.concat(sampled_indices))
 
         # run the sampling for this step
         i_exclude_indices = match_distributions(i_proposal, s2)
