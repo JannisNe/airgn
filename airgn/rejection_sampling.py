@@ -5,7 +5,7 @@ import numpy as np
 def match_distributions(s1: pd.Series, s2: pd.Series):
     """Use rejection sampling to down-sample s1 to match the distribution of s2"""
 
-    assert (min(s2) > min(s1)) & (max(s2) < max(s1)), (
+    assert (min(s2) > min(s1)) or (max(s2) < max(s1)), (
         "The target function is outside the proposal function!"
     )
 
