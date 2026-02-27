@@ -149,7 +149,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
                     meta = METRIC_PARAMS.loc[mn]
                     pn = meta["pretty_name"]
-                    lim = meta["range"]
+                    lim = (meta["lower"], meta["upper"])
                     if meta["log"]:
                         pl = r"$\log_{10}($" + pn + "$)$"
                         vals = np.log10(res_bin[m])
@@ -476,7 +476,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
                     )
                     if not mb:
                         ax.set_ylabel(f"W{i + 1}")
-                    ax.set_ylim(*meta["range"])
+                    ax.set_ylim(meta["lower"], meta["upper"])
 
                 if mb:
                     axs[-1].set_ylabel(pl)
@@ -498,7 +498,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
 
             # ---------------------- metric cuts ---------------------- #
 
-            metric_threshs = np.linspace(*meta["range"], 100)
+            metric_threshs = np.linspace(meta["lower"], meta["upper"], 100)
 
             for res_bin, s, e in self.iter_npoints_binned(res):
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
