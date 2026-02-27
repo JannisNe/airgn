@@ -12,6 +12,6 @@ Containment,False,CL,True,0.0,1.0
 NPoints,False,$N$,False,0.0,30.0
 Mean,False,$\mu$,False,4.0,20.0
 Std,False,$\sigma$,False,-1.0,1.0
-BrightestMeanColor,False,$\mathrm{(W1 - W2)_1}$,True,-1,2
-SecondrightestMeanColor,False,$\mathrm{\bar{(W1 - W2)}_2}$,True,-1,2
+BrightestColor,False,$\mathrm{(W1 - W2)_1}$,True,-1,2
+SecondBrightestMeanColor,False,$\mathrm{\bar{(W1 - W2)}_2}$,True,-1,2
 ThirdBrightestMeanColor,False,$\mathrm{\bar{(W1 - W2)}_3}$,True,-1,2
