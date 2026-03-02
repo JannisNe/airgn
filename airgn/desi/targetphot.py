@@ -58,11 +58,21 @@ def download():
 
 
 def make_extracted_file(columns: list[str]):
+    logger.info("extracting LS DR9 target photometry")
     Table.read(LOCAL_FILE_PATH)[columns].write(EXTRACTED_FILE_PATH)
 
 
-def make(columns: list[str]):
+def make(columns: list[str] = EXTRACTED_FILE_COLUMNS):
     if not LOCAL_FILE_PATH.exists():
         download()
+    else:
+        logger.info(f"{LOCAL_FILE_PATH} already exists")
     if not EXTRACTED_FILE_PATH.exists():
         make_extracted_file(columns)
+    else:
+        logger.info(f"{EXTRACTED_FILE_PATH} already exists")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    make()
