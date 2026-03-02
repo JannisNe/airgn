@@ -13,6 +13,7 @@ from ampel.model.StateT2Dependency import StateT2Dependency
 
 from airgn.legacy_survey.util import align_legacy_survey_photometry
 from timewise.process import keys
+from timewise.process.stacking import FLUX_ZEROPOINTS
 
 
 class MetricMeta(TypedDict):
@@ -49,6 +50,7 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
         StateT2Dependency[Literal["T2StackVisits", "T2MaggyToFluxDensity"]]
     ]
     metric_names: list[str] = []
+    mag: bool = False
 
     _metrics = {}
     _metric_meta = {}
@@ -130,6 +132,12 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
                 f = sel_data[f"w{i}{keys.MEAN}{key}"].values
                 fe = sel_data[f"w{i}{key}{keys.RMS}"].values
                 t = sel_data[self._mjd_colname[i]].values
+
+                # use logarithmic fluxes as magnitude representation
+                if self.mag:
+                    fe = 2.5 / np.log(10) * fe / f
+                    f = -2.5 * np.log10(f / FLUX_ZEROPOINTS[f"w{i}"])
+
                 for metric_name in self._single_band_metric_names:
                     res[f"{metric_name}_w{i}_{key}"] = self._metrics[metric_name](
                         f, fe, t
@@ -153,9 +161,18 @@ class T2CalculateVarMetrics(AbsTiedLightCurveT2Unit):
             fe2 = sel_data[f"w2{key}{keys.RMS}"].values
             t2 = sel_data[self._mjd_colname[2]].values
 
+            if self.mag:
+                fe1 = 2.5 / np.log(10) * fe1 / f1
+                f1 = -2.5 * np.log10(f1 / FLUX_ZEROPOINTS["w1"])
+                fe2 = 2.5 / np.log(10) * fe2 / f2
+                f2 = -2.5 * np.log10(f2 / FLUX_ZEROPOINTS["w1"])
+
             for metric_name in self._multi_band_metric_names:
+                kwargs = (
+                    {"mag": self.mag} if metric_name == "redder_when_brighter" else {}
+                )
                 res[f"{metric_name}_{key}"] = self._metrics[metric_name](
-                    f1, fe1, t1, f2, fe2, t2
+                    f1, fe1, t1, f2, fe2, t2, **kwargs
                 )
 
         return res
@@ -243,32 +260,7 @@ def pearsons_r(
 
 
 @T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"$r_\mathrm{log}$", multiband=True
-)
-def pearsons_r_log(
-    f1: float_arr,
-    fe1: float_arr,
-    t1: float_arr,
-    f2: float_arr,
-    fe2: float_arr,
-    t2: float_arr,
-):
-    assert len(f1) == len(f2), "Both flux arrays must have same length!"
-    if len(f1) > 0:
-        both_detections = (f1 > 0) & (f2 > 0)
-        N = sum(both_detections)
-        m1 = 2.5 * np.log10(f1[both_detections])
-        m2 = 2.5 * np.log10(f2[both_detections])
-        mean1 = sum(m1) / N
-        mean2 = sum(m2) / N
-        diff1 = m1 - mean1
-        diff2 = m2 - mean2
-        return sum(diff1 * diff2) / (np.sqrt(sum(diff1**2)) * np.sqrt(sum(diff2**2)))
-    return None
-
-
-@T2CalculateVarMetrics.register(
-    log=False, range=(-1, 1), pretty_name=r"$L$", multiband=True
+    log=False, range=(-10, 100), pretty_name=r"$L$", multiband=True
 )
 def stetson_index(
     f1: float_arr,
@@ -279,7 +271,7 @@ def stetson_index(
     t2: float_arr,
 ):
     assert len(f1) == len(f2), "Both flux arrays must have same length!"
-    if (n := len(f1)) > 0:
+    if (n := len(f1)) > 2:
         mean1 = np.average(f1, weights=1 / fe1**2)
         diff1 = f1 - mean1
         mean2 = np.average(f2, weights=1 / fe2**2)
@@ -288,3 +280,44 @@ def stetson_index(
         p_k = diff1 * diff2 * f / fe1 / fe2
         return sum(np.sign(p_k) * np.sqrt(np.abs(p_k)))
     return None
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-10, 10), pretty_name="RWB", multiband=True
+)
+def redder_when_brighter(
+    f1: float_arr,
+    fe1: float_arr,
+    t1: float_arr,
+    f2: float_arr,
+    fe2: float_arr,
+    t2: float_arr,
+    mag: bool,
+):
+    assert len(f1) == len(f2), "Both flux arrays must have same length!"
+    if len(f1) > 1:
+        if mag:
+            color = f1 - f2
+            color_e = np.sqrt(fe1**2 + fe2**2)
+            x = -f1
+        else:
+            color = f2 / f1
+            color_e = np.sqrt((f2 / fe2) ** 2 + (f1 / fe1) ** 2) * color
+            x = f1
+        try:
+            a, b = np.polyfit(x, color, 1, w=1 / color_e)
+        except np.linalg.LinAlgError:
+            return -999
+        return a
+    return None
+
+
+@T2CalculateVarMetrics.register(
+    log=False, range=(-10, 10), pretty_name="mean", multiband=False
+)
+def mean(
+    f: float_arr,
+    fe: float_arr,
+    t: float_arr,
+):
+    return np.average(f, weights=1 / fe**2)

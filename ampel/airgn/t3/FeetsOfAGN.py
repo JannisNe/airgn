@@ -1,5 +1,9 @@
+import json
+import re
 from collections.abc import Generator
-from typing import cast
+from collections import defaultdict
+from typing import Optional, Any, Literal
+from pathlib import Path
 
 from matplotlib.colors import Normalize
 from pymongo import MongoClient
@@ -16,8 +20,8 @@ from ampel.view.TransientView import TransientView
 
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
-from ampel.airgn.t2.T2CalculateVarMetrics import T2CalculateVarMetrics, MetricMeta
 from ampel.util.NPointsIterator import NPointsIterator
+from airgn.rejection_sampling import repeated_matching
 
 
 # AB offset to Vega for WISE bands from Jarrett et al. (2011)
@@ -28,30 +32,31 @@ WISE_AB_OFFSET = {
 }
 
 
-ContainmentMeta = MetricMeta(log=False, range=(0, 1), multiband=True, pretty_name="CL")
-
-
 def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
     mask = str(bin(int(agn_bitmask))).replace("0b", "")[::-1]
     return [am[0] for im, am in zip(mask, agn_mask["AGN_MASKBITS"]) if im]
 
 
-class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
+METRIC_PARAMS = pd.read_csv(Path(__file__).parent / "metric_params.csv", index_col=0)
+
+
+class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     """
     Plot lightcurves of transients using matplotlib
     """
 
     path: str
     input_mongo_db_name: str
-    mag: bool = False
+    exclude_features_fit: Optional[list[str]] = None
+    exclude_features_corner: Optional[list[str]] = None
+    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
     iter_max: int | None = None
     file_format: str = "pdf"
-    metric_names: list[str] = list(T2CalculateVarMetrics._metrics.keys())
-    exclude_metric_names: list[str] = []
-    n_point_cols = [f"npoints_w{i + 1}_fluxdensity" for i in range(2)]
     corner: bool = True
     umap: bool = True
+    umap_parameters: dict[str, Any] = {}
+    resample: Literal["agn", "non-agn", "none"] = "agn"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -60,14 +65,23 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         self._agn_bitmask = get_agn_bitmask()
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
-        self._metric_meta = T2CalculateVarMetrics._metric_meta
-        if self.umap:
-            self._metric_meta["containment"] = ContainmentMeta
-            self.metric_names.append("containment")
+
+        if self.exclude_features_fit and not self.exclude_features_corner:
+            self.exclude_features_corner = self.exclude_features_fit
+
+    def _get_metric_name(self, raw_name) -> str | None:
+        mns = {s for s in METRIC_PARAMS.index if s in raw_name}
+        if len(mns) == 0:
+            return None
+        match_length = [len(re.search(imn, raw_name).group()) for imn in mns]
+        return list(mns)[np.argmax(match_length)]
+
+    def _bin_key(self, s, e):
+        return f"bin_{s}_{e}"
 
     def process(
         self, gen: Generator[TransientView, T3Send, None], t3s: None | T3Store = None
-    ) -> None:
+    ) -> dict[str, dict[str, Any]]:
         # ---------------------- aggregate results ---------------------- #
 
         res = {}
@@ -75,12 +89,11 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         for view in gen:
             input_res = None
             body = None
-            for t2 in view.get_t2_views("T2CalculateVarMetrics", code=0):
-                if not (t2.config["mag"] == self.mag):
-                    continue
+            for t2 in view.get_t2_views("T2FeetsTimewise", code=0):
                 body = dict(t2.get_payload())
                 input_res = self._col.find_one({"orig_id": t2.stock})
                 break
+
             if not input_res:
                 continue
 
@@ -102,6 +115,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                 break
 
         res = pd.DataFrame.from_dict(res, orient="index")
+        metric_names = res.columns
 
         # ---------------------- select agn and non-agn ---------------------- #
 
@@ -111,64 +125,127 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
         res["wise_agn"] = wise_agn_mask
         res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
 
+        # ---------------------- re-sample non-agn to match agn ---------------------- #
+        res["sampled"] = True
+        if self.resample != "none":
+            resample_mask = res.agn if self.resample == "agn" else ~res.agn
+            proposal = res.loc[resample_mask, "W1_Mean"]
+            target = res.loc[~resample_mask, "W1_Mean"]
+            # to be able to resample the non-AGN to the AGN ditribution, the AGN distribution has to be
+            # within the bounds of the non-AGN distribution
+            target_outside_proposal = (target < proposal.min()) | (
+                target > proposal.max()
+            )
+            sampled_proposal_index = repeated_matching(
+                proposal, target[~target_outside_proposal], min_samples=10
+            )
+            res.loc[sampled_proposal_index, "sampled"] = False
+            res.loc[
+                target_outside_proposal.index[target_outside_proposal], "sampled"
+            ] = False
+
         # ---------------------- umap and corner plot ---------------------- #
+
+        t3res = defaultdict(dict)
 
         if self.corner or self.umap:
             for res_bin, s, e in self.iter_npoints_binned(res):
-                corner_df = pd.DataFrame(index=res_bin.index)
-                corner_df["agn"] = res_bin["agn"]
-                for m in self.metric_names:
-                    # exclude npoints because it's not a real variability metric
-                    # and has not enough variance so the KDE will collapse
+                corner_df = pd.DataFrame(index=res_bin.index[res_bin.sampled])
+                corner_df["agn"] = res_bin.loc[corner_df.index, "agn"]
+                for m in metric_names:
+                    mn = self._get_metric_name(m)
+
                     if (
-                        m.startswith("npoints")
-                        or m.startswith("containment")
-                        or any([m.startswith(mn) for mn in self.exclude_metric_names])
+                        # Skip if no matching metric was found for the column name
+                        not mn
+                        # exclude npoints because it's not a real variability metric
+                        # and has not enough variance so the KDE will collapse
+                        or (m in self.n_point_cols)
+                        # containment will be calculated l8er :-)
+                        or m.endswith("Containment")
+                        # skip features if requested
+                        or any([m.endswith(mn) for mn in self.exclude_features_corner])
                     ):
                         continue
-                    meta = self._metric_meta[m]
-                    cols = (
-                        [f"{m}_w{i}_fluxdensity" for i in range(1, 3)]
-                        if not meta["multiband"]
-                        else [f"{m}_fluxdensity"]
-                    )
+
+                    meta = METRIC_PARAMS.loc[mn]
                     pn = meta["pretty_name"]
-                    lim = meta["range"]
-                    for i, col in enumerate(cols):
-                        if meta["log"]:
-                            pl = r"$\log_{10}($" + pn + "$)$"
-                            vals = np.log10(res_bin[col])
-                        else:
-                            pl = pn
-                            vals = res_bin[col]
-                        if not meta["multiband"]:
-                            pl += f" W{i + 1}"
-                        m = (vals > lim[0]) & (vals < lim[1])
-                        pd.options.mode.chained_assignment = None
-                        vals.loc[~m] = np.nan
-                        pd.options.mode.chained_assignment = "warn"
-                        corner_df[pl] = vals
+                    lim = (meta["lower"], meta["upper"])
+                    if meta["log"]:
+                        pl = r"$\log_{10}($" + pn + "$)$"
+                        vals = np.log10(res_bin.loc[res_bin.sampled, m])
+                    else:
+                        pl = pn
+                        vals = res_bin.loc[res_bin.sampled, m]
+                    if meta["multiband"]:
+                        pl += " " + " - ".join(m.split("_")[:-1])
+                    else:
+                        pl += " " + m.split("_")[0]
+
+                    vals_mask = (vals > lim[0]) & (vals < lim[1])
+                    pd.options.mode.chained_assignment = None
+                    vals.loc[~vals_mask] = np.nan
+                    pd.options.mode.chained_assignment = "warn"
+                    corner_df[pl] = vals
 
                 # ---------------------- UMAP ---------------------- #
 
-                bindir = self._path / f"bin_{s}_{e}"
+                bindir = self._path / self._bin_key(s, e)
                 bindir.mkdir(parents=True, exist_ok=True)
 
                 if self.umap:
-                    reducer = umap.UMAP(random_state=42)
-                    nan_mask = corner_df.isna().any(axis=1)
-                    reducer.fit(
-                        corner_df.loc[~nan_mask, [c for c in corner_df if c != "agn"]]
+                    reducer = umap.UMAP(random_state=42, **self.umap_parameters)
+                    corner_df_nans = corner_df.isna()
+                    nan_mask = corner_df_nans.any(axis=1)
+                    not_fit_columns = list(self.exclude_features_fit) + ["agn"]
+                    fit_df = corner_df.loc[~nan_mask].drop(
+                        columns=corner_df.columns.intersection(not_fit_columns)
                     )
+
+                    reducer.fit(fit_df)
                     embedding = reducer.embedding_
                     agn_mask = corner_df.loc[~nan_mask, "agn"]
+
+                    # check percentages of objects that are valid
+                    umap_res = {
+                        "total": nan_mask.sum() / len(nan_mask),
+                        "agn": (nan_mask & corner_df.agn).sum() / corner_df.agn.sum(),
+                        "non_agn": (nan_mask & ~corner_df.agn).sum()
+                        / (~corner_df.agn).sum(),
+                    }
+                    self.logger.info(
+                        f"UMAP bin ({s}, {e}): {json.dumps(umap_res, indent=4)}"
+                    )
+                    t3res[self._bin_key(s, e)]["umap"] = umap_res
+
+                    # plot features that are nan per class
+                    fig, ax = plt.subplots()
+                    for m, label in zip(
+                        [~corner_df.agn, corner_df.agn], ["non-AGN", "AGN"]
+                    ):
+                        pdf = (
+                            corner_df_nans.loc[m].drop(columns=["agn"]).sum() / m.sum()
+                        )
+                        ax.bar(
+                            pdf.index, pdf.values, label=label, ec="white", alpha=0.5
+                        )
+                    xticklabels = pdf.index
+                    ax.set_ylabel("Percentage")
+                    ax.set_xticks(np.arange(0, len(xticklabels)))
+                    ax.set_xticklabels(xticklabels, rotation=60, ha="right")
+                    ax.legend()
+                    fig.tight_layout()
+                    fn = bindir / f"nan_percentages.{self.file_format}"
+                    self.logger.debug(f"Saving {fn}")
+                    fig.savefig(fn)
+                    plt.close()
 
                     # make bins in feature space
                     bins = [np.linspace(np.min(e), np.max(e), 40) for e in embedding.T]
 
                     # calculate 2d histograms for AGN and non-AGN
-                    agn_h, _, _ = np.histogram2d(*embedding[agn_mask].T, bins=bins)
-                    non_agn_h, _, _ = np.histogram2d(*embedding[~agn_mask].T, bins=bins)
+                    agn_h, _ = np.histogramdd(embedding[agn_mask], bins=bins)
+                    non_agn_h, _ = np.histogramdd(embedding[~agn_mask], bins=bins)
 
                     # check their distributions with relative histograms
                     agn_h_rel = agn_h / np.nansum(agn_h)
@@ -196,23 +273,23 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     containment = containment.reshape(pdist.shape)
 
                     # map containment back to original points
-                    xbin = np.digitize(embedding[:, 0], bins[0]) - 1
-                    ybin = np.digitize(embedding[:, 1], bins[1]) - 1
-
-                    nx, ny = containment.shape
-                    xbin = np.clip(xbin, 0, nx - 1)
-                    ybin = np.clip(ybin, 0, ny - 1)
-                    corner_df[ContainmentMeta["pretty_name"]] = np.nan
-                    corner_df.loc[~nan_mask, ContainmentMeta["pretty_name"]] = (
-                        1 - containment[xbin, ybin]
-                    )
-
-                    # also map back to original results data to make histograms later
-                    res.loc[corner_df.index, "containment_fluxdensity"] = corner_df[
-                        ContainmentMeta["pretty_name"]
+                    bin_maps = [
+                        np.clip(
+                            np.digitize(embedding[:, i], bins[i]) - 1,
+                            0,
+                            containment.shape[i] - 1,
+                        )
+                        for i in range(embedding.shape[1])
                     ]
 
-                    X, Y = np.meshgrid(*bins)
+                    cpn = METRIC_PARAMS.loc["Containment", "pretty_name"]
+                    corner_df[cpn] = np.nan
+                    corner_df.loc[~nan_mask, cpn] = 1 - containment[*bin_maps]
+
+                    # also map back to original results data to make histograms later
+                    res.loc[corner_df.index, "Containment"] = corner_df[cpn]
+
+                    meshbins = np.meshgrid(*bins)
 
                     itr = [
                         (
@@ -251,27 +328,41 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         (containment, "viridis", 0, 1, "contours", "containment level"),
                     ]
 
-                    for i, (h, cmap, vmin, vmax, fext, l) in enumerate(itr):
+                    for i, (h, cmap, vmin, vmax, fext, label) in enumerate(itr):
                         fig, ax = plt.subplots()
-                        norm = Normalize(vmin=vmin, vmax=vmax)
-                        ax.pcolormesh(X, Y, h, cmap=cmap, norm=norm)
-                        fig.colorbar(
-                            ax=ax,
-                            location="right",
-                            mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
-                            label=l,
-                            extend="both",
-                            pad=0.1,
-                        )
-                        fn = bindir / f"umap_2d{fext}.{self.file_format}"
+
+                        if (ndim := embedding.shape[1]) == 2:
+                            norm = Normalize(vmin=vmin, vmax=vmax)
+                            ax.pcolormesh(*meshbins, h, cmap=cmap, norm=norm)
+                            fig.colorbar(
+                                ax=ax,
+                                location="right",
+                                mappable=plt.cm.ScalarMappable(norm=norm, cmap=cmap),
+                                label=label,
+                                extend="both",
+                                pad=0.1,
+                            )
+                            fn = bindir / f"umap_2d{fext}.{self.file_format}"
+                        elif ndim == 1:
+                            hb = meshbins[0]
+                            ax.bar(hb[:-1], h, width=np.diff(hb), alpha=0.8, ec="white")
+                            fn = bindir / f"umap_1d{fext}.{self.file_format}"
+                        else:
+                            raise NotImplementedError()
+
                         fig.savefig(fn)
                         plt.close()
 
                 # ---------------------- corner ---------------------- #
 
                 if self.corner:
+                    plot_df = corner_df.drop(
+                        columns=corner_df.columns.intersection(
+                            self.exclude_features_corner
+                        )
+                    )
                     fig = sns.pairplot(
-                        corner_df,
+                        plot_df,
                         kind="kde",
                         corner=True,
                         hue="agn",
@@ -285,8 +376,9 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     plt.close()
 
                     # make the same plot in magnitude bins
-                    mask = ~res_bin.agn & res_bin["mean_w1_fluxdensity"].notna()
-                    w1_means = res_bin.loc[mask, "mean_w1_fluxdensity"]
+                    plot_df["W1_Mean"] = res_bin.loc[plot_df.index, "W1_Mean"]
+                    mask = ~plot_df.agn & plot_df["W1_Mean"].notna()
+                    w1_means = plot_df.loc[mask, "W1_Mean"]
                     w1_bins = np.quantile(w1_means, [0, 0.33, 0.66, 1])
                     w1_bins[-1] *= 1.1
                     w1_bins_labels = np.array(
@@ -296,7 +388,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         ]
                     )
                     w1_bin = np.digitize(w1_means, bins=w1_bins)
-                    corner_non_agn = corner_df[mask].drop(columns=["agn"])
+                    corner_non_agn = plot_df[mask].drop(columns=["agn"])
                     corner_non_agn["W1 mean"] = w1_bins_labels[w1_bin - 1]
 
                     fig = sns.pairplot(
@@ -315,17 +407,20 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
 
         # ---------------------- histograms ---------------------- #
 
-        for metric_name in self.metric_names:
-            meta = self._metric_meta[metric_name]
+        for metric_name, meta in METRIC_PARAMS.iterrows():
             pn = meta["pretty_name"]
             log = meta["log"]
             mb = meta["multiband"]
             pl = r"$\log_{10}($" + pn + "$)$" if log else pn
 
             cols = (
-                [f"{metric_name}_w{i}_fluxdensity" for i in range(1, 3)]
-                if not mb
-                else [f"{metric_name}_fluxdensity"]
+                (
+                    [f"W{i}_{metric_name}" for i in range(1, 3)]
+                    if not mb
+                    else [f"W1_W2_{metric_name}"]
+                )
+                if not metric_name == "Containment"
+                else ["Containment"]
             )
 
             fig, ax = plt.subplots()
@@ -333,12 +428,51 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
             if log:
                 m = vals > 0
                 vals = np.log10(vals[m])
-            ax.hist(vals, ec="white", alpha=0.8)
+            else:
+                m = np.array([True] * len(vals))
+            bins = np.linspace(vals.min(), vals.max(), 20)
+            ax.hist(
+                vals[res.agn & m & res.sampled],
+                ec="white",
+                alpha=0.5,
+                color="C1",
+                label=f"{(res.agn & m & res.sampled).sum() / res.agn.sum() * 100:.1f}% of AGN",
+                bins=bins,
+            )
+            ax.hist(
+                vals[~res.agn & m & res.sampled],
+                ec="white",
+                alpha=0.5,
+                color="C0",
+                label=f"{(~res.agn & m & res.sampled).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN",
+                bins=bins,
+            )
+            if any(~res.sampled & ~res.agn):
+                ax.hist(
+                    vals[m & ~res.sampled],
+                    alpha=0.8,
+                    color="C0",
+                    label=f"{(m & ~res.sampled & ~res.agn).sum() / (~res.agn).sum() * 100:.1f}% of non-AGN ignored",
+                    bins=bins,
+                    histtype="step",
+                    ls=":",
+                )
+            if any(~res.sampled & res.agn):
+                ax.hist(
+                    vals[m & ~res.sampled],
+                    alpha=0.8,
+                    color="C1",
+                    label=f"{(m & ~res.sampled & res.agn).sum() / res.agn.sum() * 100:.1f}% of AGN ignored",
+                    bins=bins,
+                    histtype="step",
+                    ls=":",
+                )
+            ax.legend()
             ax.set_xlabel(pl)
             ax.set_ylabel("counts")
             ax.set_yscale("log")
             fn = self._path / f"{metric_name}_hist.{self.file_format}"
-            self.logger.info(f"saving {fn}")
+            self.logger.debug(f"saving {fn}")
             fig.tight_layout()
             fig.savefig(fn)
             plt.close()
@@ -346,6 +480,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
             # ---------------------- violinplots ---------------------- #
 
             for res_bin, s, e in self.iter_npoints_binned(res):
+                res_bin = res_bin[res_bin.sampled]
                 both_bands_mask = res_bin[cols].notna().all(axis=1)
                 n = [((res_bin["decoded_agn_mask"] == "0") & both_bands_mask).sum()]
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
@@ -370,11 +505,8 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         ixb = res_bin["decoded_agn_mask"].str[ix[1]]
                         ixm = m & ixb.notna() & ixb.astype(float).astype(bool)
                         if any(ixm):
-                            vals = res_bin.loc[
-                                ixm,
-                                col,
-                            ].values.tolist()
-                            y.append(np.log10(vals) if log else vals)
+                            vals = res_bin.loc[ixm, col].values
+                            y.append(np.log10(vals[vals > 0]) if log else vals)
                             x.append(
                                 ix[1] if ix[1] < 10 else ix[1] - 2
                             )  # bits 8 and 9 are skipped
@@ -387,7 +519,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     )
                     if not mb:
                         ax.set_ylabel(f"W{i + 1}")
-                    ax.set_ylim(*meta["range"])
+                    ax.set_ylim(meta["lower"], meta["upper"])
 
                 if mb:
                     axs[-1].set_ylabel(pl)
@@ -402,16 +534,17 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     / f"{metric_name}_bin_{s}_{e}.{self.file_format}"
                 )
                 fn.parent.mkdir(parents=True, exist_ok=True)
-                self.logger.info(f"saving {fn}")
+                self.logger.debug(f"saving {fn}")
                 fig.tight_layout()
                 fig.savefig(fn)
                 plt.close()
 
             # ---------------------- metric cuts ---------------------- #
 
-            metric_threshs = np.linspace(*meta["range"], 100)
+            metric_threshs = np.linspace(meta["lower"], meta["upper"], 100)
 
             for res_bin, s, e in self.iter_npoints_binned(res):
+                res_bin = res_bin[res_bin.sampled]
                 for ix in self._agn_bitmask["AGN_MASKBITS"]:
                     ixb = res_bin["decoded_agn_mask"].str[ix[1]]
                     type_mask = ixb.notna() & ixb.astype(float).astype(bool)
@@ -427,27 +560,48 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                     percentage_non_wise_agn = []
 
                     for thresh in metric_threshs:
+                        if log:
+                            vals_mask = (type_res_bin[cols] > 0).all(axis=1)
+                            vals = np.log10(type_res_bin.loc[vals_mask, cols])
+                        else:
+                            vals_mask = type_res_bin[cols].notna().all(axis=1)
+                            vals = type_res_bin.loc[vals_mask, cols]
+
+                        # number of agn passing cut
                         n_selected_agn = (
-                            (type_res_bin.loc[type_res_bin["agn"], cols] > thresh)
+                            (vals[type_res_bin.loc[vals_mask, "agn"]] > thresh)
                             .all(axis=1)
                             .sum()
                         )
+
+                        # number of non agn passing cut
+                        if log:
+                            res_bin_mask = (res_bin[cols] > 0).all(axis=1)
+                            res_bin_non_agn_vals = np.log10(
+                                res_bin.loc[~res_bin["agn"] & res_bin_mask, cols]
+                            )
+                        else:
+                            res_bin_mask = res_bin[cols].notna().all(axis=1)
+                            res_bin_non_agn_vals = res_bin.loc[
+                                ~res_bin["agn"] & res_bin_mask, cols
+                            ]
+
                         n_selected_non_agn = (
-                            (res_bin.loc[~res_bin["agn"], cols] > thresh)
-                            .all(axis=1)
-                            .sum()
+                            (res_bin_non_agn_vals > thresh).all(axis=1).sum()
                         )
+
                         if n_agn > 0:
                             completeness.append(n_selected_agn / n_agn)
                         else:
                             completeness.append(np.nan)
+
                         if (total := n_selected_agn + n_selected_non_agn) > 0:
                             purity.append(n_selected_agn / total)
                         else:
                             purity.append(np.nan)
 
                         n_selected_wise_agn = (
-                            (type_res_bin.loc[type_res_bin["wise_agn"], cols] > thresh)
+                            (vals[type_res_bin.loc[vals_mask, "wise_agn"]] > thresh)
                             .all(axis=1)
                             .sum()
                         )
@@ -456,10 +610,7 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         else:
                             percentage_wise_agn.append(np.nan)
                         n_selected_non_wise_agn = (
-                            (
-                                type_res_bin.loc[type_res_bin["non_wise_agn"], cols]
-                                > thresh
-                            )
+                            (vals[type_res_bin.loc[vals_mask, "non_wise_agn"]] > thresh)
                             .all(axis=1)
                             .sum()
                         )
@@ -515,7 +666,9 @@ class VarMetricsVsAGN(AbsPhotoT3Unit, NPointsIterator):
                         / f"bin_{s}_{e}"
                         / f"{metric_name}_bin_{s}_{e}_{ix[0]}.{self.file_format}"
                     )
-                    self.logger.info(f"saving {fn}")
+                    self.logger.debug(f"saving {fn}")
                     fig.tight_layout()
                     fig.savefig(fn)
                     plt.close()
+
+        return t3res

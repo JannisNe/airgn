@@ -1,0 +1,17 @@
+,log,pretty_name,multiband,lower,upper
+RedderWhenBrighter0,False,RWB,True,-10.0,10.0
+RedderWhenBrighter1,False,RWB,True,-10.0,10.0
+StetsonL,False,$L$,True,-0.1,0.1
+PearsonsR,False,$r$,True,-1.0,1.0
+ExcessVariance,False,$\sigma^2_\mathrm{rms}$,False,-0.001,0.001
+InverseEta,True,$1/\eta$,False,-1.0,1.0
+InverseEtaColor,True,$1/\eta_\mathrm{color}$,True,-1.0,1.0
+ReducedChi2,True,$\chi_\mathrm{red}^2$,False,-2.0,2.0
+Autocor_length,False,$\tau$,False,0.0,10.0
+Containment,False,CL,True,0.0,1.0
+NPoints,False,$N$,False,0.0,30.0
+Mean,False,$\mu$,False,4.0,20.0
+Std,False,$\sigma$,False,-1.0,1.0
+BrightestColor,False,$\mathrm{(W1 - W2)_1}$,True,-1,2
+SecondBrightestMeanColor,False,$\mathrm{\bar{(W1 - W2)}_2}$,True,-1,2
+ThirdBrightestMeanColor,False,$\mathrm{\bar{(W1 - W2)}_3}$,True,-1,2
