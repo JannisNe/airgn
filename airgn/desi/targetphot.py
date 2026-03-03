@@ -1,10 +1,7 @@
 import logging
 
-import pandas as pd
 import requests
-import yaml
 from astropy.io import fits
-from astropy.table import Table
 from timewise.util.path import expand
 from tqdm import tqdm
 
@@ -59,7 +56,23 @@ def download():
 
 def make_extracted_file(columns: list[str]):
     logger.info("extracting LS DR9 target photometry")
-    Table.read(LOCAL_FILE_PATH)[columns].write(EXTRACTED_FILE_PATH)
+    logger.debug(f"reading {LOCAL_FILE_PATH}")
+    with fits.open(LOCAL_FILE_PATH, memmap=True) as hdul:
+        data = hdul[1].data
+
+        # Extract only selected columns
+        logger.debug("extracting columns")
+        new_cols = [
+            fits.Column(name=col, format=hdul[1].columns[col].format, array=data[col])
+            for col in columns
+        ]
+
+        logger.debug("building binary table")
+        hdu = fits.BinTableHDU.from_columns(new_cols)
+        logger.debug(f"writing to {EXTRACTED_FILE_PATH}")
+        hdu.writeto(EXTRACTED_FILE_PATH, overwrite=True)
+
+    logger.info("done")
 
 
 def make(columns: list[str] = EXTRACTED_FILE_COLUMNS):
