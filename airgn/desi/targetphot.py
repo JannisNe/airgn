@@ -1,9 +1,14 @@
 import logging
 
 import requests
+from astropy.table import Table
 from astropy.io import fits
 from timewise.util.path import expand
 from tqdm import tqdm
+from datetime import datetime
+from mmap import MADV_SEQUENTIAL
+import numpy as np
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,15 +61,38 @@ def download():
                 f.write(chunk)
 
 
+def log_size(path):
+    logger.debug(f"{str(path)}: {path.stat().st_size * 1e-9} GB")
+    with fits.open(path, memmap=True) as hdul:
+        hdul.info()
+
+
 def make_extracted_file(columns: list[str]):
     logger.info("extracting LS DR9 target photometry")
-    logger.debug(f"reading {LOCAL_FILE_PATH}")
+
+    logger.debug("making Primary HDU")
     chunk_size = 100_000
     tmp_path = EXTRACTED_FILE_PATH.parent / (EXTRACTED_FILE_PATH.name + ".tmp")
+
+    # Make some header entries for important information
+    primary_header_cards = [
+        ("DATE", datetime.now().strftime("%Y-%m-%d"), "Creation date"),
+        ("CREATOR", "Jannis Necker", "Who created this file"),
+    ]
+
+    # Build the Primary HDU object and put it in an HDU list
+    primary_hdu = fits.PrimaryHDU(header=fits.Header(primary_header_cards))
+    hdu_list = fits.HDUList([primary_hdu])
+
+    # Write the HDU list to file
+    logger.debug(f"writing {tmp_path}")
+    hdu_list.writeto(tmp_path, overwrite=True)
+    log_size(tmp_path)
+
+    logger.debug(f"reading {LOCAL_FILE_PATH}")
     with fits.open(LOCAL_FILE_PATH, memmap=True) as hdul:
         cols = hdul[1].columns
         nrows = hdul[1].header["NAXIS2"]
-        data = hdul[1].data
 
         # Build output column definitions (no data yet)
         selected_columns = []
@@ -82,39 +110,34 @@ def make_extracted_file(columns: list[str]):
 
         # Create empty output file with correct structure
         logger.debug("creating output table structure")
-        fits.BinTableHDU.from_columns(selected_coldefs, nrows=0).writeto(
-            tmp_path, overwrite=True
-        )
+        table_hdu = fits.BinTableHDU.from_columns(selected_coldefs, nrows=0)
+        table_hdu.header["NAXIS2"] = nrows
+        tablesize_in_bytes = (
+            (table_hdu.header["NAXIS1"] * nrows + 2880 - 1) // 2880
+        ) * 2880
+
+        with open(tmp_path, "ab") as ff:
+            ff.write(bytearray(table_hdu.header.tostring(), encoding="utf-8"))
+
+        filelen = tmp_path.stat().st_size
+
+        with open(tmp_path, "r+b") as ff:
+            ff.seek(filelen + tablesize_in_bytes - 1)
+            ff.write(b"\0")
+        log_size(tmp_path)
 
         logger.debug("streaming rows in chunks")
+        data = hdul[1].data
+        with fits.open(tmp_path, mode="update", memmap=True) as out_hdul:
+            ext_table_data = out_hdul[1].data
+            mm = fits.util._get_array_mmap(ext_table_data)
+            mm.madvise(MADV_SEQUENTIAL)
 
-        with fits.open(tmp_path, mode="append") as out_hdul:
-            for start in tqdm(range(0, 200_000, chunk_size), desc="writing chunks"):
+            for start in tqdm(range(0, nrows, chunk_size), desc="writing chunks"):
                 stop = min(start + chunk_size, nrows)
                 logger.debug(f"processing rows {start}:{stop}")
-
-                chunk_arrays = [
-                    data[col][start:stop]  # only this slice goes into memory
-                    for col in selected_coldefs.names
-                ]
-
-                chunk_hdu = fits.BinTableHDU.from_columns(
-                    [
-                        fits.Column(
-                            name=c.name,
-                            format=c.format,
-                            unit=c.unit,
-                            dim=c.dim,
-                            null=c.null,
-                            array=chunk_arrays[i],
-                        )
-                        for i, c in enumerate(selected_coldefs.columns)
-                    ]
-                )
-
-                logger.debug(f"appening to {tmp_path}")
-
-                out_hdul.append(chunk_hdu)
+                for col in selected_coldefs.names:
+                    ext_table_data[start:stop][col] = data[start:stop][col]
 
             logger.debug("done")
 
@@ -136,19 +159,22 @@ def make(columns: list[str] = EXTRACTED_FILE_COLUMNS):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
+
     make()
 
     logger.info("validating extraction")
     logger.debug(f"reading {LOCAL_FILE_PATH}")
-    with fits.open(LOCAL_FILE_PATH, memmap=True) as hdul:
-        origdata = hdul[1].data[:100].copy()
-        del hdul[1].data
+    with fits.open(LOCAL_FILE_PATH, memmap=True) as hdul_in:
+        data_in = hdul_in[1].data
+        logger.debug(f"reading {EXTRACTED_FILE_PATH}")
+        with fits.open(EXTRACTED_FILE_PATH, memmap=True) as hdul_out:
+            data_out = hdul_out[1].data
 
-    logger.debug(f"reading {LOCAL_FILE_PATH}")
-    with fits.open(EXTRACTED_FILE_PATH, memmap=True) as hdul:
-        extdata = hdul[1].data[:100].copy()
-        del hdul[1].data
-
-    for c in EXTRACTED_FILE_COLUMNS:
-        logger.debug(f"comparing {c}")
-        assert origdata[c] == extdata[c], f"column {c} does not match!"
+            for c in EXTRACTED_FILE_COLUMNS:
+                logger.debug(f"comparing {c}")
+                assert np.all(data_out[c][:100] == data_in[c][:100]), (
+                    f"column {c} does not match at the beginning!"
+                )
+                assert np.all(data_out[c][100:] == data_in[c][100:]), (
+                    f"column {c} does not match at the end!"
+                )
