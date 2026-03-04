@@ -20,7 +20,7 @@ from ampel.view.TransientView import TransientView
 
 from timewise.util.path import expand
 from airgn.desi.agn_value_added_catalog import get_agn_bitmask
-from ampel.util.NPointsIterator import NPointsIterator
+from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
 from airgn.rejection_sampling import repeated_matching
 
 
@@ -40,18 +40,16 @@ def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
 METRIC_PARAMS = pd.read_csv(Path(__file__).parent / "metric_params.csv", index_col=0)
 
 
-class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
+class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     """
     Plot lightcurves of transients using matplotlib
     """
 
     path: str
-    input_mongo_db_name: str
     exclude_features_fit: Optional[list[str]] = None
     exclude_features_corner: Optional[list[str]] = None
     n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
-    iter_max: int | None = None
     file_format: str = "pdf"
     corner: bool = True
     umap: bool = True
@@ -84,37 +82,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsIterator):
     ) -> dict[str, dict[str, Any]]:
         # ---------------------- aggregate results ---------------------- #
 
-        res = {}
-        n_iter = 0
-        for view in gen:
-            input_res = None
-            body = None
-            for t2 in view.get_t2_views("T2FeetsTimewise", code=0):
-                body = dict(t2.get_payload())
-                input_res = self._col.find_one({"orig_id": t2.stock})
-                break
-
-            if not input_res:
-                continue
-
-            if not body:
-                continue
-
-            # do not include objects that are outside the specified range of npoint bins
-            if not all([self.is_in_range(body[c]) for c in self.n_point_cols]):
-                continue
-
-            body.update(input_res)
-            mask = str(bin(int(input_res["AGN_MASKBITS"]))).replace("0b", "")[::-1]
-            body["decoded_agn_mask"] = mask
-            res[view.stock["stock"]] = body
-
-            n_iter += 1
-            if self.iter_max and n_iter >= self.iter_max:
-                self.logger.info("iteration limit reached, stopping loop")
-                break
-
-        res = pd.DataFrame.from_dict(res, orient="index")
+        res = self.aggregate_results(gen)
         metric_names = res.columns
 
         # ---------------------- select agn and non-agn ---------------------- #
