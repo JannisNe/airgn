@@ -1,0 +1,178 @@
+channel:
+- access:
+  - ZTF_PUB
+  name: legacy_survey
+  policy: []
+  version: 0
+- access:
+    - ZTF_PUB
+  name: timewise
+  policy: [ ]
+  version: 0
+mongo:
+  prefix: desi_targetphot
+  reset: false
+name: desi_targetphot
+
+
+task:
+- config:
+    compiler_opts: TiCompilerOptions
+    directives:
+    - channel: legacy_survey
+      ingest:
+        mux:
+          combine:
+          - state_t2:
+            - unit: T2MaggyToFluxDensity
+            - unit: T2FeetsTimewise
+              config:
+                t2_dependency:
+                  - unit: T2MaggyToFluxDensity
+                single_band_features:
+                  - Autocor_length
+                  - InverseEta
+                  - ExcessVariance
+                  - Mean
+                  - Std
+                  - ReducedChi2
+                  - NPoints
+                multi_band_features:
+                  - PearsonsR
+                  - RedderWhenBrighter0
+                  - RedderWhenBrighter1
+                  - StetsonL
+                  - InverseEtaColor
+                  - BrightestColor
+                  - SecondBrightestMeanColor
+                  - ThirdBrightestMeanColor
+            unit: T1SimpleCombiner
+          unit: TiMongoMuxer
+          config:
+            projection:
+              _id: 0
+              id: 1
+              tag: 1
+              channel: 1
+              stock: 1
+              body.release: 1
+              body.brickid: 1
+              body.brick_objid: 1
+              body.ra: 1
+              body.dec: 1
+              body.LC_FLUX_W1: 1
+              body.LC_FLUX_W2: 1
+              body.LC_FLUX_IVAR_W1: 1
+              body.LC_FLUX_IVAR_W2: 1
+              body.LC_NOBS_W1: 1
+              body.LC_NOBS_W2: 1
+              body.LC_MJD_W1: 1
+              body.LC_MJD_W2: 1
+            unique_key: [release, brickid, brick_objid, LC_MJD_W1]
+            channel: legacy_survey
+    shaper: LegacySurveyDatapointShaper
+    supplier:
+      config:
+        dpid: hash
+        loader:
+          config:
+            filenames:
+              - $AIRGNDATA/desi_targetphot/LSDR9_phot_iron_v1.1_extracted.fits
+          unit: LegacySurveyDESITargetPhotLoader
+      unit: LegacySurveySupplier
+  multiplier: 1
+  title: legacy_survey
+  template:
+    live:
+      - resolve_run_time_aliases
+      - hash_t2_config
+  unit: AlertConsumer
+
+
+- config:
+    log_profile: default
+  multiplier: 1
+  title: t2
+  unit: T2Worker
+
+- title: AnalyseFeatures
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "legacy_survey"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - STOCK
+            channel: "legacy_survey
+        chunk_size: 10000
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: AGNVarXGB
+            config:
+              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb
+              exclude_features:
+                - Mean
+                - NPoints
+                - Std
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Std
+              exclude_features_corner:
+                - NPoints
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright_no_autocorr
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Autocor_length
+                - Std
+              exclude_features_corner:
+                - Autocor_length
+                - NPoints
+                - Std
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright_minimal
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Autocor_length
+                - InverseEta
+                - ExcessVariance
+                - Mean
+                - NPoints
+                - RedderWhenBrighter0
+                - RedderWhenBrighter1
+                - StetsonL
+                - InverseEtaColor
+                - Std
+              exclude_features_corner:
+                - Autocor_length
+                - InverseEta
+                - ExcessVariance
+                - NPoints
+                - RedderWhenBrighter0
+                - RedderWhenBrighter1
+                - StetsonL
+                - InverseEtaColor
+                - Std
