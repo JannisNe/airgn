@@ -93,6 +93,13 @@ task:
       unit: T3SequentialStager
       config:
         execute:
+          - unit: AGNVarXGB
+            config:
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/xgb
+              exclude_features:
+                - Mean
+                - NPoints
+                - Std
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
