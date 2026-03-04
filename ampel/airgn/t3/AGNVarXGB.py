@@ -30,6 +30,9 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
     n_cpu: int = os.cpu_count()
 
+    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
+    mongo_uri: str = "mongodb://localhost:27017"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._rng = np.random.default_rng(42)

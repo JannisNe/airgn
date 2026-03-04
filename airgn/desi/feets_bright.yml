@@ -96,6 +96,7 @@ task:
           - unit: AGNVarXGB
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/xgb
+              input_mongo_db_name: desi_agn_vac
               exclude_features:
                 - Mean
                 - NPoints
