@@ -1,6 +1,6 @@
 build:
-  date: 20/02/2026
-  time: '17:01:26'
+  date: 04/03/2026
+  time: '16:22:31'
   by: necker
   conda: airgn311
   stop_on_errors: 0
@@ -13,11 +13,11 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a8
   ampel-core: 0.10.6a21
+  ampel-alerts: 0.10.4a0
   ampel-photometry: 0.10.2a1
+  ampel-plot: 0.9.1
   timewise: 1.0.0a10
   airgn: 0.1.0
-  ampel-alerts: 0.10.4a0
-  ampel-plot: 0.9.1
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -942,6 +942,72 @@ unit:
     distrib: timewise
     version: 1.0.0a10
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/ingest/TiMongoMuxer.py
+  AGNVarXGB:
+    fqn: ampel.airgn.t3.AGNVarXGB
+    base:
+    - AGNVarXGB
+    - AbsPhotoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    - NPointsVarMetricsAggregator
+    - NPointsIterator
+    xxh64: 6924260440039739960
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - asttokens
+    - cffi
+    - charset_normalizer
+    - cloudpickle
+    - comm
+    - coverage
+    - cryptography
+    - cycler
+    - decorator
+    - defusedxml
+    - executing
+    - google_crc32c
+    - idna
+    - ipywidgets
+    - jedi
+    - joblib
+    - kiwisolver
+    - llvmlite
+    - matplotlib
+    - msgpack
+    - numba
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - parso
+    - patsy
+    - prompt_toolkit
+    - psutil
+    - pure_eval
+    - pyarrow
+    - pycparser
+    - pydantic_core
+    - pynndescent
+    - pyparsing
+    - pytz
+    - requests
+    - scipy
+    - seaborn
+    - stack_data
+    - statsmodels
+    - threadpoolctl
+    - tqdm
+    - traitlets
+    - typing_inspection
+    - urllib3
+    - wcwidth
+    - xgboost
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t3/AGNVarXGB.py
   BasicMultiFilter:
     fqn: ampel.alert.filter.BasicMultiFilter
     base:
@@ -1184,8 +1250,9 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
+    - NPointsVarMetricsAggregator
     - NPointsIterator
-    xxh64: 10663197016500318960
+    xxh64: 269518939040867953
     dependencies:
     - annotated_types
     - astropy
@@ -1572,7 +1639,7 @@ unit:
     base:
     - T2FeetsBase
     - LogicalUnit
-    xxh64: 8964077568850649383
+    xxh64: 2548895029729050074
     dependencies:
     - annotated_types
     - astropy
@@ -1617,7 +1684,7 @@ unit:
     - AbsTiedT2Unit
     - T2FeetsBase
     - LogicalUnit
-    xxh64: 13801097651884122561
+    xxh64: 6315167521295211385
     dependencies:
     - annotated_types
     - astropy
@@ -2364,6 +2431,34 @@ unit:
     distrib: ampel-core
     version: 0.10.6a21
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/template/PeriodicSummaryT3.py
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
+    base:
+    - PPSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 252807104807642313
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/PPSFilter.py
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
+    base:
+    - ULSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 14523103307642547590
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/ULSFilter.py
   FilteringAlertSupplier:
     fqn: ampel.alert.FilteringAlertSupplier
     base:
@@ -2489,34 +2584,160 @@ unit:
     distrib: ampel-alerts
     version: 0.10.4a0
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/template/EasyAlertConsumerTemplate.py
-  PPSFilter:
-    fqn: ampel.aux.PPSFilter
+  TimewiseAlertSimulator:
+    fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
     base:
-    - PPSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 252807104807642313
+    - TimewiseAlertSimulator
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 15988811724111479624
     dependencies:
     - annotated_types
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
     - pydantic_core
+    - pytz
+    - rich
+    - schedule
+    - scipy
     - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/PPSFilter.py
-  ULSFilter:
-    fqn: ampel.aux.ULSFilter
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/alert/load/TimewiseAlertSimulator.py
+  NPointsVarMetricsAggregator:
+    fqn: ampel.airgn.t3.NPointsVarMetricsAggregator
     base:
-    - ULSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 14523103307642547590
+    - NPointsVarMetricsAggregator
+    - NPointsIterator
+    xxh64: 3099831609848807225
     dependencies:
     - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
     - pydantic_core
+    - pytz
     - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/ULSFilter.py
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t3/NPointsVarMetricsAggregator.py
+  NPointsIterator:
+    fqn: ampel.util.NPointsIterator
+    base:
+    - NPointsIterator
+    xxh64: 10383223017690701110
+    dependencies:
+    - cloudpickle
+    - numexpr
+    - numpy
+    - pandas
+    - pyarrow
+    - pytz
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/util/NPointsIterator.py
+  LegacySurveyBrickLoader:
+    fqn: ampel.legacy_survey.LegacySurveyBrickLoader
+    base:
+    - LegacySurveyBrickLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 16306718741933483207
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - backoff
+    - charset_normalizer
+    - cloudpickle
+    - cryptography
+    - google_crc32c
+    - idna
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - pyvo
+    - requests
+    - rich
+    - schedule
+    - tqdm
+    - typing_inspection
+    - urllib3
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyBrickLoader.py
+  LegacySurveyDESITargetPhotLoader:
+    fqn: ampel.legacy_survey.LegacySurveyDESITargetPhotLoader
+    base:
+    - LegacySurveyDESITargetPhotLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 11976405917018868537
+    dependencies:
+    - annotated_types
+    - astropy
+    - astropy_iers_data
+    - cloudpickle
+    - google_crc32c
+    - msgpack
+    - numcodecs
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyDESITargetPhotLoader.py
+  LegacySurveySupplier:
+    fqn: ampel.legacy_survey.LegacySurveySupplier
+    base:
+    - LegacySurveySupplier
+    - BaseAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 12943264248883137962
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
   TimewiseAlertSupplier:
     fqn: ampel.timewise.alert.TimewiseAlertSupplier
     base:
@@ -2636,112 +2857,6 @@ unit:
     distrib: timewise
     version: 1.0.0a10
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/util/AuxDiagnosticPlotter.py
-  TimewiseAlertSimulator:
-    fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
-    base:
-    - TimewiseAlertSimulator
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 15988811724111479624
-    dependencies:
-    - annotated_types
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - rich
-    - schedule
-    - scipy
-    - typing_inspection
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/airgn/alert/load/TimewiseAlertSimulator.py
-  NPointsIterator:
-    fqn: ampel.util.NPointsIterator
-    base:
-    - NPointsIterator
-    xxh64: 10383223017690701110
-    dependencies:
-    - cloudpickle
-    - numexpr
-    - numpy
-    - pandas
-    - pyarrow
-    - pytz
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/util/NPointsIterator.py
-  LegacySurveyBrickLoader:
-    fqn: ampel.legacy_survey.LegacySurveyBrickLoader
-    base:
-    - LegacySurveyBrickLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 16306718741933483207
-    dependencies:
-    - annotated_types
-    - astropy
-    - astropy_iers_data
-    - backoff
-    - charset_normalizer
-    - cloudpickle
-    - cryptography
-    - google_crc32c
-    - idna
-    - msgpack
-    - numcodecs
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - pyvo
-    - requests
-    - rich
-    - schedule
-    - tqdm
-    - typing_inspection
-    - urllib3
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyBrickLoader.py
-  LegacySurveySupplier:
-    fqn: ampel.legacy_survey.LegacySurveySupplier
-    base:
-    - LegacySurveySupplier
-    - BaseAlertSupplier
-    - AbsAlertSupplier
-    - AbsContextManager
-    xxh64: 12943264248883137962
-    dependencies:
-    - annotated_types
-    - cloudpickle
-    - numexpr
-    - numpy
-    - packaging
-    - pandas
-    - pyarrow
-    - pydantic_core
-    - pytz
-    - rich
-    - typing_inspection
-    distrib: airgn
-    version: 0.1.0
-    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
 process:
   t0: {}
   t1: {}
@@ -2802,40 +2917,37 @@ environment:
     mongomock: 4.3.0
     pytz: '2025.2'
     sentinels: 1.1.1
-    cloudpickle: 3.1.2
-    numexpr: 2.14.1
-    numpy: 2.3.5
-    pandas: 2.3.3
-    pyarrow: 23.0.0
-    astropy: 7.2.0
-    astropy_iers_data: 0.2026.2.2.0.48.1
-    backoff: 2.2.1
-    charset_normalizer: 3.4.4
-    google_crc32c: 1.8.0
-    idna: '3.11'
-    msgpack: 1.1.2
-    numcodecs: 0.16.5
-    platformdirs: 4.5.1
-    psutil: 7.2.2
-    pyvo: '1.8'
-    requests: 2.32.5
-    urllib3: 2.6.3
     cycler: 0.12.1
     defusedxml: 0.7.1
-    joblib: 1.5.3
     kiwisolver: 1.4.9
     matplotlib: 3.10.8
+    numpy: 2.3.5
     pyparsing: 3.3.2
+    charset_normalizer: 3.4.4
+    cloudpickle: 3.1.2
+    numexpr: 2.14.1
+    pandas: 2.3.3
+    platformdirs: 4.5.1
+    psutil: 7.2.2
+    pyarrow: 23.0.0
     scipy: 1.17.0
-    threadpoolctl: 3.6.0
+    astropy: 7.2.0
+    astropy_iers_data: 0.2026.2.2.0.48.1
     custom_inherit: 2.4.1
     dask: 2026.1.2
     feets: 1.0.1
+    google_crc32c: 1.8.0
+    idna: '3.11'
     importlib_metadata: 8.7.1
+    joblib: 1.5.3
     light_curve: 0.11.1
+    msgpack: 1.1.2
+    numcodecs: 0.16.5
     patsy: 1.0.2
+    requests: 2.32.5
     statsmodels: 0.14.6
     toolz: 1.1.0
+    urllib3: 2.6.3
     zipp: 3.23.0
     asttokens: 3.0.1
     cffi: 2.0.0
@@ -2854,9 +2966,13 @@ environment:
     pynndescent: 0.6.0
     seaborn: 0.13.2
     stack_data: 0.6.3
+    threadpoolctl: 3.6.0
     tqdm: 4.67.3
     traitlets: 5.14.3
     wcwidth: 0.5.3
+    xgboost: 3.2.0
+    backoff: 2.2.1
+    pyvo: '1.8'
 template:
   hash_t2_config: ampel.config.alter.HashT2Config
   resolve_run_time_aliases: ampel.config.alter.ResolveRunTimeAliases
