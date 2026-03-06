@@ -28,14 +28,14 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     resample: Literal["agn", "non-agn", "none"] = "agn"
     exclude_features: list[str] | None = None
 
-    n_cpu: int = os.cpu_count()
+    n_cpu: int = os.cpu_count() - 1
 
     n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._rng = np.random.default_rng(42)
+        self._random_state = 42
         self._plot_path = expand(self.plot_dir)
         self._plot_path.mkdir(parents=True, exist_ok=True)
 
@@ -65,19 +65,19 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             ] = False
 
         metrics = []
-        for m, info in METRIC_PARAMS.items():
-            if m in self.exclude_features:
+        for m, info in METRIC_PARAMS.iterrows():
+            if (m in self.exclude_features) or ("Containment" in m):
                 continue
-            if info.multiband:
+            if info["multiband"]:
                 metrics.append(f"W1_W2_{m}")
             else:
-                metrics.extend([f"W{i}_m" for i in range(1, 3)])
+                metrics.extend([f"W{i}_{m}" for i in range(1, 3)])
 
         target = res.loc[res.sampled, "agn"].astype(int).values
         data = res.loc[res.sampled, metrics].values
 
         n_splits = 6
-        kf = KFold(n_splits=n_splits, shuffle=True, random_state=self._rng)
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=self._random_state)
         xgb_model = xgb.XGBClassifier(n_jobs=self.n_cpu)
         scores = ["accuracy", "precision", "recall", "f1"]
         res = cross_validate(
@@ -112,4 +112,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         # drop estimators and return non-binary results
         res.pop("estimator")
+        res.pop("indices")
+        for k, v in res.items():
+            res[k] = v.tolist()
         return res

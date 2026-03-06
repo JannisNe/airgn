@@ -101,6 +101,7 @@ task:
                 - Mean
                 - NPoints
                 - Std
+              n_cpu: 20
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
