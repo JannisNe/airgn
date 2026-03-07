@@ -47,8 +47,9 @@ class LegacySurveyDESITargetPhotLoader(AbsAlertLoader[Dict]):
     ) -> Generator[pd.DataFrame, None, None]:
         # loop over pairs of summary and lightcurve files
         for filename in self._filenames:
+            self.logger.info(f"Loading {filename}")
             for row in Table.read(filename, format="fits", character_as_bytes=False):
-                cntr = row["RELEASE"], row["BRICKID"], row["BRICK_OBJID"]
+                cntr = row["TARGETID"]
 
                 # if filtering by row indices, skip if not in the list
                 if (
@@ -64,10 +65,8 @@ class LegacySurveyDESITargetPhotLoader(AbsAlertLoader[Dict]):
                     for col in LEGACY_SURVEY_WISE_COLUMNS
                     if col in row.colnames
                 }
-                lc = pd.DataFrame(lc).assign(
-                    release=cntr[0],
-                    brickid=cntr[1],
-                    objid=cntr[2],
+                lc = pd.DataFrame.from_dict(lc, orient="columns").assign(
+                    targetid=cntr,
                     ra=row["RA"],
                     dec=row["DEC"],
                 )
