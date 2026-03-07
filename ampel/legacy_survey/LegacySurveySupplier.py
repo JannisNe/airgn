@@ -27,6 +27,9 @@ class LegacySurveySupplier(BaseAlertSupplier, AmpelABC):
     returns a PhotoAlert instance.
     """
 
+    # e.g. ["release", "brickid", "objid"]
+    make_stock_from_columns: list[str]
+
     stat_pps: int = 0
     stat_uls: int = 0
 
@@ -57,7 +60,7 @@ class LegacySurveySupplier(BaseAlertSupplier, AmpelABC):
             return self.__next__()
 
         # make sure only data from one object is present
-        stock_ids = table[["release", "brickid", "objid"]].astype(str).sum(axis=1)
+        stock_ids = table[self.make_stock_from_columns].astype(str).sum(axis=1)
         assert stock_ids.nunique() == 1
         stock_id = stock_ids[0]
 
