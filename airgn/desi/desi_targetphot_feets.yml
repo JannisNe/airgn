@@ -68,13 +68,15 @@ task:
               body.LC_NOBS_W2: 1
               body.LC_MJD_W1: 1
               body.LC_MJD_W2: 1
-            unique_key: [release, brickid, brick_objid, LC_MJD_W1]
+            unique_key: [TARGETID, LC_MJD_W1]
             channel: legacy_survey
     shaper: LegacySurveyDatapointShaper
-    iter_max: 10000
+    iter_max: 1000
     supplier:
       config:
         dpid: hash
+        make_stock_from_columns:
+          - TARGETID
         loader:
           config:
             filenames:
@@ -113,7 +115,7 @@ task:
             directives:
               - T2DOC
               - STOCK
-            channel: "legacy_survey
+            channel: "legacy_survey"
         chunk_size: 10000
     stage:
       unit: T3SequentialStager
