@@ -41,6 +41,27 @@ def get_agn_desc(agn_bitmask, agn_mask) -> list[str]:
 METRIC_PARAMS = pd.read_csv(Path(__file__).parent / "metric_params.csv", index_col=0)
 
 
+def get_metric_info(raw_name) -> tuple[str, Any, str] | None:
+    mns = {s for s in METRIC_PARAMS.index if s in raw_name}
+    if len(mns) == 0:
+        return None
+    match_length = [len(re.search(imn, raw_name).group()) for imn in mns]
+    mn = list(mns)[np.argmax(match_length)]
+
+    meta = METRIC_PARAMS.loc[mn]
+    pn = meta["pretty_name"]
+    if meta["log"]:
+        pl = r"$\log_{10}($" + pn + "$)$"
+    else:
+        pl = pn
+    if meta["multiband"]:
+        pl += " " + " - ".join(raw_name.split("_")[:-1])
+    else:
+        pl += " " + raw_name.split("_")[0]
+
+    return mn, meta, pl
+
+
 class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     """
     Plot lightcurves of transients using matplotlib
@@ -67,13 +88,6 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         if self.exclude_features_fit and not self.exclude_features_corner:
             self.exclude_features_corner = self.exclude_features_fit
-
-    def _get_metric_name(self, raw_name) -> str | None:
-        mns = {s for s in METRIC_PARAMS.index if s in raw_name}
-        if len(mns) == 0:
-            return None
-        match_length = [len(re.search(imn, raw_name).group()) for imn in mns]
-        return list(mns)[np.argmax(match_length)]
 
     def _bin_key(self, s, e):
         return f"bin_{s}_{e}"
@@ -132,14 +146,18 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 corner_df = pd.DataFrame(index=res_bin.index[res_bin.sampled])
                 corner_df["agn"] = res_bin.loc[corner_df.index, "agn"]
                 for m in metric_names:
-                    mn = self._get_metric_name(m)
+                    metric_info = get_metric_info(m)
+
+                    # Skip if no matching metric was found for the column name
+                    if not metric_info:
+                        continue
+
+                    mn, meta, pl = metric_info
 
                     if (
-                        # Skip if no matching metric was found for the column name
-                        not mn
                         # exclude npoints because it's not a real variability metric
                         # and has not enough variance so the KDE will collapse
-                        or (m in self.n_point_cols)
+                        (m in self.n_point_cols)
                         # containment will be calculated l8er :-)
                         or m.endswith("Containment")
                         # skip features if requested
@@ -147,19 +165,11 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                     ):
                         continue
 
-                    meta = METRIC_PARAMS.loc[mn]
-                    pn = meta["pretty_name"]
                     lim = (meta["lower"], meta["upper"])
                     if meta["log"]:
-                        pl = r"$\log_{10}($" + pn + "$)$"
                         vals = np.log10(res_bin.loc[res_bin.sampled, m])
                     else:
-                        pl = pn
                         vals = res_bin.loc[res_bin.sampled, m]
-                    if meta["multiband"]:
-                        pl += " " + " - ".join(m.split("_")[:-1])
-                    else:
-                        pl += " " + m.split("_")[0]
 
                     vals_mask = (vals > lim[0]) & (vals < lim[1])
                     pd.options.mode.chained_assignment = None
