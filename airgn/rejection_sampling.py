@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import cm, colors as mcolors
+from pathlib import Path
 
 
 def match_distributions(s1: pd.Series, s2: pd.Series):
@@ -29,7 +32,9 @@ def match_distributions(s1: pd.Series, s2: pd.Series):
     return s1.index[w < m * u]
 
 
-def repeated_matching(s1: pd.Series, s2: pd.Series, min_samples: int = 10):
+def repeated_matching(
+    s1: pd.Series, s2: pd.Series, min_samples: int = 10, plot_path: str | Path = None
+):
     """
     Run rejection sampling multiple times to use as much of the
     proposal distribution as possible
@@ -52,14 +57,46 @@ def repeated_matching(s1: pd.Series, s2: pd.Series, min_samples: int = 10):
         sampled_indices.append(i_sampled_indices.tolist())
         n_sampled = len(i_sampled_indices)
 
+    concat_sampled_indices = np.concat(sampled_indices).tolist()
+
+    # plot the sampling
+    if plot_path is not None:
+        fig, ax = plt.subplots()
+        h, b, _ = ax.hist(s2, density=False, color="C0", ec="white", alpha=0.8)
+        cmap = plt.get_cmap("viridis")
+        for i in range(len(sampled_indices) + 1):
+            excl = np.concat(sampled_indices[: i + 1])
+            c = cmap(i / len(sampled_indices))
+            ax.hist(
+                s1.loc[excl],
+                density=False,
+                color=c,
+                alpha=1,
+                histtype="step",
+                ls="-",
+                bins=b,
+            )
+        ax.hist(s1, bins=b, color="k", ls=":", histtype="step")
+        ax.set_xlabel("value")
+        ax.set_ylabel("counts")
+        sm = cm.ScalarMappable(
+            norm=mcolors.Normalize(vmin=0, vmax=len(sampled_indices)), cmap=cmap
+        )
+        fig.colorbar(
+            mappable=sm,
+            ax=ax,
+        )
+        plot_path = Path(plot_path)
+        plot_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(plot_path, bbox_inches="tight")
+        plt.close()
+
     # return all rejected indices
-    return s1.index.difference(np.concat(sampled_indices).tolist())
+    return s1.index.difference(concat_sampled_indices)
 
 
 if __name__ == "__main__":
     from scipy.stats import norm, kstest
-    import matplotlib.pyplot as plt
-    from matplotlib import cm, colors as mcolors
 
     s1 = pd.Series(norm(0, 4).rvs(10000))
     s2 = pd.Series(norm(2, 0.5).rvs(1000))
