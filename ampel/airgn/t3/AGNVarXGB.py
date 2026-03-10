@@ -20,7 +20,7 @@ from ampel.struct.T3Store import T3Store
 from ampel.types import T3Send, UBson
 
 from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
-from ampel.airgn.t3.FeetsOfAGN import METRIC_PARAMS
+from ampel.airgn.t3.FeetsOfAGN import METRIC_PARAMS, get_metric_info
 
 from airgn.rejection_sampling import repeated_matching
 
@@ -28,6 +28,9 @@ from airgn.rejection_sampling import repeated_matching
 class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     plot_dir: str
     n_estimators: int
+
+    learning_rate: float = 1
+    drop_wise_agn: bool = False
 
     resample: Literal["agn", "non-agn", "none"] = "agn"
     exclude_features: list[str] | None = None
@@ -47,6 +50,13 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         res = self.aggregate_results(gen)
 
         res["agn"] = ~(res["decoded_agn_mask"] == "0")
+        wise_agn_bit = res["decoded_agn_mask"].str[15]
+        wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(bool)
+        res["wise_agn"] = wise_agn_mask
+        res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
+
+        if self.drop_wise_agn:
+            res = res[~res.wise_agn]
 
         # ---------------------- re-sample non-agn to match agn ---------------------- #
 
@@ -55,7 +65,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             resample_mask = res.agn if self.resample == "agn" else ~res.agn
             proposal = res.loc[resample_mask, "W1_Mean"]
             target = res.loc[~resample_mask, "W1_Mean"]
-            # to be able to resample the non-AGN to the AGN ditribution, the AGN distribution has to be
+            # to be able to resample the non-AGN to the AGN distribution, the AGN distribution has to be
             # within the bounds of the non-AGN distribution
             target_outside_proposal = (target < proposal.min()) | (
                 target > proposal.max()
@@ -81,6 +91,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         target = res.loc[res.sampled, "agn"].astype(int)
         data = res.loc[res.sampled, metrics]
+        ratio = (len(target) - sum(target)) / sum(target)
 
         # ---------------------- train the models ---------------------- #
 
@@ -88,7 +99,12 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         kf = StratifiedKFold(
             n_splits=n_splits, shuffle=True, random_state=self._random_state
         )
-        xgb_model = xgb.XGBClassifier(n_jobs=self.n_cpu, n_estimators=self.n_estimators)
+        xgb_model = xgb.XGBClassifier(
+            n_jobs=self.n_cpu,
+            n_estimators=self.n_estimators,
+            scale_pos_weight=ratio,
+            learning_rate=self.learning_rate,
+        )
         scores = ["accuracy", "precision", "recall", "f1"]
         res = cross_validate(
             xgb_model,
@@ -161,6 +177,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         importances_meds = importances.quantile(0.5, axis=1)
         importances_lower = importances_meds - importances.quantile(0.05, axis=1)
         importances_upper = importances.quantile(0.95, axis=1) - importances_meds
+        xlabels = [get_metric_info(m)[2] for m in importances.index]
 
         fig, ax = plt.subplots()
         ax.errorbar(
@@ -170,7 +187,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fmt="s",
         )
         ax.set_xticks(np.arange(len(importances_meds)))
-        ax.set_xticklabels(importances.index, rotation=60, ha="right")
+        ax.set_xticklabels(xlabels, rotation=60, ha="right")
         ax.set_ylabel("Importance")
         fn = self._plot_path / "importances.pdf"
         fig.savefig(fn, bbox_inches="tight")
