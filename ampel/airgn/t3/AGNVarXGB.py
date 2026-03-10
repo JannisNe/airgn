@@ -8,6 +8,8 @@ from sklearn.metrics import (
     precision_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
+from imblearn.pipeline import make_pipeline
+from imblearn.over_sampling import SMOTE
 import numpy as np
 import pandas as pd
 import xgboost as xgb
@@ -30,6 +32,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     n_estimators: int
 
     learning_rate: float = 1
+    smote: bool = False
     drop_wise_agn: bool = False
 
     resample: Literal["agn", "non-agn", "none"] = "agn"
@@ -91,7 +94,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         target = res.loc[res.sampled, "agn"].astype(int)
         data = res.loc[res.sampled, metrics]
-        ratio = (len(target) - sum(target)) / sum(target)
+        ratio = 1 if self.smote else (len(target) - sum(target)) / sum(target)
 
         # ---------------------- train the models ---------------------- #
 
@@ -105,9 +108,15 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             scale_pos_weight=ratio,
             learning_rate=self.learning_rate,
         )
-        scores = ["accuracy", "precision", "recall", "f1"]
+        if self.smote:
+            pipeline_list = [SMOTE(random_state=self._random_state), xgb_model]
+        else:
+            pipeline_list = [xgb_model]
+
+        pipeline = make_pipeline(*pipeline_list)
+        scores = ["precision", "recall", "f1"]
         res = cross_validate(
-            xgb_model,
+            pipeline,
             data,
             target,
             scoring=scores,
@@ -123,12 +132,12 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         individual_models_path.mkdir(parents=True, exist_ok=True)
         for i in range(n_splits):
             # plot importance
-            est = res["estimator"][i]
+            est = res["estimator"][i].named_steps["xgbclassifier"]
             xgb.plot_importance(est)
             fig = plt.gcf()
             fn = individual_models_path / f"{i}_importance.pdf"
             fig.savefig(fn, bbox_inches="tight")
-            plt.close()
+            plt.close("all")
 
             # plot confusion matrix
             test_indices = res["indices"]["test"][i]
@@ -171,7 +180,10 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         # ---------------------- plot average importance ---------------------- #
 
         importances = pd.concat(
-            [pd.Series(est.get_booster().get_score()) for est in res["estimator"]],
+            [
+                pd.Series(est.named_steps["xgbclassifier"].get_booster().get_score())
+                for est in res["estimator"]
+            ],
             axis=1,
         )
         importances_meds = importances.quantile(0.5, axis=1)
@@ -247,7 +259,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         # ---------------------- plot average recall and accuracy depending on prob ---------------------- #
 
-        x = np.linspace(0.01, 0.99, 100)
+        x = np.linspace(0.01, 0.95, 100)
         precisions = []
         recalls = []
         for i in range(n_splits):
