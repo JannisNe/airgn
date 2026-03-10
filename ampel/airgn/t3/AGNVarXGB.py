@@ -1,9 +1,15 @@
 from typing import Generator, Literal
 import os
 
-from sklearn.metrics import confusion_matrix, mean_squared_error, ConfusionMatrixDisplay
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_validate
+from sklearn.metrics import (
+    mean_squared_error,
+    ConfusionMatrixDisplay,
+    recall_score,
+    precision_score,
+)
+from sklearn.model_selection import StratifiedKFold, cross_validate
 import numpy as np
+import pandas as pd
 import xgboost as xgb
 import matplotlib.pyplot as plt
 from timewise.util.path import expand
@@ -11,7 +17,6 @@ from timewise.util.path import expand
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.abstract.AbsT3Unit import T
 from ampel.struct.T3Store import T3Store
-from ampel.struct.UnitResult import UnitResult
 from ampel.types import T3Send, UBson
 
 from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
@@ -63,6 +68,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 target_outside_proposal.index[target_outside_proposal], "sampled"
             ] = False
 
+        # ---------------------- collect metrics and labels ---------------------- #
+
         metrics = []
         for m, info in METRIC_PARAMS.iterrows():
             if (m in self.exclude_features) or ("Containment" in m):
@@ -74,6 +81,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         target = res.loc[res.sampled, "agn"].astype(int)
         data = res.loc[res.sampled, metrics]
+
+        # ---------------------- train the models ---------------------- #
 
         n_splits = 10
         kf = StratifiedKFold(
@@ -92,13 +101,16 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             return_indices=True,
         )
 
-        # plot the models
+        # ---------------------- plot individual models ---------------------- #
+
+        individual_models_path = self._plot_path / "individual_models"
+        individual_models_path.mkdir(parents=True, exist_ok=True)
         for i in range(n_splits):
             # plot importance
             est = res["estimator"][i]
             xgb.plot_importance(est)
             fig = plt.gcf()
-            fn = self._plot_path / f"{i}_importance.pdf"
+            fn = individual_models_path / f"{i}_importance.pdf"
             fig.savefig(fn, bbox_inches="tight")
             plt.close()
 
@@ -111,7 +123,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             )
             conf_disp.plot()
             fig = plt.gcf()
-            fn = self._plot_path / f"{i}_confudion_matrix.pdf"
+            fn = individual_models_path / f"{i}_confusion_matrix.pdf"
             fig.savefig(fn, bbox_inches="tight")
             plt.close()
 
@@ -136,11 +148,123 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             ax.plot(x, val_errors, label="test sample")
             ax.set_xlabel("Boosting iteration")
             ax.set_ylabel("MSE")
-            fn = self._plot_path / f"{i}_mse.pdf"
+            fn = individual_models_path / f"{i}_mse.pdf"
             fig.savefig(fn, bbox_inches="tight")
             plt.close()
 
-        # drop estimators and return non-binary results
+        # ---------------------- plot average importance ---------------------- #
+
+        importances = pd.concat(
+            [
+                pd.Series(est.feature_importances_, index=est.feature_names_in_)
+                for est in res["estimator"]
+            ],
+            axis=1,
+        ).T
+        importances_meds = importances.quantile(0.5, axis=1)
+        importances_lower = importances_meds - importances.quantile(0.05, axis=1)
+        importances_upper = importances.quantile(0.95, axis=1) - importances_meds
+
+        fig, ax = plt.subplots()
+        ax.errorbar(
+            np.arange(len(importances_meds)),
+            importances_meds,
+            yerr=[importances_lower, importances_upper],
+        )
+        ax.set_xticks(np.arange(len(importances_meds)))
+        ax.set_xticklabels(importances.index, rotation=60, ha="right")
+        ax.set_ylabel("Importance")
+        fn = self._plot_path / "importances.pdf"
+        fig.savefig(fn, bbox_inches="tight")
+        plt.close()
+
+        # ---------------------- plot average error in train and test samples ---------------------- #
+        train_errors = []
+        test_errors = []
+
+        for i in range(n_splits):
+            train_indices = res["indices"]["train"][i]
+            target_train = target.iloc[train_indices]
+            data_train = data.iloc[train_indices]
+
+            test_indices = res["indices"]["test"][i]
+            target_test = target.iloc[test_indices]
+            data_test = data.iloc[test_indices]
+
+            est = res["estimator"][i]
+
+            i_train_errors = []
+            i_test_errors = []
+
+            for j in range(self.n_estimators):
+                y_train = est.predict_proba(data_train, iteration_range=(1, j + 1))[
+                    :, 1
+                ]
+                i_train_errors.append(mean_squared_error(target_train, y_train))
+                y_test = est.predict_proba(data_test, iteration_range=(1, j + 1))[:, 1]
+                i_test_errors.append(mean_squared_error(target_test, y_test))
+
+            train_errors.append(i_train_errors)
+            test_errors.append(i_train_errors)
+
+        train_errors = np.array(train_errors)
+        test_errors = np.array(test_errors)
+
+        fig, ax = plt.subplots()
+        x = np.arange(train_errors.shape[1])
+        for si, (s, label) in enumerate(
+            zip([train_errors, test_errors], ["train", "test"])
+        ):
+            c = f"C{si}"
+            ax.plot(x, np.median(s, axis=0), label=label, color=c)
+            ax.fill_between(
+                x,
+                *np.quantile(train_errors, [0.05, 0.95], axis=0),
+                alpha=0.2,
+                color=c,
+                ec="none",
+            )
+        ax.set_xlabel("Boosting iteration")
+        ax.set_ylabel("MSE")
+        fn = individual_models_path / "mse.pdf"
+        fig.savefig(fn, bbox_inches="tight")
+        plt.close()
+
+        # ---------------------- plot average recall and accuracy depending on prob ---------------------- #
+
+        x = np.linspace(0.01, 0.99, 100)
+        precisions = []
+        recalls = []
+        for i in range(n_splits):
+            test_indices = res["indices"]["test"][i]
+            target_test = target.iloc[test_indices]
+            data_test = data.iloc[test_indices]
+
+            est = res["estimator"][i]
+            i_probs = est.predict_proba(data_test)[:, 1]
+            precisions.append([precision_score(target_test, i_probs > ix) for ix in x])
+            recalls.append([recall_score(target_test, i_probs > ix) for ix in x])
+
+        fig, ax = plt.subplots()
+        for i, (s, label) in enumerate(
+            zip([precisions, recalls], ["precision", "recall"])
+        ):
+            color = f"C{i}"
+            ax.plot(x, np.median(s, axis=0), color=color, label=label)
+            ax.fill_between(
+                x,
+                *np.quantile(s, [0.05, 0.95], axis=0),
+                alpha=0.2,
+                color=color,
+                ec="none",
+            )
+        ax.set_xlabel("Threshold")
+        ax.set_ylabel("Score")
+        fn = self._plot_path / "scores.pdf"
+        fig.savefig(fn, bbox_inches="tight")
+        plt.close()
+
+        # ---------------------- drop estimators and return non-binary results ---------------------- #
         res.pop("estimator")
         res.pop("indices")
         for k, v in res.items():
