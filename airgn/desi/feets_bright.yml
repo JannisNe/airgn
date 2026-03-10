@@ -97,7 +97,22 @@ task:
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/xgb
               input_mongo_db_name: desi_agn_vac
-              n_estimators: 15
+              n_estimators: 30
+              smote: true
+              learning_rate: 0.1
+              exclude_features:
+                - Mean
+                - NPoints
+                - Std
+              n_cpu: 20
+          - unit: AGNVarXGB
+            config:
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/xgb_no_wise_agn
+              input_mongo_db_name: desi_agn_vac
+              n_estimators: 200
+              smote: true
+              learning_rate: 0.1
+              drop_wise_agn: true
               exclude_features:
                 - Mean
                 - NPoints
