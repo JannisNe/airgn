@@ -236,6 +236,11 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                     agn_h, _ = np.histogramdd(embedding[agn_mask], bins=bins)
                     non_agn_h, _ = np.histogramdd(embedding[~agn_mask], bins=bins)
 
+                    # calculate histogram of non-wise and wise agn
+                    wise_agn_mask = res_bin.loc[corner_df[~nan_mask].index, "wise_agn"]
+                    wise_agn_h, _ = np.histogramdd(embedding[wise_agn_mask], bins=bins)
+                    wise_agn_ratio_h = (agn_h - wise_agn_h) / agn_h
+
                     # check their distributions with relative histograms
                     agn_h_rel = agn_h / np.nansum(agn_h)
                     non_agn_h_rel = non_agn_h / np.nansum(non_agn_h)
@@ -315,6 +320,14 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                             "percentage",
                         ),
                         (containment, "viridis", 0, 1, "contours", "containment level"),
+                        (
+                            wise_agn_ratio_h,
+                            "berlin_r",
+                            0,
+                            1,
+                            "wise_agn_ratio",
+                            r"$\mathrm{N_{WISE\,AGN}} / \mathrm{N_{other\,AGN}}$",
+                        ),
                     ]
 
                     for i, (h, cmap, vmin, vmax, fext, label) in enumerate(itr):
@@ -322,7 +335,9 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
                         if (ndim := embedding.shape[1]) == 2:
                             norm = Normalize(vmin=vmin, vmax=vmax)
-                            ax.pcolormesh(*meshbins, h, cmap=cmap, norm=norm)
+                            _cmap = plt.get_cmap(cmap)
+                            _cmap.set_bad("grey", 0.5)
+                            ax.pcolormesh(*meshbins, h, cmap=_cmap, norm=norm)
                             fig.colorbar(
                                 ax=ax,
                                 location="right",
