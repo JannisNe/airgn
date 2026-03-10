@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import umap
+from scipy.stats import kstest
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.T3Store import T3Store
@@ -99,14 +100,24 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             resample_mask = res.agn if self.resample == "agn" else ~res.agn
             proposal = res.loc[resample_mask, "W1_Mean"]
             target = res.loc[~resample_mask, "W1_Mean"]
-            # to be able to resample the non-AGN to the AGN ditribution, the AGN distribution has to be
+            # to be able to resample the non-AGN to the AGN distribution, the AGN distribution has to be
             # within the bounds of the non-AGN distribution
             target_outside_proposal = (target < proposal.min()) | (
                 target > proposal.max()
             )
             sampled_proposal_index = repeated_matching(
-                proposal, target[~target_outside_proposal], min_samples=10
+                proposal,
+                target[~target_outside_proposal],
+                min_samples=10,
+                plot_path=self._path / "W1_Mean_sampling.pdf",
             )
+
+            # make sure the sampling produced two compatible distributions
+            pval = kstest(
+                target[~target_outside_proposal],
+                proposal.loc[proposal.index.difference(sampled_proposal_index)],
+            ).pvalue
+            assert pval > 0.05
             res.loc[sampled_proposal_index, "sampled"] = False
             res.loc[
                 target_outside_proposal.index[target_outside_proposal], "sampled"
