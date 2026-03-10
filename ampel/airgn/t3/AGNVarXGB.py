@@ -1,10 +1,8 @@
 from typing import Generator, Literal
 import os
-from pathlib import Path
 
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, mean_squared_error, ConfusionMatrixDisplay
-from sklearn.model_selection import GridSearchCV, KFold, cross_validate
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_validate
 import numpy as np
 import xgboost as xgb
 import matplotlib.pyplot as plt
@@ -24,6 +22,7 @@ from airgn.rejection_sampling import repeated_matching
 
 class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     plot_dir: str
+    n_estimators: int
 
     resample: Literal["agn", "non-agn", "none"] = "agn"
     exclude_features: list[str] | None = None
@@ -73,12 +72,14 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             else:
                 metrics.extend([f"W{i}_{m}" for i in range(1, 3)])
 
-        target = res.loc[res.sampled, "agn"].astype(int).values
-        data = res.loc[res.sampled, metrics].values
+        target = res.loc[res.sampled, "agn"].astype(int)
+        data = res.loc[res.sampled, metrics]
 
-        n_splits = 6
-        kf = KFold(n_splits=n_splits, shuffle=True, random_state=self._random_state)
-        xgb_model = xgb.XGBClassifier(n_jobs=self.n_cpu)
+        n_splits = 10
+        kf = StratifiedKFold(
+            n_splits=n_splits, shuffle=True, random_state=self._random_state
+        )
+        xgb_model = xgb.XGBClassifier(n_jobs=self.n_cpu, n_estimators=self.n_estimators)
         scores = ["accuracy", "precision", "recall", "f1"]
         res = cross_validate(
             xgb_model,
@@ -93,6 +94,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         # plot the models
         for i in range(n_splits):
+            # plot importance
             est = res["estimator"][i]
             xgb.plot_importance(est)
             fig = plt.gcf()
@@ -100,13 +102,41 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fig.savefig(fn, bbox_inches="tight")
             plt.close()
 
-            indices = res["indices"]["test"][i]
+            # plot confusion matrix
+            test_indices = res["indices"]["test"][i]
+            data_test = data.iloc[test_indices]
+            target_test = target.iloc[test_indices]
             conf_disp = ConfusionMatrixDisplay.from_estimator(
-                est, data[indices], target[indices]
+                est, data_test, target_test
             )
             conf_disp.plot()
             fig = plt.gcf()
             fn = self._plot_path / f"{i}_confudion_matrix.pdf"
+            fig.savefig(fn, bbox_inches="tight")
+            plt.close()
+
+            # plot error in train and test samples
+            train_errors = []
+            val_errors = []
+            train_indices = res["indices"]["train"][i]
+            target_train = target.iloc[train_indices]
+            data_train = data.iloc[train_indices]
+
+            for j in range(self.n_estimators):
+                y_train = est.predict_proba(data_train, iteration_range=(1, j + 1))[
+                    :, 1
+                ]
+                train_errors.append(mean_squared_error(target_train, y_train))
+                y_test = est.predict_proba(data_test, iteration_range=(1, j + 1))[:, 1]
+                val_errors.append(mean_squared_error(target_test, y_test))
+
+            fig, ax = plt.subplots()
+            x = np.arange(len(train_errors))
+            ax.plot(x, train_errors, label="training sample")
+            ax.plot(x, val_errors, label="test sample")
+            ax.set_xlabel("Boosting iteration")
+            ax.set_ylabel("MSE")
+            fn = self._plot_path / f"{i}_mse.pdf"
             fig.savefig(fn, bbox_inches="tight")
             plt.close()
 

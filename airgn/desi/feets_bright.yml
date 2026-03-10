@@ -45,7 +45,7 @@ task:
                   - ThirdBrightestMeanColor
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 100000
+    iter_max: 1000000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -97,6 +97,7 @@ task:
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/xgb
               input_mongo_db_name: desi_agn_vac
+              n_estimators: 15
               exclude_features:
                 - Mean
                 - NPoints
