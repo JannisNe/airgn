@@ -155,12 +155,9 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         # ---------------------- plot average importance ---------------------- #
 
         importances = pd.concat(
-            [
-                pd.Series(est.feature_importances_, index=est.feature_names_in_)
-                for est in res["estimator"]
-            ],
+            [pd.Series(est.get_booster().get_score()) for est in res["estimator"]],
             axis=1,
-        ).T
+        )
         importances_meds = importances.quantile(0.5, axis=1)
         importances_lower = importances_meds - importances.quantile(0.05, axis=1)
         importances_upper = importances.quantile(0.95, axis=1) - importances_meds
@@ -170,6 +167,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             np.arange(len(importances_meds)),
             importances_meds,
             yerr=[importances_lower, importances_upper],
+            fmt="s",
         )
         ax.set_xticks(np.arange(len(importances_meds)))
         ax.set_xticklabels(importances.index, rotation=60, ha="right")
@@ -205,7 +203,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 i_test_errors.append(mean_squared_error(target_test, y_test))
 
             train_errors.append(i_train_errors)
-            test_errors.append(i_train_errors)
+            test_errors.append(i_test_errors)
 
         train_errors = np.array(train_errors)
         test_errors = np.array(test_errors)
@@ -219,14 +217,14 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             ax.plot(x, np.median(s, axis=0), label=label, color=c)
             ax.fill_between(
                 x,
-                *np.quantile(train_errors, [0.05, 0.95], axis=0),
+                *np.quantile(s, [0.05, 0.95], axis=0),
                 alpha=0.2,
                 color=c,
                 ec="none",
             )
         ax.set_xlabel("Boosting iteration")
         ax.set_ylabel("MSE")
-        fn = individual_models_path / "mse.pdf"
+        fn = self._plot_path / "mse.pdf"
         fig.savefig(fn, bbox_inches="tight")
         plt.close()
 
@@ -260,6 +258,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             )
         ax.set_xlabel("Threshold")
         ax.set_ylabel("Score")
+        ax.legend()
         fn = self._plot_path / "scores.pdf"
         fig.savefig(fn, bbox_inches="tight")
         plt.close()
