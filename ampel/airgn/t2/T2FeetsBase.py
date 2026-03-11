@@ -43,6 +43,15 @@ class T2FeetsBase(LogicalUnit):
         self._multi_band_extractor = feets.FeatureSpace(
             only=self.multi_band_features, dask_options=dask_options
         )
+        self._band_pairs = (
+            self.band_pairs
+            if self.band_pairs
+            else [
+                (self.filters[i], self.filters[j])
+                for i in range(len(self.filters))
+                for j in range(i + 1, len(self.filters))
+            ]
+        )
 
     # --------------------------------------------------------
 
@@ -105,18 +114,8 @@ class T2FeetsBase(LogicalUnit):
     # --------------------------------------------------------
 
     def _extract_multi_band(self, light_curve: pd.DataFrame):
-        pairs = (
-            self.band_pairs
-            if self.band_pairs
-            else [
-                (self.filters[i], self.filters[j])
-                for i in range(len(self.filters))
-                for j in range(i + 1, len(self.filters))
-            ]
-        )
-
         results = {}
-        for b1, b2 in pairs:
+        for b1, b2 in self._band_pairs:
             df1 = self._prepare_band_df(light_curve, b1).dropna()
             df2 = self._prepare_band_df(light_curve, b2).dropna()
 
@@ -134,8 +133,6 @@ class T2FeetsBase(LogicalUnit):
 
             # Synchronize the data from the two bands
             atime, amag, amag2, aerror, aerror2 = feets.preprocess.align(**lc)
-
-            # For convenience, we store the preprocessed data in a dictionary.
             lc.update(
                 {
                     "aligned_time": atime,
