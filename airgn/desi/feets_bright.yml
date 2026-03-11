@@ -45,7 +45,6 @@ task:
                   - ThirdBrightestMeanColor
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 1000000
     shaper: TiDataPointShaper
     supplier:
       config:
@@ -123,6 +122,18 @@ task:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
               input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Std
+              exclude_features_corner:
+                - NPoints
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_wise_agn
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              drop_wise_agn: true
               exclude_features_fit:
                 - Mean
                 - NPoints

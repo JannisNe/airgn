@@ -77,6 +77,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     umap: bool = True
     umap_parameters: dict[str, Any] = {}
     resample: Literal["agn", "non-agn", "none"] = "agn"
+    drop_wise_agn: bool = False
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -107,6 +108,9 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(bool)
         res["wise_agn"] = wise_agn_mask
         res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
+
+        if self.drop_wise_agn:
+            res = res[~res.wise_agn]
 
         # ---------------------- re-sample non-agn to match agn ---------------------- #
         res["sampled"] = True
