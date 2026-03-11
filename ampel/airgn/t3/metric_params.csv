@@ -15,3 +15,13 @@ Std,False,$\sigma$,False,-1.0,1.0
 BrightestColor,False,$\mathrm{C_1}$,True,-1,2
 SecondBrightestMeanColor,False,$\mathrm{\bar{C_2}}$,True,-1,2
 ThirdBrightestMeanColor,False,$\mathrm{\bar{C_3}}$,True,-1,2
+Beyond1Std,False,$\mathrm{n_{\Delta m > \sigma}}$,False,0,1
+WeightedBeyond1Std,False,$\mathrm{n_{\Delta m > \sigma}}$,False,0,1
+PercentDiffPercentile_5,False,$\mathrm{\Delta m_{.95} / m_{med}}$,False,-0.01,0.1
+Gskew,False,$\mathrm{G_{skew}}$,False,-1,1
+Skew,False,$\mathrm{arcsinh(G_1)}$,False,-5,5
+Roms,False,ROMS,False,0,10
+StructureFunction_index_21,False,$\mathrm{S_{21}}$,False,0,10
+StructureFunction_index_31,False,$\mathrm{S_{31}}$,False,0,10
+StructureFunction_index_32,False,$\mathrm{S_{32}}$,False,0,10
+AndersonDarling,False,$\mathrm{\log_{10}(A^2)}$,False,0,5
