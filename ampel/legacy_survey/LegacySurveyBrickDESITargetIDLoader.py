@@ -55,8 +55,11 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
     dr: int = 10
     sv: int = 1
 
-    # Path to CSV file with columns TARGETID, LS_ID, TARGET_RA, TARGET_DEC
+    # Path to CSV file with columns TARGETID, LS_ID, RA, DEC
+    # If the columns have different names can also specify column_map
+    # with e.g. {TARGETID: my_column_name}
     target_map_file: str
+    column_mapping: Dict[str, str] = {}
 
     cache_dir: str
 
@@ -81,13 +84,18 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
 
         # make sweep file map
         if cache_missing:
+            default_columns = ["TARGETID", "LS_ID", "TARGET_RA", "TARGET_DEC"]
+            usecols = [self.column_mapping.get(c, c) for c in default_columns]
             target_map = pd.read_csv(
                 expand(self.target_map_file),
-                usecols=["TARGETID", "LS_ID", "TARGET_RA", "TARGET_DEC"],
+                usecols=usecols,
+            ).rename(
+                columns={self.column_mapping.get(c, c): c for c in default_columns}
             )
-            target_map["ls_sweep_file_index"] = np.nan
+
             for fns, cfn in zip(self.filenames, self.cache_files):
                 ra_range, dec_range = parse_sweep_filename(fns[1])
+                cfn.parent.mkdir(parents=True, exist_ok=True)
                 target_map.loc[
                     (target_map["TARGET_RA"] > ra_range[0])
                     & (target_map["TARGET_RA"] < ra_range[1])
@@ -98,9 +106,7 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
         # set up processing generator
         self._gen = self.iter_lightcurves()
 
-    def iter_lightcurves(
-        self, filenames: list[Path], row_indices: list[int] | None = None
-    ) -> Generator[pd.DataFrame, None, None]:
+    def iter_lightcurves(self) -> Generator[pd.DataFrame, None, None]:
         # loop over pairs of summary and lightcurve files
         # with warnings.catch_warnings():
         #     warnings.simplefilter("ignore", AstropyWarning)
@@ -108,7 +114,10 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
         for i, cache_file in enumerate(self.cache_files):
             cache = pd.read_csv(cache_file, index_col=0).set_index("LS_ID")
             lightcurve_fn = (
-                str(cache).replace(str(self._cache_dir), "").replace(CACHE_FILE_EXT, "")
+                str(cache_file)
+                .replace(str(self._cache_dir), "")
+                .replace(CACHE_FILE_EXT, "")
+                .strip("/")
             )
             if len(cache) == 0:
                 self.logger.info(
