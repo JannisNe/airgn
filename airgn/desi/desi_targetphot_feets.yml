@@ -79,9 +79,13 @@ task:
           - TARGETID
         loader:
           config:
-            filenames:
-              - $AIRGNDATA/desi_targetphot/LSDR9_phot_iron_v1.1_extracted.fits
-          unit: LegacySurveyDESITargetPhotLoader
+            dr: 9
+            sv: 0
+            target_map_file: $AIRGNDATA/desi_value_added_catalog/agnqso_desi.csv
+            cache_dir:
+            download_if_missing: true
+            iter_nfiles_max: 5
+          unit: LegacySurveyDESITargetIDLoader
       unit: LegacySurveySupplier
   multiplier: 1
   title: legacy_survey

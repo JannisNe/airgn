@@ -71,7 +71,7 @@ def get_local_path(filename: str, dr: int) -> Path:
 
 
 def download_file_by_index(
-    i: int | list[int], dr: int, sv: int
+    i: int | list[int], dr: int, sv: int, only_lightcurves: bool = False
 ) -> tuple[Path, ...] | list[tuple[Path, Path]]:
     filenames = get_filenames(dr, sv)
     if isinstance(i, int):
@@ -81,6 +81,9 @@ def download_file_by_index(
         if index < 0 or index >= len(filenames):
             raise IndexError("Index out of range")
         i_filenames = filenames[index]
+        if only_lightcurves:
+            # skip the summary file
+            i_filenames = [i_filenames[1]]
         sub_paths: tuple[Path, ...] = tuple(
             [get_local_path(fn, dr) for fn in i_filenames]
         )  # type: ignore
@@ -102,6 +105,30 @@ def download_file_by_index(
         paths.append(tuple(sub_paths))
 
     return paths[0] if len(paths) == 1 else paths
+
+
+def parse_sweep_filename(filename) -> tuple[tuple[float, float], tuple[float, float]]:
+    pattern = r"sweep-(\d{3})([mp]\d{3})-(\d{3})([mp]\d{3})"
+    match = re.search(pattern, filename)
+
+    if not match:
+        raise ValueError("Filename does not match expected format")
+
+    ra_min_str, dec_min_str, ra_max_str, dec_max_str = match.groups()
+
+    def parse_dec(dec_str):
+        sign = -1 if dec_str[0] == "m" else 1
+        return sign * int(dec_str[1:])
+
+    ra_min = int(ra_min_str)
+    ra_max = int(ra_max_str)
+    dec_min = parse_dec(dec_min_str)
+    dec_max = parse_dec(dec_max_str)
+
+    ra_range = (ra_min, ra_max)
+    dec_range = (dec_min, dec_max)
+
+    return ra_range, dec_range
 
 
 if __name__ == "__main__":
