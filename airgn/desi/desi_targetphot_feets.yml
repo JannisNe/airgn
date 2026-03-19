@@ -82,10 +82,12 @@ task:
             dr: 9
             sv: 0
             target_map_file: $AIRGNDATA/desi_value_added_catalog/agnqso_desi.csv
-            cache_dir:
+            column_mapping:
+              TARGETID: orig_id
+            cache_dir: $AIRGNDATA/legacy_survey/desi_targetphot_cache
             download_if_missing: true
             iter_nfiles_max: 5
-          unit: LegacySurveyDESITargetIDLoader
+          unit: LegacySurveyBrickDESITargetIDLoader
       unit: LegacySurveySupplier
   multiplier: 1
   title: legacy_survey
