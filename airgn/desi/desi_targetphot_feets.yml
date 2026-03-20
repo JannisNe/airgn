@@ -20,6 +20,11 @@ task:
     compiler_opts: TiCompilerOptions
     directives:
     - channel: legacy_survey
+      filter:
+        unit: LegacySurveyWISEFilter
+        config:
+          min_exp_per_visit: 8
+          min_detections: 5
       ingest:
         mux:
           combine:
