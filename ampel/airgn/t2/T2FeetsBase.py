@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Literal
 
 import feets
 from ampel.base.LogicalUnit import LogicalUnit
+
+N_REQUIRED_DATAPOINTS = {"AndersonDarling": 4, "Eta": 2}
 
 
 class T2FeetsBase(LogicalUnit):
@@ -30,19 +32,32 @@ class T2FeetsBase(LogicalUnit):
     # Optional: define explicit band pairs for multi-band features
     band_pairs: Optional[Sequence[tuple[str, str]]] = None
 
+    def _get_single_band_extractor(self, exclude=None):
+        features = (
+            self.single_band_features
+            if exclude is None
+            else list(set(self.single_band_features) - set(exclude))
+        )
+        return feets.FeatureSpace(
+            only=features, dask_options=self._dask_options, **self._single_band_kwargs
+        )
+
+    def _get_multi_band_extractor(self, exclude=None):
+        features = (
+            self.single_band_features
+            if exclude is None
+            else list(set(self.single_band_features) - set(exclude))
+        )
+        return feets.FeatureSpace(only=features, dask_options=self._dask_options)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if self.row_per_filter and (self.filter_col is None):
             raise ValueError("filter_col must be specified if row_per_filter is True")
-        dask_options = {"scheduler": "synchronous"}
-        self._single_band_extractor = feets.FeatureSpace(
-            only=self.single_band_features,
-            dask_options=dask_options,
-            ReducedChi2={"transform": "identity"},
-        )
-        self._multi_band_extractor = feets.FeatureSpace(
-            only=self.multi_band_features, dask_options=dask_options
-        )
+        self._dask_options = {"scheduler": "synchronous"}
+        self._single_band_kwargs = {"ReducedChi2": {"transform": "identity"}}
+        self._single_band_extractor = self._get_single_band_extractor()
+        self._multi_band_extractor = self._get_multi_band_extractor()
         self._band_pairs = (
             self.band_pairs
             if self.band_pairs
@@ -52,6 +67,8 @@ class T2FeetsBase(LogicalUnit):
                 for j in range(i + 1, len(self.filters))
             ]
         )
+
+        self._required_datapoints = pd.DataFrame(N_REQUIRED_DATAPOINTS)
 
     # --------------------------------------------------------
 
@@ -88,15 +105,33 @@ class T2FeetsBase(LogicalUnit):
 
     # --------------------------------------------------------
 
+    def _get_extractor(
+        self, n_datapoints: int, which: Literal["single", "multi"]
+    ) -> feets.FeatureSpace:
+        # remove features from feature space if not enough data
+        default_features = self.__getattribute__(f"{which}_band_features")
+        remove_mask = self._required_datapoints.loc[default_features] > n_datapoints
+        if remove_mask.any():
+            remove_features = (
+                set(self._required_datapoints.index[remove_mask])
+                if remove_mask.any()
+                else None
+            )
+            return self.__getattribute__(f"_get_{which}_band_extractor")(
+                remove_features
+            )
+        return self.__getattribute__(f"_{which}_band_extractor")
+
     def _extract_single_band(self, light_curve: pd.DataFrame):
         results = {}
 
         for band in self.filters:
             df = self._prepare_band_df(light_curve, band).dropna()
+            fs = self._get_extractor(len(df), which="single")
 
             # extract features
             try:
-                features = self._single_band_extractor.extract(**df.to_dict("list"))
+                features = fs.extract(**df.to_dict("list"))
             except feets.runner.DataRequiredError as e:
                 if (
                     "Missing required data vectors in light curve: aligned_time, aligned_magnitude, aligned_magnitude2"
@@ -147,7 +182,7 @@ class T2FeetsBase(LogicalUnit):
                 }
             )
 
-            features = self._multi_band_extractor.extract(**lc)
+            features = self._get_extractor(len(atime), "multi").extract(**lc)
 
             for k, v in features.as_frame().loc[0].items():
                 results[f"{b1}_{b2}_{k}"] = v
