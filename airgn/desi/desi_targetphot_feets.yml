@@ -27,6 +27,7 @@ task:
             - unit: T2MaggyToFluxDensity
             - unit: T2FeetsTimewise
               config:
+                time_col: "LC_MJD_{band}"
                 t2_dependency:
                   - unit: T2MaggyToFluxDensity
                 single_band_features:
@@ -37,6 +38,16 @@ task:
                   - Std
                   - ReducedChi2
                   - NPoints
+                  - BeyondNStd
+                  - WeightedBeyondNStd
+                  - Gskew
+                  - Skew
+                  - PercentDiffPercentile
+                  - Roms
+                  - StructureFunction_index_21
+                  - StructureFunction_index_31
+                  - StructureFunction_index_32
+                  - AndersonDarling
                 multi_band_features:
                   - PearsonsR
                   - RedderWhenBrighter0
@@ -55,9 +66,7 @@ task:
               tag: 1
               channel: 1
               stock: 1
-              body.release: 1
-              body.brickid: 1
-              body.brick_objid: 1
+              body.TARGETID: 1
               body.ra: 1
               body.dec: 1
               body.LC_FLUX_W1: 1

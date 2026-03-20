@@ -141,9 +141,9 @@ class T2FeetsTimewise(AbsTiedLightCurveT2Unit, T2FeetsBase):
 
     # column names specific for timewise
     filters = ["W1", "W2"]
-    time_col = "mean_mjd"
-    value_col = "{band}mag"
-    error_col = "e_{band}mag"
+    time_col: str = "mean_mjd"
+    value_col: str = "{band}mag"
+    error_col: str = "e_{band}mag"
     row_per_filter = False
 
     def __init__(self, **kwargs):
