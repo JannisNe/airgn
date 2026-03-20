@@ -61,6 +61,10 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         if self.drop_wise_agn:
             res = res[~res.wise_agn]
 
+        # SMOTE can not handle nans so drop
+        if self.smote:
+            res = res[~res.isna().any(axis=1)]
+
         # ---------------------- re-sample non-agn to match agn ---------------------- #
 
         res["sampled"] = True
