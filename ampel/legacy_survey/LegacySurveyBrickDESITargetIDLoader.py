@@ -7,18 +7,13 @@
 # Last Modified Date:  05.11.2025
 # Last Modified By:    Jannis Necker <jannis.necker@gmail.com>
 from typing import Dict, Generator
-from pathlib import Path
-import warnings
-from itertools import chain
 
 import numpy as np
-from astropy.utils.exceptions import AstropyWarning
 from astropy.io import fits
 from astropy.table import Table
 import pandas as pd
 from ampel.abstract.AbsAlertLoader import AbsAlertLoader
 
-from timewise.config import TimewiseConfig
 from timewise.util.path import expand
 
 from airgn.legacy_survey.download import (
