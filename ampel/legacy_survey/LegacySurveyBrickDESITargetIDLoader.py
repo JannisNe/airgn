@@ -13,6 +13,7 @@ from itertools import chain
 
 import numpy as np
 from astropy.utils.exceptions import AstropyWarning
+from astropy.io import fits
 from astropy.table import Table
 import pandas as pd
 from ampel.abstract.AbsAlertLoader import AbsAlertLoader
@@ -55,11 +56,12 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
     dr: int = 10
     sv: int = 1
 
-    # Path to CSV file with columns TARGETID, LS_ID, RA, DEC
+    # Path to CSV or FITS file with columns TARGETID, RELEASE, BRICKID, OBJID, RA, DEC
     # If the columns have different names can also specify column_map
     # with e.g. {TARGETID: my_column_name}
     target_map_file: str
     column_mapping: Dict[str, str] = {}
+    index_columns: list[str] = ["RELEASE", "BRICKID", "OBJID"]
 
     cache_dir: str
 
@@ -82,43 +84,72 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
         ]
         cache_missing = any([~p.exists() for p in self.cache_files])
 
-        # make sweep file map
+        # make sweep file map per brick file, saving the info for all targets
+        # in these files per file
         if cache_missing:
-            default_columns = ["TARGETID", "LS_ID", "TARGET_RA", "TARGET_DEC"]
+            default_columns = [
+                "TARGETID",
+                "RA",
+                "DEC",
+            ] + self.index_columns
             usecols = [self.column_mapping.get(c, c) for c in default_columns]
-            target_map = pd.read_csv(
-                expand(self.target_map_file),
-                usecols=usecols,
-            ).rename(
-                columns={self.column_mapping.get(c, c): c for c in default_columns}
+            target_map_file = expand(self.target_map_file)
+            if target_map_file.suffix == ".fits":
+                target_map = Table.read(
+                    target_map_file, format="fits", character_as_bytes=False
+                ).to_pandas()[usecols]
+            else:
+                target_map = pd.read_csv(
+                    expand(self.target_map_file),
+                    usecols=usecols,
+                )
+            target_map.rename(
+                columns={self.column_mapping.get(c, c): c for c in default_columns},
+                inplace=True,
             )
 
             for fns, cfn in zip(self.filenames, self.cache_files):
                 ra_range, dec_range = parse_sweep_filename(fns[1])
                 cfn.parent.mkdir(parents=True, exist_ok=True)
                 target_map.loc[
-                    (target_map["TARGET_RA"] > ra_range[0])
-                    & (target_map["TARGET_RA"] < ra_range[1])
-                    & (target_map["TARGET_DEC"] > dec_range[0])
-                    & (target_map["TARGET_DEC"] < dec_range[1])
+                    (target_map["RA"] > ra_range[0])
+                    & (target_map["RA"] < ra_range[1])
+                    & (target_map["DEC"] > dec_range[0])
+                    & (target_map["DEC"] < dec_range[1])
                 ].to_csv(cfn, index=False)
 
         # set up processing generator
         self._gen = self.iter_lightcurves()
 
     def iter_lightcurves(self) -> Generator[pd.DataFrame, None, None]:
-        # loop over pairs of summary and lightcurve files
-        # with warnings.catch_warnings():
-        #     warnings.simplefilter("ignore", AstropyWarning)
+        # count processed bricks files
         iter_nfiles = 0
+
+        # use str when loading to prevent precision errors for large ints
+        index_dtype = {c: str for c in self.index_columns}
+
+        # loop over cahce files per bricks file
         for i, cache_file in enumerate(self.cache_files):
-            cache = pd.read_csv(cache_file, index_col=0).set_index("LS_ID")
+            # load cache, index by LS index columns
+            cache = (
+                pd.read_csv(
+                    cache_file,
+                    index_col=0,
+                    dtype={"TARGETID": str, **index_dtype},
+                )
+                .set_index(self.index_columns)
+                .sort_index()
+            )
+
+            # parse correspodning lightcurve filename
             lightcurve_fn = (
                 str(cache_file)
                 .replace(str(self._cache_dir), "")
                 .replace(CACHE_FILE_EXT, "")
                 .strip("/")
             )
+
+            # if there are no objects in this bricks file, skip
             if len(cache) == 0:
                 self.logger.info(
                     f"Skipping {lightcurve_fn} because no associated objects"
@@ -137,15 +168,32 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
                     self.logger.info("Skipping")
                     continue
 
-            for row in Table.read(
-                lightcurve_fn, format="fits", character_as_bytes=False
-            ):
-                ls_id = str(row["RELEASE"]) + str(row["OBJID"]) + str(row["BRICKID"])
-                if ls_id not in cache.index:
-                    continue
+            # load cahce index into array, convert to integer
+            np_index_dtype = [(c, ">i4") for c in self.index_columns]
+            cache_index = np.array(cache.index.tolist(), dtype=np_index_dtype)
+
+            # load bricks file, use memmap to lazy load
+            with fits.open(local_fn, memmap=True) as hdul:
+                data = hdul[1].data
+                index_data = [data[c] for c in self.index_columns]
+                fits_array = np.rec.fromarrays(index_data, dtype=np_index_dtype)
+
+                # select objects specified by cache
+                mask = np.isin(fits_array, cache_index)
+                table = Table(data[mask])
+                del hdul[1].data
+
+            # make sure all objects were selected
+            # ! Some objects have zeros in release, brickid and objid, i.e. no LS match?
+            assert len(np.unique(cache_index[cache_index["RELEASE"] != 0])) == len(
+                table
+            )
+
+            for row in table:
+                cntr = tuple(row[c] for c in self.index_columns)
 
                 # get parent sample info
-                cache_info = cache.loc[ls_id]
+                cache_info = cache.loc[cntr]
 
                 lc = {
                     col: row[col]
@@ -157,8 +205,8 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
 
                 lc = pd.DataFrame(lc).assign(
                     targetid=cache_info.loc["TARGETID"],
-                    ra=cache_info.loc["TARGET_RA"],
-                    dec=cache_info.loc["TARGET_DEC"],
+                    ra=cache_info.loc["RA"],
+                    dec=cache_info.loc["DEC"],
                 )
                 yield lc[lc["LC_MJD_W2"] > 0]  # unused entries have zeros in MJD
 
