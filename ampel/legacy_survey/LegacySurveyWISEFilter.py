@@ -37,7 +37,7 @@ class LegacySurveyWISEFilter(AbsAlertFilter):
                 for i in range(1, 3)
             ],
             axis=1,
-        ).min()
+        ).max()  # min_detections in AT LEAST ONE band, not necessarily both
         if not min_detections >= self.min_detections:
             self.logger.debug(None, extra={"n_detections": min_detections})
             return None
