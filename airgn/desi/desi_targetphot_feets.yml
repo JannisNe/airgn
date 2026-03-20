@@ -85,7 +85,7 @@ task:
             unique_key: [TARGETID, LC_MJD_W1]
             channel: legacy_survey
     shaper: LegacySurveyDatapointShaper
-    iter_max: 10000
+    iter_max: 100000
     supplier:
       config:
         dpid: hash
