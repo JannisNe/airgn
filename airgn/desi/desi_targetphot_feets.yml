@@ -81,9 +81,9 @@ task:
           config:
             dr: 9
             sv: 0
-            target_map_file: $AIRGNDATA/desi_value_added_catalog/agnqso_desi.csv
+            target_map_file: $AIRGNDATA/desi_targetphot/LSDR9_phot_iron_v1.1_extracted_minimal.fits
             column_mapping:
-              TARGETID: orig_id
+              OBJID: BRICK_OBJID
             cache_dir: $AIRGNDATA/legacy_survey/desi_targetphot_cache
             download_if_missing: true
             iter_nfiles_max: 5
@@ -131,10 +131,27 @@ task:
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb
               input_mongo_db_name: desi_agn_vac
+              n_estimators: 30
+              smote: true
+              learning_rate: 0.1
               exclude_features:
                 - Mean
                 - NPoints
                 - Std
+              n_cpu: 20
+          - unit: AGNVarXGB
+            config:
+              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn
+              input_mongo_db_name: desi_agn_vac
+              n_estimators: 50
+              smote: true
+              learning_rate: 0.1
+              drop_wise_agn: true
+              exclude_features:
+                - Mean
+                - NPoints
+                - Std
+              n_cpu: 20
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright
