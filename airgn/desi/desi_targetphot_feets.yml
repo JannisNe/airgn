@@ -95,7 +95,6 @@ task:
               OBJID: BRICK_OBJID
             cache_dir: $AIRGNDATA/legacy_survey/desi_targetphot_cache
             download_if_missing: true
-            iter_nfiles_max: 5
           unit: LegacySurveyBrickDESITargetIDLoader
       unit: LegacySurveySupplier
   multiplier: 1

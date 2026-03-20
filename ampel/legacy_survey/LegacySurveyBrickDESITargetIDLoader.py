@@ -63,9 +63,6 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
     # download files if they do not exist locally
     download_if_missing: bool = False
 
-    # number of sweep files to go through
-    iter_nfiles_max: int | None = None
-
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
@@ -117,9 +114,6 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
         self._gen = self.iter_lightcurves()
 
     def iter_lightcurves(self) -> Generator[pd.DataFrame, None, None]:
-        # count processed bricks files
-        iter_nfiles = 0
-
         # use str when loading to prevent precision errors for large ints
         index_dtype = {c: str for c in self.index_columns}
 
@@ -188,6 +182,13 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
 
                 # get parent sample info
                 cache_info = cache.loc[cntr]
+                if (
+                    len(cache_info.groupby(cache_info.columns.tolist()).value_counts())
+                    > 1
+                ):
+                    raise RuntimeError(f"Multiple matches for {cntr}!")
+                else:
+                    cache_info = cache_info.iloc[0]
 
                 lc = {
                     col: row[col]
@@ -198,17 +199,11 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
                 }
 
                 lc = pd.DataFrame(lc).assign(
-                    targetid=cache_info.loc["TARGETID"],
+                    TARGETID=cache_info.loc["TARGETID"],
                     ra=cache_info.loc["RA"],
                     dec=cache_info.loc["DEC"],
                 )
                 yield lc[lc["LC_MJD_W2"] > 0]  # unused entries have zeros in MJD
-
-            iter_nfiles += 1
-
-            if self.iter_nfiles_max is not None and iter_nfiles >= self.iter_nfiles_max:
-                self.logger.info(f"Reached {self.iter_nfiles_max} iterations, stopping")
-                break
 
     def __iter__(self):
         return self
