@@ -1,7 +1,7 @@
 import logging
+from pathlib import Path
 
 import requests
-from astropy.table import Table
 from astropy.io import fits
 from timewise.util.path import expand
 from tqdm import tqdm
@@ -43,6 +43,17 @@ EXTRACTED_FILE_COLUMNS = [
     "FLUX_IVAR_W1",
     "FLUX_IVAR_W2",
 ]
+MINIMAL_FILE_PATH = LOCAL_FILE_PATH.parent / (
+    LOCAL_FILE_PATH.stem + "_extracted_minimal.fits"
+)
+MINIAML_COLUMNS = [
+    "RELEASE",
+    "BRICKID",
+    "BRICK_OBJID",
+    "TARGETID",
+    "RA",
+    "DEC",
+]
 
 
 def download():
@@ -67,12 +78,12 @@ def log_size(path):
         hdul.info()
 
 
-def make_extracted_file(columns: list[str]):
+def make_extracted_file(columns: list[str], extracted_file_path: Path):
     logger.info("extracting LS DR9 target photometry")
 
     logger.debug("making Primary HDU")
     chunk_size = 100_000
-    tmp_path = EXTRACTED_FILE_PATH.parent / (EXTRACTED_FILE_PATH.name + ".tmp")
+    tmp_path = extracted_file_path.parent / (extracted_file_path.name + ".tmp")
 
     # Make some header entries for important information
     primary_header_cards = [
@@ -141,26 +152,27 @@ def make_extracted_file(columns: list[str]):
 
             logger.debug("done")
 
-    logger.debug(f"writing {EXTRACTED_FILE_PATH}")
-    tmp_path.replace(EXTRACTED_FILE_PATH)
+    logger.debug(f"writing {extracted_file_path}")
+    tmp_path.replace(extracted_file_path)
     logger.info("done")
 
 
-def make(columns: list[str] = EXTRACTED_FILE_COLUMNS):
+def make(columns: list[str], extracted_file_path: Path):
     if not LOCAL_FILE_PATH.exists():
         download()
     else:
         logger.info(f"{LOCAL_FILE_PATH} already exists")
-    if not EXTRACTED_FILE_PATH.exists():
-        make_extracted_file(columns)
+    if not extracted_file_path.exists():
+        make_extracted_file(columns, extracted_file_path)
     else:
-        logger.info(f"{EXTRACTED_FILE_PATH} already exists")
+        logger.info(f"{extracted_file_path} already exists")
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
-    make()
+    make(EXTRACTED_FILE_COLUMNS, EXTRACTED_FILE_PATH)
+    make(MINIAML_COLUMNS, MINIMAL_FILE_PATH)
 
     logger.info("validating extraction")
     logger.debug(f"reading {LOCAL_FILE_PATH}")
