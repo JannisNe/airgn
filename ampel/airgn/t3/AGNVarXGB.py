@@ -115,7 +115,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         pipeline = make_pipeline(*pipeline_list)
         scores = ["precision", "recall", "f1"]
-        res = cross_validate(
+        xgb_res = cross_validate(
             pipeline,
             data,
             target,
@@ -132,7 +132,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         individual_models_path.mkdir(parents=True, exist_ok=True)
         for i in range(n_splits):
             # plot importance
-            est = res["estimator"][i].named_steps["xgbclassifier"]
+            est = xgb_res["estimator"][i].named_steps["xgbclassifier"]
             xgb.plot_importance(est)
             fig = plt.gcf()
             fn = individual_models_path / f"{i}_importance.pdf"
@@ -140,7 +140,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             plt.close("all")
 
             # plot confusion matrix
-            test_indices = res["indices"]["test"][i]
+            test_indices = xgb_res["indices"]["test"][i]
             data_test = data.iloc[test_indices]
             target_test = target.iloc[test_indices]
             conf_disp = ConfusionMatrixDisplay.from_estimator(
@@ -155,7 +155,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             # plot error in train and test samples
             train_errors = []
             val_errors = []
-            train_indices = res["indices"]["train"][i]
+            train_indices = xgb_res["indices"]["train"][i]
             target_train = target.iloc[train_indices]
             data_train = data.iloc[train_indices]
 
@@ -182,7 +182,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         importances = pd.concat(
             [
                 pd.Series(est.named_steps["xgbclassifier"].get_booster().get_score())
-                for est in res["estimator"]
+                for est in xgb_res["estimator"]
             ],
             axis=1,
         )
@@ -211,15 +211,15 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         test_errors = []
 
         for i in range(n_splits):
-            train_indices = res["indices"]["train"][i]
+            train_indices = xgb_res["indices"]["train"][i]
             target_train = target.iloc[train_indices]
             data_train = data.iloc[train_indices]
 
-            test_indices = res["indices"]["test"][i]
+            test_indices = xgb_res["indices"]["test"][i]
             target_test = target.iloc[test_indices]
             data_test = data.iloc[test_indices]
 
-            est = res["estimator"][i]
+            est = xgb_res["estimator"][i]
 
             i_train_errors = []
             i_test_errors = []
@@ -264,11 +264,11 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         precisions = []
         recalls = []
         for i in range(n_splits):
-            test_indices = res["indices"]["test"][i]
+            test_indices = xgb_res["indices"]["test"][i]
             target_test = target.iloc[test_indices]
             data_test = data.iloc[test_indices]
 
-            est = res["estimator"][i]
+            est = xgb_res["estimator"][i]
             i_probs = est.predict_proba(data_test)[:, 1]
             precisions.append([precision_score(target_test, i_probs > ix) for ix in x])
             recalls.append([recall_score(target_test, i_probs > ix) for ix in x])
@@ -294,8 +294,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         plt.close()
 
         # ---------------------- drop estimators and return non-binary results ---------------------- #
-        res.pop("estimator")
-        res.pop("indices")
-        for k, v in res.items():
-            res[k] = v.tolist()
-        return res
+        xgb_res.pop("estimator")
+        xgb_res.pop("indices")
+        for k, v in xgb_res.items():
+            xgb_res[k] = v.tolist()
+        return xgb_res
