@@ -74,12 +74,16 @@ class T2FeetsBase(LogicalUnit):
         df[error_col] = 1 / np.sqrt(df[error_col])
 
         # bring data in feets-required format
-        return df[[time_col, value_col, error_col]].rename(
-            columns={
-                time_col: "time",
-                value_col: "magnitude",
-                error_col: "error",
-            }
+        return (
+            df[[time_col, value_col, error_col]]
+            .rename(
+                columns={
+                    time_col: "time",
+                    value_col: "magnitude",
+                    error_col: "error",
+                }
+            )
+            .sort_values(by="time", ascending=True)
         )
 
     # --------------------------------------------------------
