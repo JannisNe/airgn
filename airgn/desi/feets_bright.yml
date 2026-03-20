@@ -55,7 +55,7 @@ task:
                   - ThirdBrightestMeanColor
             unit: T1SimpleCombiner
           unit: TiMongoMuxer
-    iter_max: 100000
+    iter_max: 5000000
     shaper: TiDataPointShaper
     supplier:
       config:
