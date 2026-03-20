@@ -5,7 +5,20 @@ from typing import Optional, Sequence, Literal
 import feets
 from ampel.base.LogicalUnit import LogicalUnit
 
-N_REQUIRED_DATAPOINTS = {"AndersonDarling": 4, "Eta": 2}
+N_REQUIRED_DATAPOINTS = {
+    "AndersonDarling": 4,
+    "Eta": 2,
+    "StetsonL": 2,
+    "Skew": 3,
+    "Autocor_length": 2,
+    "Roms": 2,
+    "ReducedChi2": 2,
+    "ExcessVariance": 2,
+    "WeightedBeyondNStd": 2,
+    "Std": 2,
+    "BeyondNStd": 2,
+    "InverseEta": 2,
+}
 
 
 class T2FeetsBase(LogicalUnit):
@@ -44,9 +57,9 @@ class T2FeetsBase(LogicalUnit):
 
     def _get_multi_band_extractor(self, exclude=None):
         features = (
-            self.single_band_features
+            self.multi_band_features
             if exclude is None
-            else list(set(self.single_band_features) - set(exclude))
+            else list(set(self.multi_band_features) - set(exclude))
         )
         return feets.FeatureSpace(only=features, dask_options=self._dask_options)
 
@@ -68,7 +81,13 @@ class T2FeetsBase(LogicalUnit):
             ]
         )
 
-        self._required_datapoints = pd.DataFrame(N_REQUIRED_DATAPOINTS)
+        self._required_datapoints = pd.Series(
+            {
+                f: N_REQUIRED_DATAPOINTS.get(f, 1)
+                for f in list(self.single_band_features)
+                + list(self.multi_band_features)
+            }
+        )
 
     # --------------------------------------------------------
 
@@ -113,7 +132,7 @@ class T2FeetsBase(LogicalUnit):
         remove_mask = self._required_datapoints.loc[default_features] > n_datapoints
         if remove_mask.any():
             remove_features = (
-                set(self._required_datapoints.index[remove_mask])
+                set(self._required_datapoints.loc[default_features].index[remove_mask])
                 if remove_mask.any()
                 else None
             )
@@ -172,6 +191,11 @@ class T2FeetsBase(LogicalUnit):
 
             # Synchronize the data from the two bands
             atime, amag, amag2, aerror, aerror2 = feets.preprocess.align(**lc)
+
+            # if no overlapping detections, skip
+            if len(amag2) == 0:
+                continue
+
             lc.update(
                 {
                     "aligned_time": atime,
