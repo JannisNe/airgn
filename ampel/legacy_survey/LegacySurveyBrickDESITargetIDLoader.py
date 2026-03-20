@@ -129,7 +129,6 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
             cache = (
                 pd.read_csv(
                     cache_file,
-                    index_col=0,
                     dtype={"TARGETID": str, **index_dtype},
                 )
                 .set_index(self.index_columns)
