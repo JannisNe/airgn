@@ -11,9 +11,6 @@ import numpy as np
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
 from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 
-from timewise.util.visits import get_visit_map
-from timewise.process import keys
-
 
 class LegacySurveyWISEFilter(AbsAlertFilter):
     min_exp_per_visit: int = 8
