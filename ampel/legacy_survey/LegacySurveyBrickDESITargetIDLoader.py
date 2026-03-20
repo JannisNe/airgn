@@ -185,7 +185,7 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
             )
 
             for row in table:
-                cntr = tuple(row[c] for c in self.index_columns)
+                cntr = tuple(str(row[c]) for c in self.index_columns)
 
                 # get parent sample info
                 cache_info = cache.loc[cntr]
