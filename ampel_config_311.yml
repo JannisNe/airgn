@@ -1,6 +1,6 @@
 build:
-  date: 19/03/2026
-  time: '12:20:14'
+  date: 20/03/2026
+  time: '14:56:07'
   by: necker
   conda: airgn311
   stop_on_errors: 0
@@ -13,11 +13,11 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a8
   ampel-core: 0.10.6a21
-  ampel-plot: 0.9.1
-  ampel-photometry: 0.10.2a1
-  ampel-alerts: 0.10.4a0
   airgn: 0.1.0
+  ampel-alerts: 0.10.4a0
+  ampel-plot: 0.9.1
   timewise: 1.0.0a10
+  ampel-photometry: 0.10.2a1
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -1326,6 +1326,33 @@ unit:
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyDatapointShaper.py
+  LegacySurveyWISEFilter:
+    fqn: ampel.legacy_survey.LegacySurveyWISEFilter
+    base:
+    - LegacySurveyWISEFilter
+    - AbsAlertFilter
+    - LogicalUnit
+    xxh64: 15563250388634980862
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - cryptography
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - platformdirs
+    - prometheus_client
+    - psutil
+    - pyarrow
+    - pydantic_core
+    - pytz
+    - rich
+    - schedule
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveyWISEFilter.py
   NoShaper:
     fqn: ampel.dev.NoShaper
     base:
@@ -1643,7 +1670,7 @@ unit:
     base:
     - T2FeetsBase
     - LogicalUnit
-    xxh64: 9027893440929044653
+    xxh64: 11604869637202045003
     dependencies:
     - annotated_types
     - astropy
@@ -1688,7 +1715,7 @@ unit:
     - AbsTiedT2Unit
     - T2FeetsBase
     - LogicalUnit
-    xxh64: 6315167521295211385
+    xxh64: 16715437140265033759
     dependencies:
     - annotated_types
     - astropy
@@ -2506,15 +2533,13 @@ unit:
     - LegacySurveyBrickDESITargetIDLoader
     - AbsAlertLoader
     - AbsContextManager
-    xxh64: 11967595087833177012
+    xxh64: 8094101259683425459
     dependencies:
     - annotated_types
     - astropy
     - astropy_iers_data
-    - backoff
     - charset_normalizer
     - cloudpickle
-    - cryptography
     - google_crc32c
     - idna
     - msgpack
@@ -2523,16 +2548,11 @@ unit:
     - numpy
     - packaging
     - pandas
-    - platformdirs
-    - prometheus_client
-    - psutil
     - pyarrow
     - pydantic_core
     - pytz
-    - pyvo
     - requests
     - rich
-    - schedule
     - tqdm
     - typing_inspection
     - urllib3
@@ -2628,6 +2648,34 @@ unit:
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/legacy_survey/LegacySurveySupplier.py
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
+    base:
+    - PPSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 252807104807642313
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/PPSFilter.py
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
+    base:
+    - ULSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 14523103307642547590
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/ULSFilter.py
   TimewiseAlertSupplier:
     fqn: ampel.timewise.alert.TimewiseAlertSupplier
     base:
@@ -2747,34 +2795,6 @@ unit:
     distrib: timewise
     version: 1.0.0a10
     source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/timewise/util/AuxDiagnosticPlotter.py
-  PPSFilter:
-    fqn: ampel.aux.PPSFilter
-    base:
-    - PPSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 252807104807642313
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/PPSFilter.py
-  ULSFilter:
-    fqn: ampel.aux.ULSFilter
-    base:
-    - ULSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 14523103307642547590
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn311/lib/python3.11/site-packages/ampel/aux/ULSFilter.py
   FilteringAlertSupplier:
     fqn: ampel.alert.FilteringAlertSupplier
     base:
