@@ -24,7 +24,7 @@ task:
         unit: LegacySurveyWISEFilter
         config:
           min_exp_per_visit: 8
-          min_detections: 20
+          min_detections: 10
       ingest:
         mux:
           combine:
@@ -144,7 +144,7 @@ task:
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb
               input_mongo_db_name: desi_agn_vac
-              n_estimators: 30
+              n_estimators: 100
               smote: false
               learning_rate: 0.1
               exclude_features:
@@ -156,8 +156,8 @@ task:
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn
               input_mongo_db_name: desi_agn_vac
-              n_estimators: 50
-              smote: true
+              n_estimators: 1000
+              smote: false
               learning_rate: 0.1
               drop_wise_agn: true
               exclude_features:
@@ -169,7 +169,21 @@ task:
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright
               input_mongo_db_name: desi_agn_vac
-              n_points_bins: [20, 30]
+              n_points_bins: [10, 20]
+              corner: false
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Std
+              exclude_features_corner:
+                - NPoints
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright_no_wise_agn
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 10, 20 ]
+              corner: false
+              drop_wise_agn: true
               exclude_features_fit:
                 - Mean
                 - NPoints
@@ -180,7 +194,8 @@ task:
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright_no_autocorr
               input_mongo_db_name: desi_agn_vac
-              n_points_bins: [ 20, 30 ]
+              n_points_bins: [ 10, 20 ]
+              corner: false
               exclude_features_fit:
                 - Mean
                 - NPoints
@@ -194,7 +209,8 @@ task:
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright_minimal
               input_mongo_db_name: desi_agn_vac
-              n_points_bins: [ 20, 30 ]
+              n_points_bins: [ 10, 20 ]
+              corner: false
               exclude_features_fit:
                 - Autocor_length
                 - InverseEta
