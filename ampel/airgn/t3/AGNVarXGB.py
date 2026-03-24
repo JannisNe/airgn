@@ -214,7 +214,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fmt="s",
         )
         ax.set_xticks(np.arange(len(importances_meds)))
-        ax.set_xticklabels(xlabels, rotation=90, ha="right")
+        ax.set_xticklabels(xlabels, rotation=90, ha="center")
         ax.set_ylabel("Importance")
         ax.grid(ls=":", color="grey", alpha=0.3)
         fn = self._plot_path / "importances.pdf"
