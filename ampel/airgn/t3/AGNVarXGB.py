@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import matplotlib.pyplot as plt
+from scipy.stats import kstest
 from timewise.util.path import expand
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
@@ -78,8 +79,18 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 target > proposal.max()
             )
             sampled_proposal_index = repeated_matching(
-                proposal, target[~target_outside_proposal], min_samples=10
+                proposal,
+                target[~target_outside_proposal],
+                min_samples=int(0.01 * len(proposal)),
             )
+
+            # make sure the sampling produced two compatible distributions
+            pval = kstest(
+                target[~target_outside_proposal],
+                proposal.loc[proposal.index.difference(sampled_proposal_index)],
+            ).pvalue
+            assert pval > 0.05
+
             res.loc[sampled_proposal_index, "sampled"] = False
             res.loc[
                 target_outside_proposal.index[target_outside_proposal], "sampled"

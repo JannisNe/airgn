@@ -126,7 +126,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             sampled_proposal_index = repeated_matching(
                 proposal,
                 target[~target_outside_proposal],
-                min_samples=10,
+                min_samples=int(0.01 * len(proposal)),
                 plot_path=self._path / "W1_Mean_sampling.pdf",
             )
 
