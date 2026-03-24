@@ -126,7 +126,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             sampled_proposal_index = repeated_matching(
                 proposal,
                 target[~target_outside_proposal],
-                min_samples=int(0.01 * len(proposal)),
+                min_samples=int(0.05 * len(proposal)),
                 plot_path=self._path / "W1_Mean_sampling.pdf",
             )
 
@@ -135,7 +135,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 target[~target_outside_proposal],
                 proposal.loc[proposal.index.difference(sampled_proposal_index)],
             ).pvalue
-            assert pval > 0.05
+            if pval < 0.05:
+                raise RuntimeError(f"pval={pval:.2e}: sampling not successful!")
             res.loc[sampled_proposal_index, "sampled"] = False
             res.loc[
                 target_outside_proposal.index[target_outside_proposal], "sampled"
