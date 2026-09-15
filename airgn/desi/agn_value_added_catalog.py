@@ -28,7 +28,9 @@ AGN_MASKBIT_URL = (
 )
 AGN_MASKBITS_PATH = BASE_DIR / "agnqso_desi_mask.yaml"
 
-OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH = BASE_DIR / "agnqso_desi_ls_bricks_{hash}.csv"
+OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH = (
+    BASE_DIR / "agnqso_desi_ls_bricks_dr{dr}_{sv}_{hash}.csv"
+)
 
 
 def download():
@@ -109,7 +111,11 @@ def get_selected_ls_brick_objects_path(dr: int, sv: int) -> Path:
     h.update(f"{dr}.{sv}".encode())
     for fn in get_downloaded_ls_brick_lightcurves(dr, sv):
         h.update(fn.encode())
-    return Path(str(OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH).format(hash=h.hexdigest()))
+    return Path(
+        str(OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH).format(
+            dr=dr, sv=sv, hash=h.hexdigest()
+        )
+    )
 
 
 def select_objects_in_downloaded_legacy_survey_bricks(dr: int, sv: int):
