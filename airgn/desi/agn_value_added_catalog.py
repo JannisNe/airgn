@@ -1,11 +1,20 @@
 import logging
+from pathlib import Path
+from hashlib import md5
 
+import numpy as np
 import pandas as pd
 import requests
 import yaml
 from astropy.io import fits
 from timewise.util.path import expand
 from tqdm import tqdm
+
+from airgn.legacy_survey.download import (
+    get_filenames,
+    get_local_path,
+    parse_sweep_filename,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +27,8 @@ AGN_MASKBIT_URL = (
     "https://data.desi.lbl.gov/public/dr1/vac/dr1/agnqso/v1.0/tutorial/agnmask.yaml"
 )
 AGN_MASKBITS_PATH = BASE_DIR / "agnqso_desi_mask.yaml"
+
+OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH = BASE_DIR / "agnqso_desi_ls_bricks_{hash}.csv"
 
 
 def download():
@@ -88,6 +99,48 @@ def get_agn_bitmask() -> dict:
     return agn_maskbits_info_list
 
 
+def get_downloaded_ls_brick_lightcurves(dr: int, sv: int) -> list[str]:
+    fns = sorted(get_filenames(dr, sv), key=lambda x: x[1])
+    return [ifns[1] for ifns in fns if get_local_path(ifns[1], dr=dr).exists()]
+
+
+def get_selected_ls_brick_objects_path(dr: int, sv: int) -> Path:
+    h = md5()
+    h.update(f"{dr}.{sv}".encode())
+    for fn in get_downloaded_ls_brick_lightcurves(dr, sv):
+        h.update(fn.encode())
+    return Path(str(OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH).format(hash=h.hexdigest()))
+
+
+def select_objects_in_downloaded_legacy_survey_bricks(dr: int, sv: int):
+    fn = get_selected_ls_brick_objects_path(dr, sv)
+    if fn.exists():
+        logger.info(f"found {fn}")
+        return
+    logger.info(f"{fn} not found, making it now")
+    downloaded_fns = get_downloaded_ls_brick_lightcurves(dr, sv)
+    logger.info(f"found {len(downloaded_fns)} downloaded bricks")
+
+    logger.info(f"reading {CSV_FILE_PATH}")
+    sample = pd.read_csv(CSV_FILE_PATH)
+    mask = np.zeros(len(sample), dtype=bool)
+    for downloaded_fn in downloaded_fns:
+        ra_range, dec_range = parse_sweep_filename(downloaded_fn)
+        imask = (
+            (sample["ra"] > ra_range[0])
+            & (sample["ra"] < ra_range[1])
+            & (sample["dec"] > dec_range[0])
+            & (sample["dec"] < dec_range[1])
+        )
+        logger.info(f"Found {imask.sum()} objects in {downloaded_fn}")
+        mask = mask | imask
+    logger.info(f"Found {mask.sum()} objects in {len(downloaded_fns)} bricks")
+
+    sample[mask].to_csv(fn, index=False)
+    logger.info(f"wrote to {fn}")
+
+
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
     download()
+    select_objects_in_downloaded_legacy_survey_bricks(dr=9, sv=0)
