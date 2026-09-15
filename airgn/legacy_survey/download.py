@@ -131,6 +131,11 @@ def parse_sweep_filename(filename) -> tuple[tuple[float, float], tuple[float, fl
     return ra_range, dec_range
 
 
+def get_downloaded_ls_brick_lightcurves(dr: int, sv: int) -> list[str]:
+    fns = sorted(get_filenames(dr, sv), key=lambda x: x[1])
+    return [ifns[1] for ifns in fns if get_local_path(ifns[1], dr=dr).exists()]
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(
         description="Download Legacy Survey lightcurve FITS files by index."

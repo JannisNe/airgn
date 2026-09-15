@@ -11,8 +11,7 @@ from timewise.util.path import expand
 from tqdm import tqdm
 
 from airgn.legacy_survey.download import (
-    get_filenames,
-    get_local_path,
+    get_downloaded_ls_brick_lightcurves,
     parse_sweep_filename,
 )
 
@@ -99,11 +98,6 @@ def get_agn_bitmask() -> dict:
         agn_maskbits_info_list = yaml.safe_load(f)
 
     return agn_maskbits_info_list
-
-
-def get_downloaded_ls_brick_lightcurves(dr: int, sv: int) -> list[str]:
-    fns = sorted(get_filenames(dr, sv), key=lambda x: x[1])
-    return [ifns[1] for ifns in fns if get_local_path(ifns[1], dr=dr).exists()]
 
 
 def get_selected_ls_brick_objects_path(dr: int, sv: int) -> Path:
