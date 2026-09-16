@@ -129,12 +129,14 @@ task:
           config:
             channel: "legacy_survey"
         load:
-          unit: T3SimpleDataLoader
+          unit: T3AugmentDataLoader
           config:
             directives:
               - T2DOC
               - STOCK
             channel: "legacy_survey"
+            extra_resource_uri: "mongodb://localhost:27017"
+            extra_resource_db_name: "desi_agn_vac"
         chunk_size: 10000
     stage:
       unit: T3SequentialStager
@@ -143,7 +145,6 @@ task:
           - unit: AGNVarXGB
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb
-              input_mongo_db_name: desi_agn_vac
               n_estimators: 100
               smote: false
               learning_rate: 0.1
@@ -155,7 +156,6 @@ task:
           - unit: AGNVarXGB
             config:
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn
-              input_mongo_db_name: desi_agn_vac
               n_estimators: 1000
               smote: false
               learning_rate: 0.1
