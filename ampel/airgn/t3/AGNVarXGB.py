@@ -314,6 +314,84 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         fig.savefig(fn, bbox_inches="tight")
         plt.close()
 
+        # --------------- plot average recall and accuracy depending on prob and wise colors --------------- #
+
+        if not self.drop_wise_agn:
+            wise_precisions = []
+            wise_recalls = []
+            non_wise_precisions = []
+            non_wise_recalls = []
+            for i in range(n_splits):
+                test_indices = xgb_res["indices"]["test"][i]
+                data_test = res.loc[res.sampled].iloc[test_indices]
+                wise_test_indices = np.where(data_test["wise_agn"])[0]
+                non_wise_test_indices = np.where(~data_test["wise_agn"])[0]
+                est = xgb_res["estimator"][i]
+
+                wise_target_test = target.iloc[wise_test_indices]
+                wise_data_test = data.iloc[wise_test_indices]
+                i_probs_wise = est.predict_proba(wise_data_test)[:, 1]
+                wise_precisions.append(
+                    [precision_score(wise_target_test, i_probs_wise > ix) for ix in x]
+                )
+                wise_recalls.append(
+                    [recall_score(wise_target_test, i_probs_wise > ix) for ix in x]
+                )
+
+                non_wise_target_test = target.iloc[non_wise_test_indices]
+                non_wise_data_test = data.iloc[non_wise_test_indices]
+                i_probs_non_wise = est.predict_proba(non_wise_data_test)[:, 1]
+                non_wise_precisions.append(
+                    [
+                        precision_score(non_wise_target_test, i_probs_non_wise > ix)
+                        for ix in x
+                    ]
+                )
+                non_wise_recalls.append(
+                    [
+                        recall_score(non_wise_target_test, i_probs_non_wise > ix)
+                        for ix in x
+                    ]
+                )
+
+            fig, ax = plt.subplots()
+            for i, (s, label) in enumerate(
+                zip(
+                    [wise_precisions, wise_recalls],
+                    ["WISE AGN precision", "WISE AGN recall"],
+                )
+            ):
+                color = f"C{i}"
+                ax.plot(x, np.median(s, axis=0), color=color, label=label, ls=":")
+                ax.fill_between(
+                    x,
+                    *np.quantile(s, [0.05, 0.95], axis=0),
+                    alpha=0.2,
+                    color=color,
+                    ec="none",
+                )
+            for i, (s, label) in enumerate(
+                zip(
+                    [precisions, recalls],
+                    ["non-WISE AGN precision", "non-WISE AGN recall"],
+                )
+            ):
+                color = f"C{i}"
+                ax.plot(x, np.median(s, axis=0), color=color, label=label)
+                ax.fill_between(
+                    x,
+                    *np.quantile(s, [0.05, 0.95], axis=0),
+                    alpha=0.2,
+                    color=color,
+                    ec="none",
+                )
+            ax.set_xlabel("Threshold")
+            ax.set_ylabel("Score")
+            ax.legend()
+            fn = self._plot_path / "scores_wise_vs_non_wise.pdf"
+            fig.savefig(fn, bbox_inches="tight")
+            plt.close()
+
         # ---------------------- drop estimators and return non-binary results ---------------------- #
         est = xgb_res.pop("estimator")
         if self._pickle_path:
