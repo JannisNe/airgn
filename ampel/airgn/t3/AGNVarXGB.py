@@ -1,3 +1,4 @@
+import pickle
 from typing import Generator, Literal
 import os
 
@@ -44,11 +45,16 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     mongo_uri: str = "mongodb://localhost:27017"
 
+    estimators_pickle_file: str | None
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._random_state = 42
         self._plot_path = expand(self.plot_dir)
         self._plot_path.mkdir(parents=True, exist_ok=True)
+        self._pickle_path = (
+            expand(self.estimators_pickle_file) if self.estimators_pickle_file else None
+        )
 
     def process(self, gen: Generator[T, T3Send, None], t3s: T3Store) -> UBson:
         res = self.aggregate_results(gen)
@@ -309,7 +315,13 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         plt.close()
 
         # ---------------------- drop estimators and return non-binary results ---------------------- #
-        xgb_res.pop("estimator")
+        est = xgb_res.pop("estimator")
+        if self._pickle_path:
+            self.logger.debug(f"Saving estimators to {self._pickle_path}")
+            self._pickle_path.mkdir(parents=True, exist_ok=True)
+            with open(self._pickle_path, "wb") as f:
+                pickle.dump(est, f)
+
         xgb_res.pop("indices")
         for k, v in xgb_res.items():
             xgb_res[k] = v.tolist()
