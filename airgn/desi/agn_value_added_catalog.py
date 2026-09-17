@@ -149,6 +149,13 @@ def select_objects_in_downloaded_legacy_survey_bricks(dr: int, sv: int):
     logger.info(f"wrote to {fn}")
 
 
+def agn_bitmask_to_wise_agn(bitmask: str) -> bool:
+    wise_mask_bit = 15
+    if len(bitmask) < (wise_mask_bit + 1):
+        return False
+    return bool(int(bitmask[wise_mask_bit]))
+
+
 def make_histograms():
     logger.info(f"loading {CSV_FILE_PATH}")
     data = pd.read_csv(CSV_FILE_PATH)
@@ -161,7 +168,7 @@ def make_histograms():
         .apply(lambda x: x[::-1])
     )
     agn_mask = ~(data["decoded_agn_mask"] == "0")
-    wise_agn_mask = data["decoded_agn_mask"].str[15].astype(float).astype(bool)
+    wise_agn_mask = data["decoded_agn_mask"].apply(agn_bitmask_to_wise_agn)
     non_wise_agn_mask = agn_mask & ~wise_agn_mask
 
     for i in range(1, 3):
@@ -170,18 +177,37 @@ def make_histograms():
         )
 
     labels = ["non AGN", "WISE AGN", "non-WISE AGN"]
-    masks = [~agn_mask, non_wise_agn_mask, wise_agn_mask]
+    masks = [~agn_mask, wise_agn_mask, non_wise_agn_mask]
     colors = ["C0", "C1", "C2"]
     ls = [":", "-", "-"]
 
     keys = ["Z", "W1mag", "W2mag"]
     xlabels = ["$z$", r"$m_\mathrm{W1}$", r"$m_\mathrm{W2}$"]
+    key_masks = [
+        np.ones(len(data), dtype=bool),
+        ~np.isinf(data["W1mag"]),
+        ~np.isinf(data["W2mag"]),
+    ]
+    xlim = [(0, 4), (10, 25), (10, 25)]
 
-    for k, xl in zip(keys, xlabels):
+    for k, xl, km, lim in zip(keys, xlabels, key_masks, xlim):
         fig, ax = plt.subplots()
         for mask, c, ils, label in zip(masks, colors, ls, labels):
-            ax.hist(data.loc[mask, k], color=c, ls=ils, label=label, density=True)
+            if any(~km):
+                perc = (mask & km).sum() / mask.sum()
+                label += f" ({perc * 100:.0f}%)"
+            ax.hist(
+                data.loc[mask & km, k],
+                color=c,
+                ls=ils,
+                label=label,
+                density=True,
+                alpha=1,
+                histtype="step",
+                bins=20,
+            )
         ax.set_xlabel(xl)
+        ax.set_xlim(lim)
         ax.set_ylabel("density")
         ax.legend()
         fig.tight_layout()
