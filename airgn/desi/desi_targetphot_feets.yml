@@ -179,7 +179,7 @@ task:
               n_cpu: 20
           - unit: AGNVarXGB
             config:
-              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn_smote
+              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_smote
               n_estimators: 200
               smote: true
               learning_rate: 0.1
