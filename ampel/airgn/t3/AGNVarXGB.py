@@ -16,6 +16,7 @@ import pandas as pd
 import xgboost as xgb
 import matplotlib.pyplot as plt
 from scipy.stats import kstest
+import shap
 from timewise.util.path import expand
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
@@ -171,7 +172,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fig = plt.gcf()
             fn = individual_models_path / f"{i}_confusion_matrix.pdf"
             fig.savefig(fn, bbox_inches="tight")
-            plt.close()
+            plt.close("all")
 
             # plot error in train and test samples
             train_errors = []
@@ -196,7 +197,15 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             ax.set_ylabel("MSE")
             fn = individual_models_path / f"{i}_mse.pdf"
             fig.savefig(fn, bbox_inches="tight")
-            plt.close()
+            plt.close("all")
+
+            explainer = shap.Explainer(est, data_test)
+            shap.plots.beeswarm(
+                explainer(data_test), show=False, color=plt.get_cmap("cool")
+            )
+            fn = individual_models_path / f"{i}_bees.pdf"
+            plt.gcf().savefig(fn, bbox_inches="tight")
+            plt.close("all")
 
         # ---------------------- plot average importance ---------------------- #
 
@@ -226,6 +235,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         fn = self._plot_path / "importances.pdf"
         fig.savefig(fn, bbox_inches="tight")
         plt.close()
+
+        # ---------------------- plot average importance using shap ---------------------- #
 
         # ---------------------- plot average error in train and test samples ---------------------- #
         train_errors = []
@@ -284,6 +295,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         x = np.linspace(0.01, 0.95, 100)
         precisions = []
         recalls = []
+        probs = [[]] * len(data)
         for i in range(n_splits):
             test_indices = xgb_res["indices"]["test"][i]
             target_test = target.iloc[test_indices]
@@ -293,20 +305,45 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             i_probs = est.predict_proba(data_test)[:, 1]
             precisions.append([precision_score(target_test, i_probs > ix) for ix in x])
             recalls.append([recall_score(target_test, i_probs > ix) for ix in x])
+            for ip, i in zip(i_probs, test_indices):
+                probs[i].append(ip)
+
+        probs_med = np.array([np.quantile(ips, [0.05, 0.5, 0.95]) for ips in probs])
 
         fig, ax = plt.subplots()
         for i, (s, label) in enumerate(
             zip([precisions, recalls], ["precision", "recall"])
         ):
             color = f"C{i}"
-            ax.plot(x, np.median(s, axis=0), color=color, label=label)
+            ax.plot(x, np.median(s, axis=0), color=color, label=label, zorder=10)
             ax.fill_between(
                 x,
                 *np.quantile(s, [0.05, 0.95], axis=0),
                 alpha=0.2,
                 color=color,
                 ec="none",
+                zorder=5,
             )
+        ax2 = ax.twinx()
+        ax2.hist(
+            probs_med[target, 1],
+            bins=20,
+            density=True,
+            alpha=0.5,
+            ec="none",
+            color="C1",
+            zorder=2,
+        )
+        ax2.hist(
+            probs_med[~target, 1],
+            bins=20,
+            density=True,
+            alpha=0.5,
+            ec="none",
+            color="C2",
+            zorder=2,
+        )
+        ax2.set_ylabel("density")
         ax.set_xlabel("Threshold")
         ax.set_ylabel("Score")
         ax.legend()
