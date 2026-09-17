@@ -9,7 +9,7 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "timewise (>=1.0.0)",
+    "timewise[dev,ampel] (>=1.0.0)",
     "jupyterlab (>=4.4.6,<5.0.0)",
     "wget (>=3.2,<4.0)",
     "rubin-sim (>=2.6.0,<3.0.0)",
