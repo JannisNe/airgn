@@ -7,6 +7,8 @@ import pandas as pd
 import requests
 import yaml
 from astropy.io import fits
+from matplotlib import pyplot as plt
+
 from timewise.util.path import expand
 from tqdm import tqdm
 
@@ -30,6 +32,13 @@ AGN_MASKBITS_PATH = BASE_DIR / "agnqso_desi_mask.yaml"
 OBJECTS_IN_DOWNLOADED_LS_BRICKS_PATH = (
     BASE_DIR / "agnqso_desi_ls_bricks_dr{dr}_{sv}_{hash}.csv"
 )
+
+# AB offset to Vega for WISE bands from Jarrett et al. (2011)
+# https://dx.doi.org/10.1088/0004-637X/735/2/112
+WISE_AB_OFFSET = {
+    "W1": 2.699,
+    "W2": 3.339,
+}
 
 
 def download():
@@ -140,7 +149,50 @@ def select_objects_in_downloaded_legacy_survey_bricks(dr: int, sv: int):
     logger.info(f"wrote to {fn}")
 
 
+def make_histograms():
+    logger.info(f"loading {CSV_FILE_PATH}")
+    data = pd.read_csv(CSV_FILE_PATH)
+    data["decoded_agn_mask"] = (
+        data["AGN_MASKBITS"]
+        .astype(int)
+        .apply(bin)
+        .astype(str)
+        .str.replace("0b", "")
+        .apply(lambda x: x[::-1])
+    )
+    agn_mask = ~(data["decoded_agn_mask"] == "0")
+    wise_agn_mask = data["decoded_agn_mask"].str[15].astype(float).astype(bool)
+    non_wise_agn_mask = agn_mask & ~wise_agn_mask
+
+    for i in range(1, 3):
+        data[f"W{i}mag"] = (
+            22.5 - 2.5 * np.log10(data[f"FLUX_W{i}"]) - WISE_AB_OFFSET[f"W{i}"]
+        )
+
+    labels = ["non AGN", "WISE AGN", "non-WISE AGN"]
+    masks = [~agn_mask, non_wise_agn_mask, wise_agn_mask]
+    colors = ["C0", "C1", "C2"]
+    ls = [":", "-", "-"]
+
+    keys = ["Z", "W1mag", "W2mag"]
+    xlabels = ["$z$", r"$m_\mathrm{W1}$", r"$m_\mathrm{W2}$"]
+
+    for k, xl in zip(keys, xlabels):
+        fig, ax = plt.subplots()
+        for mask, c, ils, label in zip(masks, colors, ls, labels):
+            ax.hist(data.loc[mask, k], color=c, ls=ils, label=label, density=True)
+        ax.set_xlabel(xl)
+        ax.set_ylabel("density")
+        ax.legend()
+        fig.tight_layout()
+        fn = BASE_DIR / f"{k}_hist.pdf"
+        logger.info(f"saving {fn}")
+        fig.savefig(fn)
+        plt.close()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
-    download()
-    select_objects_in_downloaded_legacy_survey_bricks(dr=9, sv=0)
+    # download()
+    # select_objects_in_downloaded_legacy_survey_bricks(dr=9, sv=0)
+    make_histograms()
