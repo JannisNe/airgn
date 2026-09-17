@@ -179,28 +179,31 @@ def make_histograms():
     labels = ["non AGN", "WISE AGN", "non-WISE AGN"]
     masks = [~agn_mask, wise_agn_mask, non_wise_agn_mask]
     colors = ["C0", "C1", "C2"]
-    ls = [":", "-", "-"]
+    ls = [":", "--", "-"]
 
     keys = ["Z", "W1mag", "W2mag"]
     xlabels = ["$z$", r"$m_\mathrm{W1}$", r"$m_\mathrm{W2}$"]
     key_masks = [
         np.ones(len(data), dtype=bool),
-        ~np.isinf(data["W1mag"]),
-        ~np.isinf(data["W2mag"]),
+        ~np.isinf(data["W1mag"]) & ~data["W1mag"].isna(),
+        ~np.isinf(data["W2mag"]) & ~data["W2mag"].isna(),
     ]
     xlim = [(0, 4), (10, 25), (10, 25)]
 
-    for k, xl, km, lim in zip(keys, xlabels, key_masks, xlim):
-        fig, ax = plt.subplots()
+    plt.style.use("airgn.paper")
+    fs = plt.rcParams["figure.figsize"]
+    fig, axs = plt.subplots(ncols=len(keys), figsize=(fs[0] * 2, fs[1]))
+
+    for k, xl, km, lim, ax in zip(keys, xlabels, key_masks, xlim, axs):
         for mask, c, ils, label in zip(masks, colors, ls, labels):
             if any(~km):
-                perc = (mask & km).sum() / mask.sum()
-                label += f" ({perc * 100:.0f}%)"
+                perc = (mask & ~km).sum() / mask.sum() * 100
+                logger.info(f"{k}: {perc:.2f}% of {label} missing")
             ax.hist(
                 data.loc[mask & km, k],
                 color=c,
                 ls=ils,
-                label=label,
+                label=label if k == keys[0] else "",
                 density=True,
                 alpha=1,
                 histtype="step",
@@ -208,13 +211,14 @@ def make_histograms():
             )
         ax.set_xlabel(xl)
         ax.set_xlim(lim)
-        ax.set_ylabel("density")
-        ax.legend()
-        fig.tight_layout()
-        fn = BASE_DIR / f"{k}_hist.pdf"
-        logger.info(f"saving {fn}")
-        fig.savefig(fn)
-        plt.close()
+
+    axs[0].set_ylabel("density")
+    fig.legend(ncols=3, loc="upper center", borderaxespad=0.0)
+    fn = BASE_DIR / ("_".join(keys) + "_hist.pdf")
+    logger.info(f"saving {fn}")
+    fig.subplots_adjust(top=0.90, bottom=0.2)
+    fig.savefig(fn)
+    plt.close()
 
 
 if __name__ == "__main__":
