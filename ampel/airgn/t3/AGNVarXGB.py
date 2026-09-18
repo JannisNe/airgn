@@ -311,6 +311,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             recalls.append([recall_score(target_test, i_probs > ix) for ix in x])
             probs[test_indices] = i_probs
 
+        target_mask = target.astype(bool).values
         fig, ax = plt.subplots()
         for i, (s, label) in enumerate(
             zip([precisions, recalls], ["precision", "recall"])
@@ -327,7 +328,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             )
         ax2 = ax.twinx()
         ax2.hist(
-            probs[target],
+            probs[target_mask],
             bins=20,
             density=True,
             alpha=0.5,
@@ -336,7 +337,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             zorder=2,
         )
         ax2.hist(
-            probs[~target],
+            probs[~target_mask],
             bins=20,
             density=True,
             alpha=0.5,
