@@ -486,7 +486,9 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             with open(self._pickle_path, "wb") as f:
                 pickle.dump(est, f)
 
+        probs_dict = pd.Series(probs, index=res.loc[res.sampled].index).to_dict()
+
         xgb_res.pop("indices")
         for k, v in xgb_res.items():
             xgb_res[k] = v.tolist()
-        return xgb_res
+        return {"xgb": xgb_res, "probabilities": probs_dict}
