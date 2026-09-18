@@ -292,10 +292,14 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         # ---------------------- plot average recall and accuracy depending on prob ---------------------- #
 
+        # make sure every index is in the array only once
+        indices = np.concat(xgb_res["indices"]["test"])
+        assert len(indices) == len(np.unique(indices)), "Duplicate indices detected!"
+
         x = np.linspace(0.01, 0.95, 100)
         precisions = []
         recalls = []
-        probs = [[]] * len(data)
+        probs = np.full(len(data), np.nan)
         for i in range(n_splits):
             test_indices = xgb_res["indices"]["test"][i]
             target_test = target.iloc[test_indices]
@@ -305,10 +309,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             i_probs = est.predict_proba(data_test)[:, 1]
             precisions.append([precision_score(target_test, i_probs > ix) for ix in x])
             recalls.append([recall_score(target_test, i_probs > ix) for ix in x])
-            for ip, i in zip(i_probs, test_indices):
-                probs[i].append(ip)
-
-        probs_med = np.array([np.quantile(ips, [0.05, 0.5, 0.95]) for ips in probs])
+            probs[test_indices] = i_probs
 
         fig, ax = plt.subplots()
         for i, (s, label) in enumerate(
@@ -326,7 +327,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             )
         ax2 = ax.twinx()
         ax2.hist(
-            probs_med[target, 1],
+            probs[target],
             bins=20,
             density=True,
             alpha=0.5,
@@ -335,7 +336,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             zorder=2,
         )
         ax2.hist(
-            probs_med[~target, 1],
+            probs[~target],
             bins=20,
             density=True,
             alpha=0.5,
