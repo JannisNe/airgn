@@ -384,6 +384,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                     ]
                 )
 
+            wise_target_mask = target & res.loc[res.sampled, "wise_agn"]
+            non_wise_target_mask = target & res.loc[res.sampled, "non_wise_agn"]
             fig, ax = plt.subplots()
             for i, (s, label) in enumerate(
                 zip(
@@ -413,6 +415,36 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 alpha=0.2,
                 color="C1",
                 ec="none",
+            )
+            ax2 = ax.twinx()
+            ax2.hist(
+                probs[wise_target_mask],
+                bins=20,
+                density=True,
+                alpha=0.8,
+                ec="none",
+                color="C1",
+                histtype="step",
+                ls=":",
+                zorder=3,
+            )
+            ax2.hist(
+                probs[non_wise_target_mask],
+                bins=20,
+                density=True,
+                alpha=0.5,
+                ec="none",
+                color="C1",
+                zorder=2,
+            )
+            ax2.hist(
+                probs[~target_mask],
+                bins=20,
+                density=True,
+                alpha=0.5,
+                ec="none",
+                color="C0",
+                zorder=2,
             )
             ax.set_xlabel("Threshold")
             ax.set_ylabel("Score")
