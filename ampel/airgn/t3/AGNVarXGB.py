@@ -342,7 +342,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             density=True,
             alpha=0.5,
             ec="none",
-            color="C2",
+            color="C0",
             zorder=2,
         )
         ax2.set_ylabel("density")
