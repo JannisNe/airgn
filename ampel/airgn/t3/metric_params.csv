@@ -1,6 +1,6 @@
 ,log,pretty_name,multiband,lower,upper
-RedderWhenBrighter0,False,RWB,True,-10.0,10.0
-RedderWhenBrighter1,False,RWB,True,-10.0,10.0
+RedderWhenBrighter0,False,RWB$_\mathrm{W1}$,True,-10.0,10.0
+RedderWhenBrighter1,False,RWB$_\mathrm{W2}$,True,-10.0,10.0
 StetsonL,False,$L$,True,-0.1,0.1
 PearsonsR,False,$r$,True,-1.0,1.0
 ExcessVariance,False,$\sigma^2_\mathrm{rms}$,False,-0.001,0.001
