@@ -1,4 +1,5 @@
 import pickle
+import warnings
 from typing import Generator, Literal
 import os
 
@@ -152,6 +153,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         individual_models_path = self._plot_path / "individual_models"
         individual_models_path.mkdir(parents=True, exist_ok=True)
+        explanations = []
         for i in range(n_splits):
             # plot importance
             est = xgb_res["estimator"][i].named_steps["xgbclassifier"]
@@ -199,10 +201,19 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fig.savefig(fn, bbox_inches="tight")
             plt.close("all")
 
-            explainer = shap.Explainer(est, data_test)
-            shap.plots.beeswarm(
-                explainer(data_test), show=False, color=plt.get_cmap("cool")
-            )
+            explainer = shap.TreeExplainer(est, data_test)
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Background dataset has .* samples but *",
+                )
+                explanation = explainer(data_test)
+            explanation.feature_names = [
+                get_metric_info(m)[2] for m in explanation.feature_names
+            ]
+            explanations.append(explanation)
+            shap.plots.beeswarm(explanation, show=False, color=plt.get_cmap("cool"))
             fn = individual_models_path / f"{i}_bees.pdf"
             plt.gcf().savefig(fn, bbox_inches="tight")
             plt.close("all")
@@ -237,6 +248,17 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         plt.close()
 
         # ---------------------- plot average importance using shap ---------------------- #
+
+        total_explanation = shap.Explanation(
+            values=np.concatenate([ex.values for ex in explanations], axis=0),
+            base_values=np.concatenate([ex.base_values for ex in explanations], axis=0),
+            data=np.concatenate([ex.data for ex in explanations], axis=0),
+            feature_names=explanations[0].feature_names,
+        )
+        shap.plots.beeswarm(total_explanation, show=False, color=plt.get_cmap("cool"))
+        fn = self._plot_path / "bees.pdf"
+        plt.gcf().savefig(fn, bbox_inches="tight")
+        plt.close("all")
 
         # ---------------------- plot average error in train and test samples ---------------------- #
         train_errors = []
@@ -296,7 +318,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         indices = np.concat(xgb_res["indices"]["test"])
         assert len(indices) == len(np.unique(indices)), "Duplicate indices detected!"
 
-        x = np.linspace(0.01, 0.95, 100)
+        x = np.linspace(0.01, 0.99, 100)
         precisions = []
         recalls = []
         probs = np.full(len(data), np.nan)
@@ -349,6 +371,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         ax.set_xlabel("Threshold")
         ax.set_ylabel("Score")
         ax.legend()
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
         fn = self._plot_path / "scores.pdf"
         fig.savefig(fn, bbox_inches="tight")
         plt.close()
@@ -422,7 +446,6 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 bins=20,
                 density=True,
                 alpha=0.8,
-                ec="none",
                 color="C1",
                 histtype="step",
                 ls=":",
@@ -449,6 +472,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             ax.set_xlabel("Threshold")
             ax.set_ylabel("Score")
             ax.legend()
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
             fn = self._plot_path / "scores_wise_vs_non_wise.pdf"
             fig.savefig(fn, bbox_inches="tight")
             plt.close()
