@@ -81,8 +81,6 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._client = MongoClient(self.mongo_uri)
-        self._col = self._client[self.input_mongo_db_name]["input"]
         self._agn_bitmask = get_agn_bitmask()
         self._path = expand(self.path)
         self._path.mkdir(parents=True, exist_ok=True)
