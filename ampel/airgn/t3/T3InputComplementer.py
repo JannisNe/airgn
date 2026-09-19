@@ -19,4 +19,7 @@ class T3InputComplementer(AbsBufferComplement):
     def complement(self, it: Iterable[AmpelBuffer], t3s: T3Store) -> None:
         buffer_dict = {b["stock"]["stock"]: b for b in it}
         for extra in self._col.find({"orig_id": {"$in": list(buffer_dict.keys())}}):
-            buffer_dict[extra["orig_id"]]["extra"] = extra
+            if buffer_dict[extra["orig_id"]]["extra"] is None:
+                buffer_dict[extra["orig_id"]]["extra"] = extra
+            else:
+                buffer_dict[extra["orig_id"]]["extra"].update(extra)
