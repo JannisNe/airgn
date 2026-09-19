@@ -492,7 +492,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         xgb_res.pop("indices")
         for k, v in xgb_res.items():
             xgb_res[k] = v.tolist()
-            return {
-                "xgb": xgb_res,
-                "probabilities": probs_aug.to_dict(orient="index"),
-            }
+        return {
+            "xgb": xgb_res,
+            "probabilities": probs_aug.to_dict(orient="index"),
+        }
