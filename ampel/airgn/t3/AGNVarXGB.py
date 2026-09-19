@@ -488,7 +488,6 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         probs_aug = res.loc[res.sampled, ["agn", "wise_agn"]]
         probs_aug["probability"] = probs
-        probs_aug.set_index(probs_aug.index.astype(str), inplace=True)
 
         xgb_res.pop("indices")
         for k, v in xgb_res.items():
