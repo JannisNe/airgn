@@ -40,16 +40,15 @@ class T3TiedComplementer(AbsBufferComplement):
 
     def complement(self, it: Iterable[AmpelBuffer], t3s: T3Store) -> None:
         buffer_dict = {b["stock"]["stock"]: b for b in it}
-        for extra in self._t3col.aggregate(
-            self._get_pipeline(list(buffer_dict.keys()))
-        ):
-            if not extra["records"]:
+        for res in self._t3col.aggregate(self._get_pipeline(list(buffer_dict.keys()))):
+            if not res["records"]:
                 continue
-            stock = extra.pop("stock")
-            if "extra" not in buffer_dict[stock]["extra"]:
-                buffer_dict[stock]["extra"] = extra
-            else:
-                buffer_dict[stock]["extra"].update(extra)
+            for extra in res["records"]:
+                stock = extra.pop("stock")
+                if "extra" not in buffer_dict[stock]:
+                    buffer_dict[stock]["extra"] = extra
+                else:
+                    buffer_dict[stock]["extra"].update(extra)
 
     def _get_pipeline(self, stocks: Sequence[StockId]):
         return [
