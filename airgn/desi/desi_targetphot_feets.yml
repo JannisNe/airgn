@@ -129,14 +129,17 @@ task:
           config:
             channel: "legacy_survey"
         load:
-          unit: T3AugmentDataLoader
+          unit: T3SimpleDataLoader
           config:
             directives:
               - T2DOC
               - STOCK
             channel: "legacy_survey"
-            extra_resource_uri: "mongodb://localhost:27017"
-            extra_resource_db_name: "desi_agn_vac"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
         chunk_size: 10000
     stage:
       unit: T3SequentialStager
