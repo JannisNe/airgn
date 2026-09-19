@@ -488,11 +488,14 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         probs_aug = res.loc[res.sampled, ["agn", "wise_agn"]]
         probs_aug["probability"] = probs
+        probs_aug.set_index(probs_aug.index.astype(str), inplace=True)
 
         xgb_res.pop("indices")
         for k, v in xgb_res.items():
             xgb_res[k] = v.tolist()
         return {
             "xgb": xgb_res,
-            "probabilities": probs_aug.to_dict(orient="index"),
+            "probabilities": probs_aug.reset_index(names="stock").to_dict(
+                orient="records"
+            ),
         }
