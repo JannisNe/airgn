@@ -1,3 +1,4 @@
+import logging
 import pickle
 import warnings
 from typing import Generator, Literal
@@ -203,12 +204,10 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
             explainer = shap.TreeExplainer(est, data_test)
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message="Background dataset has .* samples but *",
-                )
-                explanation = explainer(data_test)
+            prev_level = logging.getLogger("shap").getEffectiveLevel()
+            logging.getLogger("shap").setLevel(logging.ERROR)
+            explanation = explainer(data_test)
+            logging.getLogger("shap").setLevel(prev_level)
             explanation.feature_names = [
                 get_metric_info(m)[2] for m in explanation.feature_names
             ]
