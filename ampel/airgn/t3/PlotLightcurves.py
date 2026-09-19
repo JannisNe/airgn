@@ -9,7 +9,6 @@ from ampel.types import T3Send, UBson
 from ampel.view.TransientView import TransientView
 from matplotlib import pyplot as plt
 from timewise.plot import plot_lightcurve
-from timewise.plot.lightcurve import BAND_PLOT_COLORS
 from timewise.process import keys
 from timewise.util.path import expand
 
@@ -20,6 +19,7 @@ class PlotLightcurves(AbsPhotoT3Unit):
     """
 
     base_dir: str
+    filename_extra_keys: list[str] | None = None
 
     w1_color: str = "dodgerblue"
     w1_marker: str = "o"
@@ -70,6 +70,12 @@ class PlotLightcurves(AbsPhotoT3Unit):
                 elinewidth=0.5,
             )
 
+            filename_extension = ""
+            if self.filename_extra_keys is not None:
+                assert view.extra is not None, "Extra keys missing!"
+                for k in self.filename_extra_keys:
+                    filename_extension += f"_{k}{view.extra[k]}"
+
             if tw_view := view.get_t2_body(unit="T2StackVisits", ret_type=tuple):
                 stacked_lc = pd.DataFrame(tw_view)
                 raw_lightcurve = datapoints_to_dataframe(dps, self._columns)[0]
@@ -81,7 +87,7 @@ class PlotLightcurves(AbsPhotoT3Unit):
                     colors=self._colors,
                 )
                 fig.tight_layout()
-                fig.savefig(f"{self._base_dir}/{stock_id}_tw.pdf")
+                fig.savefig(f"{self._base_dir}/{stock_id}_tw{filename_extension}.pdf")
                 plt.close(fig)
 
             if ls_view := view.get_t2_body(unit="T2MaggyToFluxDensity", ret_type=tuple):
@@ -104,5 +110,5 @@ class PlotLightcurves(AbsPhotoT3Unit):
                 ax.set_xlabel("MJD")
                 ax.legend()
                 fig.tight_layout()
-                fig.savefig(f"{self._base_dir}/{stock_id}_ls.pdf")
+                fig.savefig(f"{self._base_dir}/{stock_id}_ls{filename_extension}.pdf")
                 plt.close(fig)
