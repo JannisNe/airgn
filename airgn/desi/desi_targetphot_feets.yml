@@ -146,9 +146,10 @@ task:
       config:
         execute:
           - unit: AGNVarXGB
-            config:
+            config: &xgb_full
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb
               n_estimators: 100
+              iter_max: 50000
               smote: false
               learning_rate: 0.1
               exclude_features:
@@ -157,9 +158,10 @@ task:
                 - Std
               n_cpu: 20
           - unit: AGNVarXGB
-            config:
+            config: &xgb_no_wise_agn
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn
               n_estimators: 1000
+              iter_max: 50000
               smote: false
               learning_rate: 0.1
               drop_wise_agn: true
@@ -259,3 +261,97 @@ task:
                 - StetsonL
                 - InverseEtaColor
                 - Std
+
+- title: PlotLightcurvesXGBFull
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "legacy_survey"
+            custom: {'stock': {'$in': [39627568181152288, 39627760636790448, 39627603966957172, 39627899472448745, 39627562095214782, 39627742571926630, 39627772712197138, 39627857315501692, 39627778793938183]}}
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - STOCK
+              - T0
+              - T1
+              - T2
+            channel: "legacy_survey"
+        complement:
+          - unit: T3TiedComplementer
+            config:
+              t3_dependency:
+                unit: AGNVarXGB
+                config: *xgb_full
+              t3_dependency_data_field: body.probabilities
+              t3_dependency_columns:
+                - probability
+                - agn
+                - wise_agn
+        chunk_size: 10000
+
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: PlotLightcurves
+            config:
+              base_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/lightcurves_xgb_full
+              mplstyle: airgn.paper
+              filename_extra_keys:
+                - probability
+                - agn
+                - wise_agn
+
+- title: PlotLightcurvesXGBNoWISEAGN
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "legacy_survey"
+            custom: {'stock': {'$in': [39627568181152288, 39627760636790448, 39627603966957172, 39627899472448745, 39627562095214782, 39627742571926630, 39627772712197138, 39627857315501692, 39627778793938183]}}
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - STOCK
+              - T0
+              - T1
+              - T2
+            channel: "legacy_survey"
+        complement:
+          - unit: T3TiedComplementer
+            config:
+              t3_dependency:
+                unit: AGNVarXGB
+                config: *xgb_no_wise_agn
+              t3_dependency_data_field: body.probabilities
+              t3_dependency_columns:
+                - probability
+                - agn
+                - wise_agn
+        chunk_size: 10000
+
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: PlotLightcurves
+            config:
+              base_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/lightcurves_xgb_no_wise_agn
+              mplstyle: airgn.paper
+              filename_extra_keys:
+                - probability
+                - agn
+                - wise_agn
