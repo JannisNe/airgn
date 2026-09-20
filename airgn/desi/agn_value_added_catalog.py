@@ -175,20 +175,24 @@ def make_histograms():
         data[f"W{i}mag"] = (
             22.5 - 2.5 * np.log10(data[f"FLUX_W{i}"]) - WISE_AB_OFFSET[f"W{i}"]
         )
+    data["W1 - W2"] = data["W1mag"] - data["W2mag"]
 
     labels = ["non AGN", "WISE AGN", "non-WISE AGN"]
     masks = [~agn_mask, wise_agn_mask, non_wise_agn_mask]
     colors = ["C0", "C1", "C2"]
     ls = [":", "--", "-"]
 
-    keys = ["Z", "W1mag", "W2mag"]
-    xlabels = ["$z$", r"$m_\mathrm{W1}$", r"$m_\mathrm{W2}$"]
+    keys = ["Z", "W1mag", "W1 - W2"]
+    xlabels = ["$z$", r"$m_\mathrm{W1}$", "W1 - W2"]
     key_masks = [
         np.ones(len(data), dtype=bool),
         ~np.isinf(data["W1mag"]) & ~data["W1mag"].isna(),
-        ~np.isinf(data["W2mag"]) & ~data["W2mag"].isna(),
+        ~np.isinf(data["W1 - W2"])
+        & ~data["W1 - W2"].isna()
+        & (data["W1 - W2"] < 3)
+        & (data["W1 - W2"] > -3),
     ]
-    xlim = [(0, 4), (10, 25), (10, 25)]
+    xlim = [(0, 4), (10, 25), (None, None)]
 
     plt.style.use("airgn.paper")
     fs = plt.rcParams["figure.figsize"]
@@ -199,6 +203,7 @@ def make_histograms():
             if any(~km):
                 perc = (mask & ~km).sum() / mask.sum() * 100
                 logger.info(f"{k}: {perc:.2f}% of {label} missing")
+
             ax.hist(
                 data.loc[mask & km, k],
                 color=c,
