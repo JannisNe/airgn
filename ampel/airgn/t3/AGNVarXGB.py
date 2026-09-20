@@ -427,6 +427,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         if not self.drop_wise_agn:
             wise_recalls = []
             non_wise_recalls = []
+            non_wise_agn_precision = []
             for i in range(n_splits):
                 test_indices = xgb_res["indices"]["test"][i]
                 data_test = res.loc[res.sampled].iloc[test_indices]
@@ -452,18 +453,35 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                         for ix in x
                     ]
                 )
+                non_wise_agn_precision.append(
+                    [
+                        precision_score(non_wise_target_test, i_probs_non_wise > ix)
+                        for ix in x
+                    ]
+                )
 
             wise_target_mask = target & res.loc[res.sampled, "wise_agn"]
             non_wise_target_mask = target & res.loc[res.sampled, "non_wise_agn"]
             fig, ax = plt.subplots()
-            for i, (s, label) in enumerate(
+            for i, (s, label, ls, color) in enumerate(
                 zip(
-                    [precisions, non_wise_recalls],
-                    ["precision", "non-WISE AGN recall"],
+                    [
+                        precisions,
+                        non_wise_agn_precision,
+                        non_wise_recalls,
+                        wise_recalls,
+                    ],
+                    [
+                        "precision",
+                        "non-WISE AGN precision",
+                        "non-WISE AGN recall",
+                        "WISE AGN recall",
+                    ],
+                    ["-", "--", "-", ":"],
+                    ["C0", "C0", "C1", "C1"],
                 )
             ):
-                color = f"C{i}"
-                ax.plot(x, np.median(s, axis=0), color=color, label=label, ls="-")
+                ax.plot(x, np.median(s, axis=0), color=color, label=label, ls=ls)
                 ax.fill_between(
                     x,
                     *np.quantile(s, [0.05, 0.95], axis=0),
@@ -471,20 +489,6 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                     color=color,
                     ec="none",
                 )
-            ax.plot(
-                x,
-                np.median(wise_recalls, axis=0),
-                color="C1",
-                label="WISE AGN recall",
-                ls=":",
-            )
-            ax.fill_between(
-                x,
-                *np.quantile(wise_recalls, [0.05, 0.95], axis=0),
-                alpha=0.2,
-                color="C1",
-                ec="none",
-            )
             ax2 = ax.twinx()
             ax2.hist(
                 probs[wise_target_mask],
