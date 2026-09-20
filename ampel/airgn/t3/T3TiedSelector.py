@@ -36,9 +36,9 @@ class T3TiedSelector(AbsT3Selector, T3Tied):
             {
                 "$project": {
                     "_id": 0,
-                    "index": f"${self.t3_dependency_data_field}.stock",
+                    "stock": f"${self.t3_dependency_data_field}.stock",
                 }
             }
         )
 
-        return (doc["index"] for doc in self._t3col.aggregate(pipeline))
+        return self._t3col.aggregate(pipeline)
