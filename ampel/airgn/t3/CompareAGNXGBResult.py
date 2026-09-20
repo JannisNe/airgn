@@ -29,8 +29,8 @@ class CompareAGNXGBResult(AbsPhotoT3Unit):
         for k in ["agn", "wise_agn"]:
             assert all(data[f"{ppk[0]}_{k}"] == data[f"{ppk[0]}_{k}"])
 
-        non_agn_mask = ~data[f"{ppk[0]}_agn"]
-        wise_agn_mask = data[f"{ppk[0]}_wise_agn"]
+        non_agn_mask = ~data[f"{ppk[0]}_agn"].astype(bool)
+        wise_agn_mask = data[f"{ppk[0]}_wise_agn"].astype(bool)
         non_wise_agn_mask = ~non_agn_mask & ~wise_agn_mask
         masks = [non_agn_mask, wise_agn_mask, non_wise_agn_mask]
         labels = ["non AGN", "WISE AGN", "non-WISE AGN"]
