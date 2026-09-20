@@ -1,6 +1,6 @@
 build:
-  date: 19/09/2026
-  time: '15:52:28'
+  date: 20/09/2026
+  time: '12:46:10'
   by: necker
   conda: airgn312
   stop_on_errors: 2
@@ -14,10 +14,10 @@ build:
   ampel-interface: 0.10.5a11
   ampel-core: 0.10.6a25
   timewise: 1.0.3
-  ampel-alerts: 0.10.4a0
-  airgn: 0.1.0
-  ampel-plot: 0.9.1
   ampel-photometry: 0.10.2a1
+  airgn: 0.1.0
+  ampel-alerts: 0.10.4a0
+  ampel-plot: 0.9.1
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -710,7 +710,7 @@ unit:
     - T3InputComplementer
     - AbsBufferComplement
     - ContextUnit
-    xxh64: 4242015397544534687
+    xxh64: 5325566246391348883
     dependencies:
     - annotated_types
     - cryptography
@@ -911,15 +911,34 @@ unit:
     - T3TiedComplementer
     - AbsBufferComplement
     - ContextUnit
-    xxh64: 14833021634258286997
+    - T3Tied
+    xxh64: 17391206038409279399
     dependencies:
     - annotated_types
     - packaging
     - pydantic_core
+    - rich
     - typing_inspection
     distrib: airgn
     version: 0.1.0
     source: /home/necker/Software/airgn/ampel/airgn/t3/T3TiedComplementer.py
+  T3TiedSelector:
+    fqn: ampel.airgn.t3.T3TiedSelector
+    base:
+    - T3TiedSelector
+    - AbsT3Selector
+    - ContextUnit
+    - T3Tied
+    xxh64: 8042626692969334715
+    dependencies:
+    - annotated_types
+    - packaging
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t3/T3TiedSelector.py
   T4RunTimeContextUpdater:
     fqn: ampel.t4.T4RunTimeContextUpdater
     base:
@@ -982,7 +1001,7 @@ unit:
     - LogicalUnit
     - NPointsVarMetricsAggregator
     - NPointsIterator
-    xxh64: 7010364365157466124
+    xxh64: 18425074932489766083
     dependencies:
     - annotated_types
     - astropy
@@ -1488,7 +1507,7 @@ unit:
     - AbsPhotoT3Unit
     - AbsT3Unit
     - LogicalUnit
-    xxh64: 13452176745677887173
+    xxh64: 17062005866683012773
     dependencies:
     - annotated_types
     - astropy
@@ -2601,6 +2620,131 @@ unit:
     distrib: ampel-photometry
     version: 0.10.2a1
     source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/aux/ULSFilter.py
+  FilteringAlertSupplier:
+    fqn: ampel.alert.FilteringAlertSupplier
+    base:
+    - FilteringAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 16923665551712057840
+    dependencies:
+    - annotated_types
+    - packaging
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/FilteringAlertSupplier.py
+  DirAlertLoader:
+    fqn: ampel.alert.load.DirAlertLoader
+    base:
+    - DirAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 10171942137351062083
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/DirAlertLoader.py
+  DirFileNamesLoader:
+    fqn: ampel.alert.load.DirFileNamesLoader
+    base:
+    - DirFileNamesLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 8599448184043280499
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/DirFileNamesLoader.py
+  DirTaggedAlertLoader:
+    fqn: ampel.alert.load.DirTaggedAlertLoader
+    base:
+    - DirTaggedAlertLoader
+    - DirAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 9278748089013175870
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/DirTaggedAlertLoader.py
+  FileAlertLoader:
+    fqn: ampel.alert.load.FileAlertLoader
+    base:
+    - FileAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 11924022877541862841
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/FileAlertLoader.py
+  TarAlertLoader:
+    fqn: ampel.alert.load.TarAlertLoader
+    base:
+    - TarAlertLoader
+    - AbsAlertLoader
+    - AbsContextManager
+    xxh64: 8928970892179404415
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/TarAlertLoader.py
+  UnitTestAlertSupplier:
+    fqn: ampel.dev.UnitTestAlertSupplier
+    base:
+    - UnitTestAlertSupplier
+    - AbsAlertSupplier
+    - AbsContextManager
+    xxh64: 13729016972229493520
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/dev/UnitTestAlertSupplier.py
+  EasyAlertConsumerTemplate:
+    fqn: ampel.template.EasyAlertConsumerTemplate
+    base:
+    - EasyAlertConsumerTemplate
+    - AbsConfigMorpher
+    - AmpelBaseModel
+    xxh64: 13512684806126266059
+    dependencies:
+    - annotated_types
+    - cryptography
+    - packaging
+    - prometheus_client
+    - pydantic_core
+    - rich
+    - typing_inspection
+    distrib: ampel-alerts
+    version: 0.10.4a0
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/template/EasyAlertConsumerTemplate.py
   TimewiseAlertSimulator:
     fqn: ampel.airgn.alert.load.TimewiseAlertSimulator
     base:
@@ -2912,131 +3056,6 @@ unit:
     distrib: timewise
     version: 1.0.3
     source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/timewise/util/AuxDiagnosticPlotter.py
-  FilteringAlertSupplier:
-    fqn: ampel.alert.FilteringAlertSupplier
-    base:
-    - FilteringAlertSupplier
-    - AbsAlertSupplier
-    - AbsContextManager
-    xxh64: 16923665551712057840
-    dependencies:
-    - annotated_types
-    - packaging
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/FilteringAlertSupplier.py
-  DirAlertLoader:
-    fqn: ampel.alert.load.DirAlertLoader
-    base:
-    - DirAlertLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 10171942137351062083
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/DirAlertLoader.py
-  DirFileNamesLoader:
-    fqn: ampel.alert.load.DirFileNamesLoader
-    base:
-    - DirFileNamesLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 8599448184043280499
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/DirFileNamesLoader.py
-  DirTaggedAlertLoader:
-    fqn: ampel.alert.load.DirTaggedAlertLoader
-    base:
-    - DirTaggedAlertLoader
-    - DirAlertLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 9278748089013175870
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/DirTaggedAlertLoader.py
-  FileAlertLoader:
-    fqn: ampel.alert.load.FileAlertLoader
-    base:
-    - FileAlertLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 11924022877541862841
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/FileAlertLoader.py
-  TarAlertLoader:
-    fqn: ampel.alert.load.TarAlertLoader
-    base:
-    - TarAlertLoader
-    - AbsAlertLoader
-    - AbsContextManager
-    xxh64: 8928970892179404415
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/load/TarAlertLoader.py
-  UnitTestAlertSupplier:
-    fqn: ampel.dev.UnitTestAlertSupplier
-    base:
-    - UnitTestAlertSupplier
-    - AbsAlertSupplier
-    - AbsContextManager
-    xxh64: 13729016972229493520
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/dev/UnitTestAlertSupplier.py
-  EasyAlertConsumerTemplate:
-    fqn: ampel.template.EasyAlertConsumerTemplate
-    base:
-    - EasyAlertConsumerTemplate
-    - AbsConfigMorpher
-    - AmpelBaseModel
-    xxh64: 13512684806126266059
-    dependencies:
-    - annotated_types
-    - cryptography
-    - packaging
-    - prometheus_client
-    - pydantic_core
-    - rich
-    - typing_inspection
-    distrib: ampel-alerts
-    version: 0.10.4a0
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/template/EasyAlertConsumerTemplate.py
 process:
   t0: {}
   t1: {}
@@ -3097,10 +3116,15 @@ environment:
     mongomock: 4.3.0
     pytz: '2025.2'
     sentinels: 1.1.1
+    cycler: 0.12.1
+    defusedxml: 0.7.1
+    kiwisolver: 1.4.9
+    matplotlib: 3.10.8
+    numpy: 2.3.5
+    pyparsing: 3.3.2
     charset_normalizer: 3.4.4
     cloudpickle: 3.1.2
     numexpr: 2.14.1
-    numpy: 2.3.5
     pandas: 2.3.3
     platformdirs: 4.5.1
     psutil: 7.2.2
@@ -3127,16 +3151,12 @@ environment:
     cffi: 2.0.0
     comm: 0.2.3
     coverage: 7.13.3
-    cycler: 0.12.1
     decorator: 5.2.1
-    defusedxml: 0.7.1
     executing: 2.2.1
     iniconfig: 2.3.0
     ipywidgets: 8.1.8
     jedi: 0.19.2
-    kiwisolver: 1.4.9
     llvmlite: 0.46.0
-    matplotlib: 3.10.8
     numba: 0.63.1
     parso: 0.8.5
     pluggy: 1.6.0
@@ -3144,7 +3164,6 @@ environment:
     pure_eval: 0.2.3
     pycparser: '3.0'
     pynndescent: 0.6.0
-    pyparsing: 3.3.2
     pytest: 7.4.4
     seaborn: 0.13.2
     shap: 0.52.0
