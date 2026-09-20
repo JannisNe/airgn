@@ -21,8 +21,9 @@ class CompareAGNXGBResult(AbsPhotoT3Unit):
         self, gen: Generator[T, T3Send, None], t3s: T3Store
     ) -> UBson | UnitResult:
         data = pd.DataFrame.from_dict(
-            {view.stock: view.extra for view in gen}, orient="index"
-        )
+            {view.stock["stock"]: view.extra if view.extra else {} for view in gen},
+            orient="index",
+        ).dropna(how="any", axis="index")
 
         ppk = self.prepended_keys
         for k in ["agn", "wise_agn"]:
