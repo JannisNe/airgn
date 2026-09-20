@@ -212,7 +212,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fig.savefig(fn, bbox_inches="tight")
             plt.close("all")
 
-            test_wise_agn_mask = res.loc[res.sampled, "wise_agn"].loc[test_indices]
+            test_wise_agn_mask = res.loc[res.sampled, "wise_agn"].iloc[test_indices]
             test_non_wise_agn_mask = target_test.astype(bool) & ~test_wise_agn_mask
             test_non_agn_mask = ~target_test.astype(bool)
             masks = {
@@ -224,10 +224,12 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             this_explanations = []
             for label, exp_list in explanations.items():
                 mask = masks[label]
+                if not any(mask):
+                    continue
                 prev_level = logging.getLogger("shap").getEffectiveLevel()
                 explainer = shap.TreeExplainer(est, data_test[mask])
                 logging.getLogger("shap").setLevel(logging.ERROR)
-                explanation = explainer(data_test)
+                explanation = explainer(data_test[mask])
                 logging.getLogger("shap").setLevel(prev_level)
                 explanation.feature_names = [
                     get_metric_info(m)[2] for m in explanation.feature_names
@@ -280,16 +282,21 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         # ---------------------- plot average importance using shap ---------------------- #
 
         for label, exp_list in explanations.items():
-            shap.plots.beeswarm(
-                merge_explanations(exp_list), show=False, color=plt.get_cmap("cool")
-            )
-            fn = self._plot_path / f"{label}_bees.pdf"
-            plt.gcf().savefig(fn, bbox_inches="tight")
-            plt.close("all")
+            if len(exp_list):
+                shap.plots.beeswarm(
+                    merge_explanations(exp_list), show=False, color=plt.get_cmap("cool")
+                )
+                fn = self._plot_path / f"{label}_bees.pdf"
+                plt.gcf().savefig(fn, bbox_inches="tight")
+                plt.close("all")
 
         shap.plots.beeswarm(
             merge_explanations(
-                [merge_explanations(exp_list) for exp_list in explanations.values()]
+                [
+                    merge_explanations(exp_list)
+                    for exp_list in explanations.values()
+                    if len(exp_list)
+                ]
             ),
             show=False,
             color=plt.get_cmap("cool"),
