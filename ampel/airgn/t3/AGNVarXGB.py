@@ -1,7 +1,7 @@
 import logging
 import pickle
 import warnings
-from typing import Generator, Literal
+from typing import Generator, Literal, Sequence
 import os
 
 from sklearn.metrics import (
@@ -30,6 +30,15 @@ from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregat
 from ampel.airgn.t3.FeetsOfAGN import METRIC_PARAMS, get_metric_info
 
 from airgn.rejection_sampling import repeated_matching
+
+
+def merge_explanations(explanations: Sequence[shap.Explanation]) -> shap.Explanation:
+    return shap.Explanation(
+        values=np.concatenate([ex.values for ex in explanations], axis=0),
+        base_values=np.concatenate([ex.base_values for ex in explanations], axis=0),
+        data=np.concatenate([ex.data for ex in explanations], axis=0),
+        feature_names=explanations[0].feature_names,
+    )
 
 
 class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
@@ -155,7 +164,7 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         individual_models_path = self._plot_path / "individual_models"
         individual_models_path.mkdir(parents=True, exist_ok=True)
-        explanations = []
+        explanations = {"non_agn": [], "non_wise_agn": [], "wise_agn": []}
         for i in range(n_splits):
             # plot importance
             est = xgb_res["estimator"][i].named_steps["xgbclassifier"]
@@ -203,18 +212,39 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
             fig.savefig(fn, bbox_inches="tight")
             plt.close("all")
 
-            explainer = shap.TreeExplainer(est, data_test)
+            test_wise_agn_mask = res.loc[res.sampled, "wise_agn"].loc[test_indices]
+            test_non_wise_agn_mask = target_test.astype(bool) & ~test_wise_agn_mask
+            test_non_agn_mask = ~target_test.astype(bool)
+            masks = {
+                "wise_agn": test_wise_agn_mask.values,
+                "non_wise_agn": test_non_wise_agn_mask.values,
+                "non_agn": test_non_agn_mask.values,
+            }
 
-            prev_level = logging.getLogger("shap").getEffectiveLevel()
-            logging.getLogger("shap").setLevel(logging.ERROR)
-            explanation = explainer(data_test)
-            logging.getLogger("shap").setLevel(prev_level)
-            explanation.feature_names = [
-                get_metric_info(m)[2] for m in explanation.feature_names
-            ]
-            explanations.append(explanation)
-            shap.plots.beeswarm(explanation, show=False, color=plt.get_cmap("cool"))
-            fn = individual_models_path / f"{i}_bees.pdf"
+            this_explanations = []
+            for label, exp_list in explanations.items():
+                mask = masks[label]
+                prev_level = logging.getLogger("shap").getEffectiveLevel()
+                explainer = shap.TreeExplainer(est, data_test[mask])
+                logging.getLogger("shap").setLevel(logging.ERROR)
+                explanation = explainer(data_test)
+                logging.getLogger("shap").setLevel(prev_level)
+                explanation.feature_names = [
+                    get_metric_info(m)[2] for m in explanation.feature_names
+                ]
+                exp_list.append(explanation)
+                this_explanations.append(explanation)
+                shap.plots.beeswarm(explanation, show=False, color=plt.get_cmap("cool"))
+                fn = individual_models_path / f"{i}_{label}_bees.pdf"
+                plt.gcf().savefig(fn, bbox_inches="tight")
+                plt.close("all")
+
+            shap.plots.beeswarm(
+                merge_explanations(this_explanations),
+                show=False,
+                color=plt.get_cmap("cool"),
+            )
+            fn = individual_models_path / f"{i}_all_bees.pdf"
             plt.gcf().savefig(fn, bbox_inches="tight")
             plt.close("all")
 
@@ -249,14 +279,22 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
 
         # ---------------------- plot average importance using shap ---------------------- #
 
-        total_explanation = shap.Explanation(
-            values=np.concatenate([ex.values for ex in explanations], axis=0),
-            base_values=np.concatenate([ex.base_values for ex in explanations], axis=0),
-            data=np.concatenate([ex.data for ex in explanations], axis=0),
-            feature_names=explanations[0].feature_names,
+        for label, exp_list in explanations.items():
+            shap.plots.beeswarm(
+                merge_explanations(exp_list), show=False, color=plt.get_cmap("cool")
+            )
+            fn = self._plot_path / f"{label}_bees.pdf"
+            plt.gcf().savefig(fn, bbox_inches="tight")
+            plt.close("all")
+
+        shap.plots.beeswarm(
+            merge_explanations(
+                [merge_explanations(exp_list) for exp_list in explanations.values()]
+            ),
+            show=False,
+            color=plt.get_cmap("cool"),
         )
-        shap.plots.beeswarm(total_explanation, show=False, color=plt.get_cmap("cool"))
-        fn = self._plot_path / "bees.pdf"
+        fn = self._plot_path / "total_bees.pdf"
         plt.gcf().savefig(fn, bbox_inches="tight")
         plt.close("all")
 
