@@ -170,30 +170,6 @@ task:
                 - NPoints
                 - Std
               n_cpu: 20
-          - unit: AGNVarXGB
-            config:
-              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn_smote
-              n_estimators: 200
-              smote: true
-              learning_rate: 0.1
-              drop_wise_agn: true
-              exclude_features:
-                - Mean
-                - NPoints
-                - Std
-              n_cpu: 20
-          - unit: AGNVarXGB
-            config:
-              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_smote
-              n_estimators: 200
-              smote: true
-              learning_rate: 0.1
-              drop_wise_agn: false
-              exclude_features:
-                - Mean
-                - NPoints
-                - Std
-              n_cpu: 20
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright
