@@ -331,3 +331,67 @@ task:
                 - probability
                 - agn
                 - wise_agn
+
+
+- title: CompareXGBs
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3TiedSelector
+          config:
+            t3_dependency:
+              unit: AGNVarXGB
+              config: *xgb_no_wise_agn
+            t3_dependency_data_field: body.probabilities
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - STOCK
+            channel:
+              any_of:
+              - "legacy_survey"
+              - "timewise"
+        complement:
+          - unit: T3TiedComplementer
+            config:
+              t3_dependency:
+                unit: AGNVarXGB
+                config: *xgb_full
+              t3_dependency_data_field: body.probabilities
+              t3_dependency_columns:
+                - probability
+                - agn
+                - wise_agn
+              prepend_key: full
+          - unit: T3TiedComplementer
+            config:
+              t3_dependency:
+                unit: AGNVarXGB
+                config: *xgb_no_wise_agn
+              t3_dependency_data_field: body.probabilities
+              t3_dependency_columns:
+                - probability
+                - agn
+                - wise_agn
+              prepend_key: nowise
+        chunk_size: 10000
+
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: CompareAGNXGBResult
+            config:
+              prepended_keys:
+                - full
+                - nowise
+              labels:
+                - Full
+                - "No WISE AGN"
+              filename_base: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/xgb_full_vs_no_wise_agn
+              mplstyle: airgn.paper
