@@ -12,7 +12,7 @@ channel:
 mongo:
   prefix: feets_bright_combined
   reset: false
-name: agn_variability_features
+name: compare_agn_variability_features_ls_timewise
 
 task:
 - config:
