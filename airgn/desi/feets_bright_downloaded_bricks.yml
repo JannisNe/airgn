@@ -281,3 +281,18 @@ task:
                 - wise_agn
               prepend_key: ls
         chunk_size: 10000
+
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: CompareAGNXGBResult
+            config:
+              prepend_keys:
+                - ls
+                - timewise
+              labels:
+                - LegacySurvey
+                - Timewise
+              filename: $AIRGNDATA/desi_value_added_catalog_compare/plots/ls_vs_timewise_xgb_full.pdf
+              mplstyle: airgn.paper
