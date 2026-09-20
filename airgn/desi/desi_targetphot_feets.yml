@@ -393,5 +393,5 @@ task:
               labels:
                 - Full
                 - "No WISE AGN"
-              filename_base: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/xgb_full_vs_no_wise_agn
+              filename_base: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_full_vs_no_wise_agn
               mplstyle: airgn.paper
