@@ -11,6 +11,7 @@ from ampel.airgn.t3.T3Tied import T3Tied
 class T3TiedComplementer(AbsBufferComplement, T3Tied):
     t3_dependency_data_field: str
     t3_dependency_columns: list[str]
+    prepend_key: str | None = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -24,6 +25,9 @@ class T3TiedComplementer(AbsBufferComplement, T3Tied):
                 continue
             for extra in res["records"]:
                 stock = extra.pop("stock")
+                if self.prepend_key is not None:
+                    for k in list(extra.keys()):
+                        extra[f"{self.prepend_key}_{k}"] = extra.pop(k)
                 if "extra" not in buffer_dict[stock]:
                     buffer_dict[stock]["extra"] = extra
                 else:
