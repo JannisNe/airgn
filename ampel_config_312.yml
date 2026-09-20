@@ -1,6 +1,6 @@
 build:
   date: 20/09/2026
-  time: '13:43:30'
+  time: '13:48:32'
   by: necker
   conda: airgn312
   stop_on_errors: 2
@@ -13,11 +13,11 @@ build:
   ignore_processes: false
   ampel-interface: 0.10.5a11
   ampel-core: 0.10.6a25
-  ampel-plot: 0.9.1
   ampel-alerts: 0.10.4a0
-  timewise: 1.0.3
   ampel-photometry: 0.10.2a1
+  ampel-plot: 0.9.1
   airgn: 0.1.0
+  timewise: 1.0.3
 mongo:
   ingest:
     stock: MongoStockIngester
@@ -1079,6 +1079,34 @@ unit:
     distrib: ampel-alerts
     version: 0.10.4a0
     source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/alert/filter/BasicMultiFilter.py
+  CompareAGNXGBResult:
+    fqn: ampel.airgn.t3.CompareAGNXGBResult
+    base:
+    - CompareAGNXGBResult
+    - AbsPhotoT3Unit
+    - AbsT3Unit
+    - LogicalUnit
+    xxh64: 3291047961866574767
+    dependencies:
+    - annotated_types
+    - cloudpickle
+    - cycler
+    - defusedxml
+    - kiwisolver
+    - matplotlib
+    - numexpr
+    - numpy
+    - packaging
+    - pandas
+    - pyarrow
+    - pydantic_core
+    - pyparsing
+    - pytz
+    - timewise
+    - typing_inspection
+    distrib: airgn
+    version: 0.1.0
+    source: /home/necker/Software/airgn/ampel/airgn/t3/CompareAGNXGBResult.py
   CompareTimewiseToLegacySurvey:
     fqn: ampel.legacy_survey.CompareTimewiseToLegacySurvey
     base:
@@ -2903,6 +2931,34 @@ unit:
     distrib: timewise
     version: 1.0.3
     source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/timewise/util/AuxDiagnosticPlotter.py
+  PPSFilter:
+    fqn: ampel.aux.PPSFilter
+    base:
+    - PPSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 252807104807642313
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/aux/PPSFilter.py
+  ULSFilter:
+    fqn: ampel.aux.ULSFilter
+    base:
+    - ULSFilter
+    - AbsApplicable
+    - AmpelBaseModel
+    xxh64: 14523103307642547590
+    dependencies:
+    - annotated_types
+    - pydantic_core
+    - typing_inspection
+    distrib: ampel-photometry
+    version: 0.10.2a1
+    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/aux/ULSFilter.py
   FilteringAlertSupplier:
     fqn: ampel.alert.FilteringAlertSupplier
     base:
@@ -3028,34 +3084,6 @@ unit:
     distrib: ampel-alerts
     version: 0.10.4a0
     source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/template/EasyAlertConsumerTemplate.py
-  PPSFilter:
-    fqn: ampel.aux.PPSFilter
-    base:
-    - PPSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 252807104807642313
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/aux/PPSFilter.py
-  ULSFilter:
-    fqn: ampel.aux.ULSFilter
-    base:
-    - ULSFilter
-    - AbsApplicable
-    - AmpelBaseModel
-    xxh64: 14523103307642547590
-    dependencies:
-    - annotated_types
-    - pydantic_core
-    - typing_inspection
-    distrib: ampel-photometry
-    version: 0.10.2a1
-    source: /data1/necker/envs/airgn312/lib/python3.12/site-packages/ampel/aux/ULSFilter.py
 process:
   t0: {}
   t1: {}
