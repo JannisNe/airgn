@@ -1,0 +1,59 @@
+figure.figsize: 3.937007874015748, 2.4332106784273146
+figure.dpi: 300
+legend.frameon: false
+
+# sneaked from seaborn white style
+axes.axisbelow: true
+axes.edgecolor: .15
+axes.facecolor: white
+axes.grid: false
+axes.labelcolor: .15
+axes.spines.bottom: true
+axes.spines.left: true
+axes.spines.right: true
+axes.spines.top: true
+figure.facecolor: white
+font.family: sans-serif
+font.sans-serif: Arial, DejaVu Sans, Liberation Sans, Bitstream Vera Sans, sans-serif
+grid.color: .8
+grid.linestyle: "-"
+lines.solid_capstyle: round
+patch.edgecolor: w
+patch.force_edgecolor: true
+text.color: .15
+xtick.bottom: true
+xtick.color: .15
+xtick.direction: out
+xtick.top: false
+ytick.color: .15
+ytick.direction: out
+ytick.left: true
+ytick.right: false
+
+# sneaked from seaborn paper context
+axes.labelsize: 9.600000000000001
+axes.linewidth: 1.0
+axes.titlesize: 9.600000000000001
+font.size: 9.600000000000001
+grid.linewidth: 0.8
+legend.fontsize: 8.8
+legend.title_fontsize: 9.600000000000001
+lines.linewidth: 1.2000000000000002
+lines.markersize: 4.800000000000001
+patch.linewidth: 0.8
+xtick.labelsize: 8.8
+xtick.major.size: 4.800000000000001
+xtick.major.width: 1.0
+xtick.minor.size: 3.2
+xtick.minor.width: 0.8
+ytick.labelsize: 8.8
+ytick.major.size: 4.800000000000001
+ytick.major.width: 1.0
+ytick.minor.size: 3.2
+ytick.minor.width: 0.8
+
+# sneaked from seaborn colorblind palette
+axes.prop_cycle: cycler('color', ["#0173B2", "#DE8F05", "#029E73", "#D55E00", "#CC78BC", "#CA9161", "#FBAFE4", "#949494", "#ECE133", "#56B4E9"])
+
+# sneaked from seaborn deep palette
+#axes.prop_cycle: cycler('color', ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860", "#DA8BC3", "#8C8C8C", "#CCB974", "#64B5CD"])
