@@ -148,6 +148,7 @@ task:
           - unit: AGNVarXGB
             config: &xgb_full
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb
+              mplstyle: airgn.paper
               n_estimators: 100
               iter_max: 50000
               smote: false
@@ -160,6 +161,7 @@ task:
           - unit: AGNVarXGB
             config: &xgb_no_wise_agn
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/xgb_no_wise_agn
+              mplstyle: airgn.paper
               n_estimators: 1000
               iter_max: 50000
               smote: false

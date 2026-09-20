@@ -34,21 +34,19 @@ from airgn.rejection_sampling import repeated_matching
 
 class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     plot_dir: str
-    n_estimators: int
+    estimators_pickle_file: str | None
+    mplstyle: str | None = None
 
-    learning_rate: float = 1
-    smote: bool = False
     drop_wise_agn: bool = False
-
-    resample: Literal["agn", "non-agn", "none"] = "agn"
+    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
     exclude_features: list[str] | None = None
 
+    n_estimators: int
+    learning_rate: float = 1
+    smote: bool = False
+    resample: Literal["agn", "non-agn", "none"] = "agn"
+
     n_cpu: int = os.cpu_count() - 1
-
-    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
-    mongo_uri: str = "mongodb://localhost:27017"
-
-    estimators_pickle_file: str | None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -74,6 +72,9 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         # SMOTE can not handle nans so drop
         if self.smote:
             res = res[~res.isna().any(axis=1)]
+
+        if self.mplstyle is not None:
+            plt.style.use(self.mplstyle)
 
         # ---------------------- re-sample non-agn to match agn ---------------------- #
 
