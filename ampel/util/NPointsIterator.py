@@ -22,7 +22,7 @@ class NPointsIterator(AmpelABC):
         self, df: pd.DataFrame
     ) -> Generator[tuple[pd.DataFrame, float, float], None, None]:
         bins = list(pairwise(self.n_points_bins))
-        if all_bin := (min(self.n_points_bins), max(self.n_points_bins)) not in bins:
+        if (all_bin := (min(self.n_points_bins), max(self.n_points_bins))) not in bins:
             bins.append(all_bin)
         for s, e in bins:
             bin_mask = (df[self.n_point_cols] >= s).all(axis=1) & (
