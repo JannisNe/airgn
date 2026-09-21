@@ -414,6 +414,9 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
         # ---------------------- histograms ---------------------- #
 
         for metric_name, meta in METRIC_PARAMS.iterrows():
+            if (metric_name == "Containment") and not self.umap:
+                continue
+
             pn = meta["pretty_name"]
             log = meta["log"]
             mb = meta["multiband"]
