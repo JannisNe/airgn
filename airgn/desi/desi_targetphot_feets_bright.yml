@@ -204,7 +204,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_very_bright_15
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [10, 20]
               corner: false
               exclude_features_fit:
@@ -216,7 +215,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_very_bright_15_no_wise_agn
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 10, 20 ]
               corner: false
               drop_wise_agn: true
@@ -229,7 +227,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_very_bright_15_no_autocorr
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 10, 20 ]
               corner: false
               exclude_features_fit:
@@ -244,7 +241,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_very_bright_15_minimal
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 10, 20 ]
               corner: false
               exclude_features_fit:
