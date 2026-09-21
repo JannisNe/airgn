@@ -15,6 +15,13 @@ from timewise.process import keys
 from timewise.util.path import expand
 
 
+ylabels = {
+    keys.MAG_EXT: "Mag",
+    keys.FLUX_EXT: "Flux",
+    keys.FLUX_DENSITY_EXT: "Flux Density [mJy]",
+}
+
+
 class PlotLightcurves(AbsPhotoT3Unit):
     """
     Plot lightcurves of transients using matplotlib
@@ -103,6 +110,7 @@ class PlotLightcurves(AbsPhotoT3Unit):
                     raw_lightcurve=raw_lightcurve,
                     colors=self._colors,
                 )
+                ax.set_ylabel(ylabels[self.timewise_key])
                 fig.tight_layout()
                 fig.savefig(f"{self._base_dir}/{stock_id}_tw{filename_extension}.pdf")
                 plt.close(fig)
@@ -123,7 +131,7 @@ class PlotLightcurves(AbsPhotoT3Unit):
                         **errorbar_kw,
                     )
 
-                ax.set_ylabel("Flux Density (mJy)")
+                ax.set_ylabel(ylabels[keys.FLUX_DENSITY_EXT])
                 ax.set_xlabel("MJD")
                 ax.legend()
                 fig.tight_layout()
