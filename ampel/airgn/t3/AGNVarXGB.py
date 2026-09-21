@@ -221,16 +221,17 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 "non_agn": test_non_agn_mask.values,
             }
 
+            prev_level = logging.getLogger("shap").getEffectiveLevel()
+            logging.getLogger("shap").setLevel(logging.ERROR)
+            explainer = shap.TreeExplainer(est, data_test)
+
             this_explanations = []
             for label, exp_list in explanations.items():
                 mask = masks[label]
                 if not any(mask):
                     continue
-                prev_level = logging.getLogger("shap").getEffectiveLevel()
-                explainer = shap.TreeExplainer(est, data_test[mask])
-                logging.getLogger("shap").setLevel(logging.ERROR)
+
                 explanation = explainer(data_test[mask])
-                logging.getLogger("shap").setLevel(prev_level)
                 explanation.feature_names = [
                     get_metric_info(m)[2] for m in explanation.feature_names
                 ]
@@ -240,6 +241,8 @@ class AGNVarXGB(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                 fn = individual_models_path / f"{i}_{label}_bees.pdf"
                 plt.gcf().savefig(fn, bbox_inches="tight")
                 plt.close("all")
+
+            logging.getLogger("shap").setLevel(prev_level)
 
             shap.plots.beeswarm(
                 merge_explanations(this_explanations),
