@@ -173,9 +173,10 @@ class LegacySurveyBrickDESITargetIDLoader(AbsAlertLoader[Dict]):
 
             # make sure all objects were selected
             # ! Some objects have zeros in release, brickid and objid, i.e. no LS match?
-            assert len(np.unique(cache_index[cache_index["RELEASE"] != 0])) == len(
-                table
-            )
+            # ! Some objects have release = -1 and objid -1, why?
+            assert len(
+                np.unique(cache_index[~np.isin(cache_index["RELEASE"], [0, -1])])
+            ) == len(table)
 
             for row in table:
                 cntr = tuple(str(row[c]) for c in self.index_columns)
