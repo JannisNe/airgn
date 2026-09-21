@@ -71,7 +71,6 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
     exclude_features_fit: Optional[list[str]] = None
     exclude_features_corner: Optional[list[str]] = None
     n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
-    mongo_uri: str = "mongodb://localhost:27017"
     file_format: str = "pdf"
     corner: bool = True
     umap: bool = True
@@ -521,6 +520,8 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                     x.append(-1)
                     not_agn_vals = res_bin.loc[not_agn_mask, col].values.tolist()
                     y.append(np.log10(not_agn_vals) if log else not_agn_vals)
+                    if y == [[]]:
+                        continue
                     ax.violinplot(
                         dataset=y, positions=x, showextrema=False, showmedians=True
                     )
