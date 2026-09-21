@@ -142,7 +142,7 @@ task:
             column_mapping:
               OBJID: BRICK_OBJID
             cache_dir: $AIRGNDATA/legacy_survey/desi_targetphot_cache
-            download_if_missing: true
+            download_if_missing: false
           unit: LegacySurveyBrickDESITargetIDLoader
       unit: LegacySurveySupplier
   multiplier: 1
@@ -169,7 +169,10 @@ task:
         select:
           unit: T3StockSelector
           config:
-            channel: "timewise"
+            channel:
+              all_of:
+                - timewise
+                - legacy_survey
         load:
           unit: T3SimpleDataLoader
           config:
@@ -207,7 +210,10 @@ task:
         select:
           unit: T3StockSelector
           config:
-            channel: "legacy_survey"
+            channel:
+              all_of:
+                - timewise
+                - legacy_survey
         load:
           unit: T3SimpleDataLoader
           config:
@@ -236,7 +242,7 @@ task:
               n_cpu: 20
 
 
-- title: PlotLightcurvesXGBFull
+- title: Compare
   unit: T3Processor
   config:
     raise_exc: true
@@ -288,7 +294,7 @@ task:
         execute:
           - unit: CompareAGNXGBResult
             config:
-              prepend_keys:
+              prepended_keys:
                 - ls
                 - timewise
               labels:
