@@ -523,7 +523,7 @@ class FeetsOfAGN(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
                     x.append(-1)
                     not_agn_vals = res_bin.loc[not_agn_mask, col].values.tolist()
                     y.append(np.log10(not_agn_vals) if log else not_agn_vals)
-                    if y == [[]]:
+                    if (len(y) == 1) and (len(y[0]) == 0):
                         continue
                     ax.violinplot(
                         dataset=y, positions=x, showextrema=False, showmedians=True
