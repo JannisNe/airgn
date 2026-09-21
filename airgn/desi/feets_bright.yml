@@ -167,7 +167,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
               exclude_features_fit:
                 - Mean
@@ -178,7 +177,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_wise_agn
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
               drop_wise_agn: true
               exclude_features_fit:
@@ -190,7 +188,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_autocorr
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
               exclude_features_fit:
                 - Mean
@@ -204,7 +201,6 @@ task:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_minimal
-              input_mongo_db_name: desi_agn_vac
               n_points_bins: [ 20, 30 ]
               exclude_features_fit:
                 - Autocor_length
