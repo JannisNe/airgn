@@ -117,7 +117,7 @@ task:
   title: t2
   unit: T2Worker
 
-- title: AnalyseFeatures
+- title: XGB
   unit: T3Processor
   config:
     raise_exc: true
@@ -172,6 +172,35 @@ task:
                 - NPoints
                 - Std
               n_cpu: 20
+
+- title: VisualizeFeatures
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "legacy_survey"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - STOCK
+            channel: "legacy_survey"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
+        chunk_size: 10000
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
           - unit: FeetsOfAGN
             config:
               path: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright
