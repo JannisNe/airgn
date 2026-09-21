@@ -180,6 +180,11 @@ task:
               - T2DOC
               - STOCK
             channel: "timewise"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
         chunk_size: 10000
     stage:
       unit: T3SequentialStager
@@ -189,7 +194,6 @@ task:
             config: &timewisexgb
               plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_combined_timewise/xgb_no_wise_agn
               estimators_pickle_file: $AIRGNDATA/desi_value_added_catalog/estimators/feets_bright_combined_timewise.pkl
-              input_mongo_db_name: desi_agn_vac
               n_estimators: 50
               smote: true
               learning_rate: 0.1
@@ -221,6 +225,11 @@ task:
               - T2DOC
               - STOCK
             channel: "legacy_survey"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
         chunk_size: 10000
     stage:
       unit: T3SequentialStager
@@ -230,7 +239,6 @@ task:
             config: &lsxgb
               plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_combined_legacy_survey/xgb_no_wise_agn
               estimators_pickle_file: $AIRGNDATA/desi_value_added_catalog/estimators/feets_bright_combined_legacy_survey.pkl
-              input_mongo_db_name: desi_agn_vac
               n_estimators: 1000
               smote: true
               learning_rate: 0.1
