@@ -80,7 +80,7 @@ task:
   title: t2
   unit: T2Worker
 
-- title: PlotChi2
+- title: XGB
   unit: T3Processor
   config:
     raise_exc: true
@@ -128,7 +128,122 @@ task:
                 - NPoints
                 - Std
               n_cpu: 20
+
+- title: VisualizeFeatures
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - STOCK
+            channel: "wise"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
+        chunk_size: 10000
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
           - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Std
+              exclude_features_corner:
+                - NPoints
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_wise_agn
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              drop_wise_agn: true
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Std
+              exclude_features_corner:
+                - NPoints
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_no_autocorr
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Mean
+                - NPoints
+                - Autocor_length
+                - Std
+              exclude_features_corner:
+                - Autocor_length
+                - NPoints
+                - Std
+          - unit: FeetsOfAGN
+            config:
+              path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright_minimal
+              input_mongo_db_name: desi_agn_vac
+              n_points_bins: [ 20, 30 ]
+              exclude_features_fit:
+                - Autocor_length
+                - InverseEta
+                - ExcessVariance
+                - Mean
+                - NPoints
+                - RedderWhenBrighter0
+                - RedderWhenBrighter1
+                - StetsonL
+                - InverseEtaColor
+                - Std
+              exclude_features_corner:
+                - Autocor_length
+                - InverseEta
+                - ExcessVariance
+                - NPoints
+                - RedderWhenBrighter0
+                - RedderWhenBrighter1
+                - StetsonL
+                - InverseEtaColor
+                - Std
+
+- title: PlotLightcurvesXGBFull
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+            custom: {'stock': {'$in': [39627568181152288, 39627760636790448, 39627603966957172, 39627899472448745, 39627562095214782, 39627742571926630, 39627772712197138, 39627857315501692, 39627778793938183]}}
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - STOCK
+              - T0
+              - T1
+              - T2
+            channel: "wise"
+        complement:
+          - unit: T3TiedComplementer
             config:
               path: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright
               input_mongo_db_name: desi_agn_vac
