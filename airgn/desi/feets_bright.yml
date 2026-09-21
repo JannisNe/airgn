@@ -98,6 +98,11 @@ task:
               - T2DOC
               - STOCK
             channel: "wise"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
         chunk_size: 10000
     stage:
       unit: T3SequentialStager
