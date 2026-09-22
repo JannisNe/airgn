@@ -1,10 +1,17 @@
+import gzip
+import io
 import logging
+from itertools import batched, islice
 
-from astropy.table import Table
+from astropy.table import Table, vstack
+from astropy.io import ascii
 
 import wget
 from matplotlib import pyplot as plt
 from timewise.util.path import expand
+from zipfile import ZipFile
+
+from tqdm import tqdm
 
 BASE_DIR = expand("$AIRGNDATA/regalade")
 README_FILE_PATH = BASE_DIR / "README.md"
@@ -16,7 +23,7 @@ DATA_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/706/A284/regalade.dat.gz"
 logger = logging.getLogger(__name__)
 
 
-def get(columns: list[str]):
+def get(columns: list[str], chunk_size: int = 10_000) -> Table:
     BASE_DIR.mkdir(parents=True, exist_ok=True)
     if not README_FILE_PATH.exists():
         logger.info(f"Downloading {README_URL}")
@@ -26,11 +33,25 @@ def get(columns: list[str]):
         wget.download(DATA_URL, str(DATA_FILE_PATH))
 
     logger.info(f"Loading {DATA_FILE_PATH}")
-    return Table.read(DATA_FILE_PATH, format="ascii.cds", readme=README_FILE_PATH)
+
+    tables = []
+    reader = ascii.get_reader(
+        ascii.Cds,
+        readme=README_FILE_PATH,
+    )
+    reader.data.table_name = "regalade.dat"
+    with (
+        gzip.open(DATA_FILE_PATH, "rt", encoding="utf-8") as f,
+        tqdm(total=71485705) as pbar,
+    ):
+        while lines := list(islice(f, chunk_size)):
+            tables.append(reader.read("".join(lines))[columns])
+            pbar.update(chunk_size)
+    return vstack(tables)
 
 
 def histograms():
-    table = get().to_pandas()
+    table = get(["W1mag", "W2mag"]).to_pandas()
     agn_color_mask = (table["W1mag"] - table["W2mag"]) > 0.8
     bright_wise_mask = table["W1mag"] <= 15
 
