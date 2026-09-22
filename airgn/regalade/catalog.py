@@ -23,7 +23,7 @@ DATA_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/706/A284/regalade.dat.gz"
 logger = logging.getLogger(__name__)
 
 
-def get(columns: list[str], chunk_size: int = 10_000) -> Table:
+def get(columns: list[str], chunk_size: int = 1_000_000) -> Table:
     BASE_DIR.mkdir(parents=True, exist_ok=True)
     if not README_FILE_PATH.exists():
         logger.info(f"Downloading {README_URL}")
@@ -57,7 +57,7 @@ def histograms():
 
     logger.info(f"{agn_color_mask.sum()} / {len(agn_color_mask)} AGN")
     logger.info(f"{bright_wise_mask.sum()} / {len(bright_wise_mask)} Bright in WISE")
-    logger.info(f"{~agn_color_mask & bright_wise_mask} candidate objects")
+    logger.info(f"{(~agn_color_mask & bright_wise_mask).sum()} candidate objects")
 
     fig, ax = plt.subplots()
     ax.hist(table["W1mag"], bins=100, ec="white", alpha=0.8)
