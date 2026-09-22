@@ -196,7 +196,11 @@ def make_histograms():
 
     plt.style.use("airgn.paper")
     fs = plt.rcParams["figure.figsize"]
-    fig, axs = plt.subplots(ncols=len(keys), figsize=(fs[0] * 2, fs[1]))
+    fig, axs = plt.subplots(
+        ncols=len(keys),
+        figsize=(fs[0] * 2 / 1.3, fs[1] / 1.3),
+        gridspec_kw={"wspace": 0.3},
+    )
 
     for k, xl, km, lim, ax in zip(keys, xlabels, key_masks, xlim, axs):
         for mask, c, ils, label in zip(masks, colors, ls, labels):
@@ -221,7 +225,7 @@ def make_histograms():
     fig.legend(ncols=3, loc="upper center", borderaxespad=0.0)
     fn = BASE_DIR / ("_".join(keys) + "_hist.pdf")
     logger.info(f"saving {fn}")
-    fig.subplots_adjust(top=0.90, bottom=0.2)
+    fig.subplots_adjust(top=0.85, bottom=0.3)
     fig.savefig(fn)
     plt.close()
 
