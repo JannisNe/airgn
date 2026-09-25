@@ -18,20 +18,18 @@ from airgn.rejection_sampling import repeated_matching
 from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
 
 
-class T3SOM(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
+class T3SOM(AbsPhotoT3Unit):
     # SOM parameters
     som_size: tuple[int, int] = 10, 10
 
     # input data processing
     t2_lc_unit: Literal["T2StackVisits", "T2MaggyToFluxDensity"]
     drop_wise_agn: bool = False
-    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
-    exclude_features: list[str] | None = None
     resample: Literal["agn", "non-agn", "none"] = "agn"
 
     # output
     plot_dir: str
-    mplstyle: str
+    mplstyle: str | None = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
