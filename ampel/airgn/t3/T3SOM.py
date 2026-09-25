@@ -41,11 +41,9 @@ class T3SOM(AbsPhotoT3Unit):
         self, gen: Generator[T, T3Send, None], t3s: T3Store
     ) -> UBson | UnitResult:
         res = {}
-        lcs = {}
+        raw_lcs = {}
         n_steps = 0
-        n_iter = 0
         for view in gen:
-            lc = None
             for t2 in view.get_t2_views(self.t2_lc_unit, code=0):
                 lc = t2.get_payload()
                 break
@@ -53,30 +51,14 @@ class T3SOM(AbsPhotoT3Unit):
             if not view.extra:
                 continue
 
-            if not lc:
-                continue
-
-            lcdf = pd.DataFrame(lc)
-
-            if self.t2_lc_unit == "T2MaggyToFluxDensity":
-                assert all(abs(lcdf["LC_MJD_W1"] - lcdf["LC_MJD_W2"]) <= 10)
-                lcdf["mean_mjd"] = lcdf[["LC_MJD_W1", "LC_MJD_W2"]].mean(axis=1)
-
-            epoch = round((lcdf["mean_mjd"] - lcdf["mean_mjd"].min()) / 180)
-            unique_epochs = np.unique(epoch, return_counts=True)
-            if any(unique_epochs[1] > 1):
-                raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
-
-            if (i_n_steps := max(unique_epochs[0])) > n_steps:
-                n_steps = i_n_steps
-
-            lcdf["epoch"] = epoch
-
             body = dict(view.extra)
             mask = str(bin(int(view.extra["AGN_MASKBITS"]))).replace("0b", "")[::-1]
             body["decoded_agn_mask"] = mask
             res[view.stock["stock"]] = body
-            lcs[view.stock["stock"]] = lcdf
+            raw_lcs[view.stock["stock"]] = lc
+
+            if (i_n_steps := len(lc)) > n_steps:
+                n_steps = i_n_steps
 
         res = pd.DataFrame.from_dict(res, orient="index")
         res["agn"] = ~(res["decoded_agn_mask"] == "0")
@@ -125,19 +107,33 @@ class T3SOM(AbsPhotoT3Unit):
         # The features in this case are just the w1 and w2 flux densities normed by the
         # respective median, stacked horizontally per source.
 
-        features = pd.DataFrame(index=res.index, columns=range(n_steps * 2))
+        features = pd.DataFrame(
+            index=res[res.sampled].index, columns=range(n_steps * 2)
+        )
         for i in features.index:
-            lcdf = lcs[i]
-            features.loc[i, lcdf["epoch"]] = (
+            lcdf = pd.DataFrame(raw_lcs[i])
+
+            if self.t2_lc_unit == "T2MaggyToFluxDensity":
+                assert all(abs(lcdf["LC_MJD_W1"] - lcdf["LC_MJD_W2"]) <= 10)
+                lcdf["mean_mjd"] = lcdf[["LC_MJD_W1", "LC_MJD_W2"]].mean(axis=1)
+
+            epoch = round((lcdf["mean_mjd"] - lcdf["mean_mjd"].min()) / 180)
+            unique_epochs = np.unique(epoch, return_counts=True)
+            if any(unique_epochs[1] > 1):
+                raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
+
+            if (i_n_steps := max(unique_epochs[0])) > n_steps:
+                n_steps = i_n_steps
+
+            features.loc[i, epoch] = (
                 lcdf["w1meanfluxdensity"] / lcdf["w1meanfluxdensity"].median()
             )
-            features.loc[i, lcdf["epoch"] + n_steps] = (
+            features.loc[i, epoch + n_steps] = (
                 lcdf["w2meanfluxdensity"] / lcdf["w2meanfluxdensity"].median()
             )
 
         target = res.loc[res.sampled, "agn"].astype(int)
         data = features.loc[res.sampled]
-        ratio = (len(target) - sum(target)) / sum(target)
 
         # ------------------------------ train the map ------------------------------ #
         n_splits = 10
