@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from astropy.time import Time
 from matplotlib import pyplot as plt
-from numpy.random import RandomState
 import python_som
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.abstract.AbsT3Unit import T
@@ -17,7 +16,6 @@ from timewise.util.path import expand
 from tqdm import tqdm
 
 from airgn.rejection_sampling import repeated_matching
-from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
 
 
 class T3SOM(AbsPhotoT3Unit):
@@ -149,28 +147,24 @@ class T3SOM(AbsPhotoT3Unit):
         kf = StratifiedKFold(
             n_splits=n_splits, shuffle=True, random_state=self._random_state
         )
-        som = python_som.SOM(
-            x=self.som_size[0],
-            y=self.som_size[1],
-            input_len=n_steps * 2,
-            learning_rate=0.5,
-            neighborhood_radius=1.0,
-            neighborhood_function="gaussian",
-            cyclic_x=True,
-            cyclic_y=True,
-            random_seed=self._random_state,
-        )
-        scores = ["precision", "recall", "f1"]
-        som_res = cross_validate(
-            som,
-            features,
-            target,
-            scoring=scores,
-            cv=kf,
-            n_jobs=1,
-            return_estimator=True,
-            return_indices=True,
-        )
+
+        soms = []
+        test_indices = []
+        for train_index, test_index in kf.split(features, target):
+            som = python_som.SOM(
+                x=self.som_size[0],
+                y=self.som_size[1],
+                input_len=n_steps * 2,
+                learning_rate=0.5,
+                neighborhood_radius=1.0,
+                neighborhood_function="gaussian",
+                cyclic_x=True,
+                cyclic_y=True,
+                random_seed=self._random_state,
+            )
+            som.fit(features.iloc[train_index])
+            soms.append(som)
+            test_indices.append(test_index)
 
         # ---------------------- plot individual models ---------------------- #
 
@@ -181,9 +175,7 @@ class T3SOM(AbsPhotoT3Unit):
         recalls = []
         precisions = []
 
-        for i in range(n_splits):
-            isom = som_res["estimator"][i]
-            test_indices = som_res["indices"]["test"][i]
+        for i, (isom, test_indices) in enumerate(zip(soms, test_indices)):
             data_test = features.iloc[test_indices]
             win_map = np.array(
                 np.unravel_index(isom.predict(data_test), isom.get_shape())
