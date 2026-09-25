@@ -13,6 +13,7 @@ from ampel.types import T3Send, UBson
 from scipy.stats import kstest
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from timewise.util.path import expand
+from tqdm import tqdm
 
 from airgn.rejection_sampling import repeated_matching
 from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
@@ -78,8 +79,8 @@ class T3SOM(AbsPhotoT3Unit):
         res["sampled"] = True
         if self.resample != "none":
             resample_mask = res.agn if self.resample == "agn" else ~res.agn
-            proposal = res.loc[resample_mask, "W1_Mean"]
-            target = res.loc[~resample_mask, "W1_Mean"]
+            proposal = res.loc[resample_mask, "FLUX_W1"]
+            target = res.loc[~resample_mask, "FLUX_W1"]
             # to be able to resample the non-AGN to the AGN distribution, the AGN distribution has to be
             # within the bounds of the non-AGN distribution
             target_outside_proposal = (target < proposal.min()) | (
@@ -107,30 +108,33 @@ class T3SOM(AbsPhotoT3Unit):
         # The features in this case are just the w1 and w2 flux densities normed by the
         # respective median, stacked horizontally per source.
 
-        features = pd.DataFrame(
-            index=res[res.sampled].index, columns=range(n_steps * 2)
-        )
-        for i in features.index:
-            lcdf = pd.DataFrame(raw_lcs[i])
+        index = res[res.sampled].index
+        features = np.full((len(index), n_steps * 2), np.nan)
+
+        for row, i in enumerate(tqdm(index, desc="Formatting lightcurves")):
+            lc = raw_lcs[i]
 
             if self.t2_lc_unit == "T2MaggyToFluxDensity":
-                assert all(abs(lcdf["LC_MJD_W1"] - lcdf["LC_MJD_W2"]) <= 10)
-                lcdf["mean_mjd"] = lcdf[["LC_MJD_W1", "LC_MJD_W2"]].mean(axis=1)
+                mjd1 = np.fromiter((x["LC_MJD_W1"] for x in lc), dtype=float)
+                mjd2 = np.fromiter((x["LC_MJD_W2"] for x in lc), dtype=float)
 
-            epoch = round((lcdf["mean_mjd"] - lcdf["mean_mjd"].min()) / 180)
-            unique_epochs = np.unique(epoch, return_counts=True)
-            if any(unique_epochs[1] > 1):
+                assert np.all(np.abs(mjd1 - mjd2) <= 10)
+                mean_mjd = (mjd1 + mjd2) / 2
+            else:
+                mean_mjd = np.fromiter((x["mean_mjd"] for x in lc), dtype=float)
+
+            epoch = np.rint((mean_mjd - mean_mjd.min()) / 180).astype(int)
+
+            if np.unique(epoch).size != epoch.size:
                 raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
 
-            if (i_n_steps := max(unique_epochs[0])) > n_steps:
-                n_steps = i_n_steps
+            w1 = np.fromiter((x["w1meanfluxdensity"] for x in lc), dtype=float)
+            w2 = np.fromiter((x["w2meanfluxdensity"] for x in lc), dtype=float)
 
-            features.loc[i, epoch] = (
-                lcdf["w1meanfluxdensity"] / lcdf["w1meanfluxdensity"].median()
-            )
-            features.loc[i, epoch + n_steps] = (
-                lcdf["w2meanfluxdensity"] / lcdf["w2meanfluxdensity"].median()
-            )
+            features[row, epoch] = w1 / np.median(w1)
+            features[row, epoch + n_steps] = w2 / np.median(w2)
+
+        features = pd.DataFrame(features, index=index, columns=range(n_steps * 2))
 
         target = res.loc[res.sampled, "agn"].astype(int)
         data = features.loc[res.sampled]
