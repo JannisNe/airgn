@@ -2,6 +2,7 @@ from typing import Generator, Literal
 
 import numpy as np
 import pandas as pd
+from astropy.time import Time
 from matplotlib import pyplot as plt
 from numpy.random import RandomState
 import python_som
@@ -111,6 +112,10 @@ class T3SOM(AbsPhotoT3Unit):
         index = res[res.sampled].index
         features = np.full((len(index), n_steps * 2), np.nan)
 
+        wise_end = Time("2011-02-01").mjd
+        neowise_start = Time("2013-12-29").mjd
+        gap_length = neowise_start - wise_end
+
         for row, i in enumerate(tqdm(index, desc="Formatting lightcurves")):
             lc = raw_lcs[i]
 
@@ -123,7 +128,8 @@ class T3SOM(AbsPhotoT3Unit):
             else:
                 mean_mjd = np.fromiter((x["mean_mjd"] for x in lc), dtype=float)
 
-            epoch = np.rint((mean_mjd - mean_mjd.min()) / 180).astype(int)
+            offset = (gap_length - 180) * (mean_mjd > wise_end).astype(float)
+            epoch = np.rint((mean_mjd - mean_mjd.min() - offset) / 180).astype(int)
 
             if np.unique(epoch).size != epoch.size:
                 raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
@@ -137,7 +143,6 @@ class T3SOM(AbsPhotoT3Unit):
         features = pd.DataFrame(features, index=index, columns=range(n_steps * 2))
 
         target = res.loc[res.sampled, "agn"].astype(int)
-        data = features.loc[res.sampled]
 
         # ------------------------------ train the map ------------------------------ #
         n_splits = 10
@@ -179,7 +184,7 @@ class T3SOM(AbsPhotoT3Unit):
         for i in range(n_splits):
             isom = som_res["estimator"][i]
             test_indices = som_res["indices"]["test"][i]
-            data_test = data.iloc[test_indices]
+            data_test = features.iloc[test_indices]
             win_map = np.array(
                 np.unravel_index(isom.predict(data_test), isom.get_shape())
             ).T
