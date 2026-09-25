@@ -1,0 +1,293 @@
+from typing import Generator, Literal
+
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+from numpy.random import RandomState
+import python_som
+from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
+from ampel.abstract.AbsT3Unit import T
+from ampel.struct.T3Store import T3Store
+from ampel.struct.UnitResult import UnitResult
+from ampel.types import T3Send, UBson
+from scipy.stats import kstest
+from sklearn.model_selection import StratifiedKFold, cross_validate
+from timewise.util.path import expand
+
+from airgn.rejection_sampling import repeated_matching
+from ampel.airgn.t3.NPointsVarMetricsAggregator import NPointsVarMetricsAggregator
+
+
+class T3SOM(AbsPhotoT3Unit, NPointsVarMetricsAggregator):
+    # SOM parameters
+    som_size: tuple[int, int] = 10, 10
+
+    # input data processing
+    t2_lc_unit: Literal["T2StackVisits", "T2MaggyToFluxDensity"]
+    drop_wise_agn: bool = False
+    n_point_cols: list[str] = [f"W{i + 1}_NPoints" for i in range(2)]
+    exclude_features: list[str] | None = None
+    resample: Literal["agn", "non-agn", "none"] = "agn"
+
+    # output
+    plot_dir: str
+    mplstyle: str
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._random_state = 42
+        self._plot_path = expand(self.plot_dir)
+        self._plot_path.mkdir(parents=True, exist_ok=True)
+
+    def process(
+        self, gen: Generator[T, T3Send, None], t3s: T3Store
+    ) -> UBson | UnitResult:
+        res = {}
+        lcs = {}
+        n_steps = 0
+        n_iter = 0
+        for view in gen:
+            lc = None
+            for t2 in view.get_t2_views(self.t2_lc_unit, code=0):
+                lc = t2.get_payload()
+                break
+
+            if not view.extra:
+                continue
+
+            if not lc:
+                continue
+
+            lcdf = pd.DataFrame(lc)
+
+            if self.t2_lc_unit == "T2MaggyToFluxDensity":
+                assert all(abs(lcdf["LC_MJD_W1"] - lcdf["LC_MJD_W2"]) <= 10)
+                lcdf["mean_mjd"] = lcdf[["LC_MJD_W1", "LC_MJD_W2"]].mean(axis=1)
+
+            epoch = round((lcdf["mean_mjd"] - lcdf["mean_mjd"].min()) / 180)
+            unique_epochs = np.unique(epoch, return_counts=True)
+            if any(unique_epochs[1] > 1):
+                raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
+
+            if (i_n_steps := max(unique_epochs[0])) > n_steps:
+                n_steps = i_n_steps
+
+            lcdf["epoch"] = epoch
+
+            body = dict(view.extra)
+            mask = str(bin(int(view.extra["AGN_MASKBITS"]))).replace("0b", "")[::-1]
+            body["decoded_agn_mask"] = mask
+            res[view.stock["stock"]] = body
+            lcs[view.stock["stock"]] = lcdf
+
+        res = pd.DataFrame.from_dict(res, orient="index")
+        res["agn"] = ~(res["decoded_agn_mask"] == "0")
+        wise_agn_bit = res["decoded_agn_mask"].str[15]
+        wise_agn_mask = wise_agn_bit.notna() & wise_agn_bit.astype(float).astype(bool)
+        res["wise_agn"] = wise_agn_mask
+        res["non_wise_agn"] = res["agn"] & ~wise_agn_mask
+
+        if self.drop_wise_agn:
+            res = res[~res.wise_agn]
+
+        if self.mplstyle is not None:
+            plt.style.use(self.mplstyle)
+
+        # ---------------------- re-sample non-agn to match agn ---------------------- #
+
+        res["sampled"] = True
+        if self.resample != "none":
+            resample_mask = res.agn if self.resample == "agn" else ~res.agn
+            proposal = res.loc[resample_mask, "W1_Mean"]
+            target = res.loc[~resample_mask, "W1_Mean"]
+            # to be able to resample the non-AGN to the AGN distribution, the AGN distribution has to be
+            # within the bounds of the non-AGN distribution
+            target_outside_proposal = (target < proposal.min()) | (
+                target > proposal.max()
+            )
+            sampled_proposal_index = repeated_matching(
+                proposal,
+                target[~target_outside_proposal],
+                min_samples=int(0.01 * len(proposal)),
+            )
+
+            # make sure the sampling produced two compatible distributions
+            pval = kstest(
+                target[~target_outside_proposal],
+                proposal.loc[proposal.index.difference(sampled_proposal_index)],
+            ).pvalue
+            assert pval > 0.05
+
+            res.loc[sampled_proposal_index, "sampled"] = False
+            res.loc[
+                target_outside_proposal.index[target_outside_proposal], "sampled"
+            ] = False
+
+        # ------------------------------ collect features ------------------------------ #
+        # The features in this case are just the w1 and w2 flux densities normed by the
+        # respective median, stacked horizontally per source.
+
+        features = pd.DataFrame(index=res.index, columns=range(n_steps * 2))
+        for i in features.index:
+            lcdf = lcs[i]
+            features.loc[i, lcdf["epoch"]] = (
+                lcdf["w1meanfluxdensity"] / lcdf["w1meanfluxdensity"].median()
+            )
+            features.loc[i, lcdf["epoch"] + n_steps] = (
+                lcdf["w2meanfluxdensity"] / lcdf["w2meanfluxdensity"].median()
+            )
+
+        target = res.loc[res.sampled, "agn"].astype(int)
+        data = features.loc[res.sampled]
+        ratio = (len(target) - sum(target)) / sum(target)
+
+        # ------------------------------ train the map ------------------------------ #
+        n_splits = 10
+        kf = StratifiedKFold(
+            n_splits=n_splits, shuffle=True, random_state=self._random_state
+        )
+        som = python_som.SOM(
+            x=self.som_size[0],
+            y=self.som_size[1],
+            input_len=n_steps * 2,
+            learning_rate=0.5,
+            neighborhood_radius=1.0,
+            neighborhood_function="gaussian",
+            cyclic_x=True,
+            cyclic_y=True,
+            random_seed=self._random_state,
+        )
+        scores = ["precision", "recall", "f1"]
+        som_res = cross_validate(
+            som,
+            features,
+            target,
+            scoring=scores,
+            cv=kf,
+            n_jobs=1,
+            return_estimator=True,
+            return_indices=True,
+        )
+
+        # ---------------------- plot individual models ---------------------- #
+
+        individual_models_path = self._plot_path / "individual_models"
+        individual_models_path.mkdir(parents=True, exist_ok=True)
+
+        xx = np.linspace(0, 1, 100)
+        recalls = []
+        precisions = []
+
+        for i in range(n_splits):
+            isom = som_res["estimator"][i]
+            test_indices = som_res["indices"]["test"][i]
+            data_test = data.iloc[test_indices]
+            win_map = np.array(
+                np.unravel_index(isom.predict(data_test), isom.get_shape())
+            ).T
+
+            fig, axs = plt.subplots(*self.som_size, figsize=(7, 7))
+            for position in np.unique(win_map, axis=0):
+                mask = (win_map[:, 0] == position[0]) & (win_map[:, 1] == position[1])
+                if not any(mask):
+                    continue
+                ax = (
+                    axs[self.som_size[0] - 1 - position[0], position[1]]
+                    if self.som_size[1] > 1
+                    else axs[position[0]]
+                )
+                ax.plot(np.nanmean(data_test[mask], axis=0), c="k")
+                ax.fill_between(
+                    np.arange(n_steps),
+                    *np.nanquantile(data_test[mask], [0.05, 0.95], axis=0),
+                    color="gray",
+                    alpha=0.5,
+                )
+                ax.xaxis.set_ticklabels([])
+                ax.yaxis.set_ticklabels([])
+            fig.savefig(individual_models_path / f"{i}_som_timeseries.pdf")
+            plt.close()
+
+            maps = []
+            target_test = target.iloc[test_indices]
+            for mask in [~target_test, target_test]:
+                counts = np.unique(
+                    som.predict(data_test[mask]),
+                    return_counts=True,
+                    axis=0,
+                )
+                i_map = np.zeros(self.som_size)
+                for p, c in zip(
+                    np.array(np.unravel_index(counts[0], som.get_shape())).T,
+                    counts[1],
+                    strict=False,
+                ):
+                    i_map[p[0], p[1]] = c
+                maps.append(i_map)
+
+            purity_map = maps[1] / (maps[0] + maps[1])
+            recall_map = maps[1] / maps[1].sum()
+
+            fig, axs = plt.subplots(ncols=4, figsize=(20, 5))
+            for cmap, pmap, ax in zip(
+                ["Reds", "Blues", "copper", "Reds"],
+                [maps[1], maps[0], purity_map, recall_map],
+                axs,
+                strict=False,
+            ):
+                mesh = ax.pcolormesh(
+                    pmap, cmap=cmap
+                )  # plotting the distance map as background
+                fig.colorbar(mesh, ax=ax)
+            fig.tight_layout()
+            fig.savefig(individual_models_path / f"{i}_som_maps.pdf")
+            plt.close()
+
+            flat_sig_map = maps[1].flatten()
+            flat_bkg_map = maps[0].flatten()
+            probs = purity_map.flatten()
+
+            recall = []
+            precision = []
+
+            for i in xx:
+                m = probs >= i
+                precision.append(
+                    flat_sig_map[m].sum()
+                    / (flat_sig_map[m].sum() + flat_bkg_map[m].sum())
+                )
+                recall.append(flat_sig_map[m].sum() / flat_sig_map.sum())
+
+            fig, ax = plt.subplots()
+            ax.plot(xx, precision, label="Precision")
+            ax.plot(xx, recall, label="Recall")
+            ax.set_xlabel("Precision")
+            ax.set_ylabel("Score")
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(individual_models_path / f"{i}_scores.pdf")
+            plt.close()
+
+        # ---------------------- plot totals ---------------------- #
+
+        fig, ax = plt.subplots()
+        for i, arr, label in enumerate(
+            zip([precisions, recalls], ["Precision", "Recall"])
+        ):
+            c = f"C{i}"
+            ax.plot(xx, np.median(arr, axis=0), label=label, color=c)
+            ax.fill_between(
+                xx, *np.quantile(arr, [0.05, 0.95], axis=0), alpha=0.5, color=c
+            )
+        ax.set_xlabel("Threshold")
+        ax.set_ylabel("Score")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(self._plot_path / "scores.pdf")
+        plt.close()
+
+        # ---------------------- plot totals separate for WISE AGN ---------------------- #
