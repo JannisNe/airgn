@@ -11,7 +11,7 @@ from ampel.struct.T3Store import T3Store
 from ampel.struct.UnitResult import UnitResult
 from ampel.types import T3Send, UBson
 from scipy.stats import kstest
-from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.model_selection import StratifiedKFold
 from timewise.util.path import expand
 from tqdm import tqdm
 
