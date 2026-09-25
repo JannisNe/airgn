@@ -34,6 +34,7 @@ class T3SOM(AbsPhotoT3Unit):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._random_state = 42
+        self._rng = np.random.default_rng(self._random_state)
         self._plot_path = expand(self.plot_dir)
         self._plot_path.mkdir(parents=True, exist_ok=True)
 
@@ -129,19 +130,36 @@ class T3SOM(AbsPhotoT3Unit):
             else:
                 mean_mjd = np.fromiter((x["mean_mjd"] for x in lc), dtype=float)
 
-            offset = (gap_length - 180) * (mean_mjd > wise_end).astype(float)
-            epoch = np.rint((mean_mjd - mean_mjd.min() - offset) / 180).astype(int)
+            mask = mean_mjd >= neowise_start
+
+            epoch = np.rint((mean_mjd[mask] - neowise_start) / 180).astype(int)
 
             if np.unique(epoch).size != epoch.size:
                 raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
 
-            w1 = np.fromiter((x["w1meanfluxdensity"] for x in lc), dtype=float)
-            w2 = np.fromiter((x["w2meanfluxdensity"] for x in lc), dtype=float)
+            w1 = np.fromiter((x["w1meanfluxdensity"] for x in lc), dtype=float)[mask]
+            w2 = np.fromiter((x["w2meanfluxdensity"] for x in lc), dtype=float)[mask]
 
             features[row, epoch] = w1 / np.median(w1)
             features[row, epoch + n_steps] = w2 / np.median(w2)
 
-        features = pd.DataFrame(features, index=index, columns=range(n_steps * 2))
+        # remove first and last epoch per band if there are any objects that have
+        # potentially no observations
+        missing_any = np.where(np.isnan(features).all(axis=0))[0]
+        edgecols_have_nans = [
+            i for i in [0, n_steps - 1, n_steps, 2 * n_steps - 1] if i in missing_any
+        ]
+        features = np.delete(features, edgecols_have_nans, axis=1)
+
+        # remove columns that have no values
+        missing_all = np.where(np.isnan(features).all(axis=0))[0]
+        features = np.delete(features, missing_all, axis=1)
+
+        # for all other epochs we assume that every object was observed. Thus, a missing
+        # entry means a non-detection, so we set the observed flux to 0
+        features = pd.DataFrame(
+            np.nan_to_num(features), index=index, columns=range(features.shape[1])
+        )
 
         target = res.loc[res.sampled, "agn"].astype(int)
 
@@ -153,11 +171,14 @@ class T3SOM(AbsPhotoT3Unit):
 
         soms = []
         test_indices = []
-        for train_index, test_index in kf.split(features, target):
+        target_mask = target.astype(bool).values
+        for train_index, test_index in tqdm(
+            kf.split(features, target), desc="training maps", total=n_splits
+        ):
             som = python_som.SOM(
                 x=self.som_size[0],
                 y=self.som_size[1],
-                input_len=n_steps * 2,
+                input_len=len(features.columns),
                 learning_rate=0.5,
                 neighborhood_radius=1.0,
                 neighborhood_function="gaussian",
@@ -165,7 +186,18 @@ class T3SOM(AbsPhotoT3Unit):
                 cyclic_y=True,
                 random_seed=self._random_state,
             )
-            som.fit(features.iloc[train_index])
+            train_target_index = train_index[target_mask[train_index]]
+            train_non_target_index = self._rng.choice(
+                train_index[~target_mask[train_index]],
+                len(train_target_index),
+                replace=False,
+            )
+            train_indices = np.concatenate([train_target_index, train_non_target_index])
+            som.fit(
+                features.iloc[train_indices],
+                mode="batch",
+                verbose=True,
+            )
             soms.append(som)
             test_indices.append(test_index)
 

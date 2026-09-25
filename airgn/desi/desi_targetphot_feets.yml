@@ -208,6 +208,9 @@ task:
               drop_wise_agn: true
               plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/som_no_wise_agn
               mplstyle: airgn.paper
+              som_size:
+                - 10
+                - 10
 
 - title: VisualizeFeatures
   unit: T3Processor
