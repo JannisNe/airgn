@@ -51,6 +51,9 @@ class T3SOM(AbsPhotoT3Unit):
             if not view.extra:
                 continue
 
+            if not lc:
+                continue
+
             body = dict(view.extra)
             mask = str(bin(int(view.extra["AGN_MASKBITS"]))).replace("0b", "")[::-1]
             body["decoded_agn_mask"] = mask
@@ -207,13 +210,13 @@ class T3SOM(AbsPhotoT3Unit):
             target_test = target.iloc[test_indices]
             for mask in [~target_test, target_test]:
                 counts = np.unique(
-                    som.predict(data_test[mask]),
+                    isom.predict(data_test[mask]),
                     return_counts=True,
                     axis=0,
                 )
                 i_map = np.zeros(self.som_size)
                 for p, c in zip(
-                    np.array(np.unravel_index(counts[0], som.get_shape())).T,
+                    np.array(np.unravel_index(counts[0], isom.get_shape())).T,
                     counts[1],
                     strict=False,
                 ):
@@ -245,8 +248,8 @@ class T3SOM(AbsPhotoT3Unit):
             recall = []
             precision = []
 
-            for i in xx:
-                m = probs >= i
+            for ix in xx:
+                m = probs >= ix
                 precision.append(
                     flat_sig_map[m].sum()
                     / (flat_sig_map[m].sum() + flat_bkg_map[m].sum())
