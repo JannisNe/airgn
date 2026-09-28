@@ -234,15 +234,15 @@ class T3SOM(AbsPhotoT3Unit):
                     if self.som_size[1] > 1
                     else axs[position[0]]
                 )
-                for i in range(2):
-                    c = "dodgerblue" if i == 0 else "crimson"
+                for fid in range(2):
+                    c = "dodgerblue" if fid == 0 else "crimson"
                     feature_indices = np.arange(
-                        i * (n_features // 2), (i + 1) * (n_features // 2)
+                        fid * (n_features // 2), (fid + 1) * (n_features // 2)
                     )
                     idata_test = data_test.loc[mask, feature_indices]
                     ax.plot(np.nanmean(idata_test, axis=0), c=c)
                     ax.fill_between(
-                        np.arange(n_steps),
+                        np.arange(n_features // 2),
                         *np.nanquantile(idata_test, [0.05, 0.95], axis=0),
                         color=c,
                         alpha=0.2,
@@ -253,7 +253,7 @@ class T3SOM(AbsPhotoT3Unit):
             plt.close()
 
             maps = []
-            target_test = target.iloc[test_indices]
+            target_test = target.iloc[test_indices].astype(bool).values
             for mask in [~target_test, target_test]:
                 counts = np.unique(
                     isom.predict(data_test[mask]),
@@ -314,10 +314,13 @@ class T3SOM(AbsPhotoT3Unit):
             fig.savefig(individual_models_path / f"{i}_scores.pdf")
             plt.close()
 
+            precisions.append(precision)
+            recalls.append(recall)
+
         # ---------------------- plot totals ---------------------- #
 
         fig, ax = plt.subplots()
-        for i, arr, label in enumerate(
+        for i, (arr, label) in enumerate(
             zip([precisions, recalls], ["Precision", "Recall"])
         ):
             c = f"C{i}"
