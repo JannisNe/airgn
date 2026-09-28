@@ -146,11 +146,18 @@ class T3SOM(AbsPhotoT3Unit):
 
         # remove first and last epoch per band if there are any objects that have
         # potentially no observations
-        missing_any = np.where(np.isnan(features).all(axis=0))[0]
-        edgecols_have_nans = [
-            i for i in [0, n_steps - 1, n_steps, 2 * n_steps - 1] if i in missing_any
-        ]
-        features = np.delete(features, edgecols_have_nans, axis=1)
+        nan_feature = np.isnan(features)
+        missing_any_folded = np.where(
+            nan_feature[:, :n_steps].all(axis=0) | nan_feature[:, n_steps:].all(axis=0)
+        )[0]
+        n_pad = 2
+        padded_epochs_folded = np.array(
+            [(j, n_steps - 1 - j) for j in range(n_pad)]
+        ).flatten()
+        drop_folded = np.intersect1d(missing_any_folded, padded_epochs_folded)
+        features = np.delete(
+            features, drop_folded.tolist() + (drop_folded + n_steps).tolist(), axis=1
+        )
 
         # remove columns that have no values
         missing_all = np.where(np.isnan(features).all(axis=0))[0]
