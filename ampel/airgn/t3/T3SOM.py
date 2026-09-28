@@ -31,6 +31,7 @@ class T3SOM(AbsPhotoT3Unit):
     # output
     plot_dir: str
     mplstyle: str | None = None
+    verbose_soms: bool = Falase
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -202,7 +203,7 @@ class T3SOM(AbsPhotoT3Unit):
             som.fit(
                 features.iloc[train_indices],
                 mode="batch",
-                verbose=True,
+                verbose=self.verbose_soms,
             )
             soms.append(som)
             test_indices.append(test_index)
@@ -235,7 +236,9 @@ class T3SOM(AbsPhotoT3Unit):
                 )
                 for i in range(2):
                     c = "dodgerblue" if i == 0 else "crimson"
-                    feature_indices = np.arange(i * n_features, (i + 1) * n_features)
+                    feature_indices = np.arange(
+                        i * (n_features // 2), (i + 1) * (n_features // 2)
+                    )
                     idata_test = data_test.loc[mask, feature_indices]
                     ax.plot(np.nanmean(idata_test, axis=0), c=c)
                     ax.fill_between(
