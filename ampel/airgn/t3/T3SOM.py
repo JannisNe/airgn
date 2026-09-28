@@ -139,9 +139,10 @@ class T3SOM(AbsPhotoT3Unit):
 
             w1 = np.fromiter((x["w1meanfluxdensity"] for x in lc), dtype=float)[mask]
             w2 = np.fromiter((x["w2meanfluxdensity"] for x in lc), dtype=float)[mask]
+            i_med = np.median(np.concatenate([w1, w2]))
 
-            features[row, epoch] = w1 / np.median(w1)
-            features[row, epoch + n_steps] = w2 / np.median(w2)
+            features[row, epoch] = w1 / i_med
+            features[row, epoch + n_steps] = w2 / i_med
 
         # remove first and last epoch per band if there are any objects that have
         # potentially no observations
