@@ -116,9 +116,7 @@ class T3SOM(AbsPhotoT3Unit):
         index = res[res.sampled].index
         features = np.full((len(index), n_steps * 2), np.nan)
 
-        wise_end = Time("2011-02-01").mjd
         neowise_start = Time("2013-12-29").mjd
-        gap_length = neowise_start - wise_end
 
         for row, i in enumerate(tqdm(index, desc="Formatting lightcurves")):
             lc = raw_lcs[i]
