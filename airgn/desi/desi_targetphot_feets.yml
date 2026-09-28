@@ -211,6 +211,7 @@ task:
               som_size:
                 - 10
                 - 10
+              n_sample_max: 1000
 
 - title: VisualizeFeatures
   unit: T3Processor

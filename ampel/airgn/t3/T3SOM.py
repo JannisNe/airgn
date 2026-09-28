@@ -26,6 +26,7 @@ class T3SOM(AbsPhotoT3Unit):
     t2_lc_unit: Literal["T2StackVisits", "T2MaggyToFluxDensity"]
     drop_wise_agn: bool = False
     resample: Literal["agn", "non-agn", "none"] = "agn"
+    n_sample_max: int | None = None
 
     # output
     plot_dir: str
@@ -187,6 +188,11 @@ class T3SOM(AbsPhotoT3Unit):
                 random_seed=self._random_state,
             )
             train_target_index = train_index[target_mask[train_index]]
+
+            # limit the number of samples if specified
+            if self.n_sample_max is not None:
+                train_target_index = train_target_index[: self.n_sample_max]
+
             train_non_target_index = self._rng.choice(
                 train_index[~target_mask[train_index]],
                 len(train_target_index),
