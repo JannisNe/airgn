@@ -212,6 +212,7 @@ task:
                 - 10
                 - 10
               n_sample_max: 1000
+              verbose_soms: true
 
 - title: VisualizeFeatures
   unit: T3Processor

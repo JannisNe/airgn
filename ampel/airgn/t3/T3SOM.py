@@ -31,7 +31,7 @@ class T3SOM(AbsPhotoT3Unit):
     # output
     plot_dir: str
     mplstyle: str | None = None
-    verbose_soms: bool = Falase
+    verbose_soms: bool = False
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
