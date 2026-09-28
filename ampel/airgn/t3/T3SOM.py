@@ -215,6 +215,7 @@ class T3SOM(AbsPhotoT3Unit):
         xx = np.linspace(0, 1, 100)
         recalls = []
         precisions = []
+        n_features = len(features.columns)
 
         for i, (isom, test_indices) in enumerate(zip(soms, test_indices)):
             data_test = features.iloc[test_indices]
@@ -232,13 +233,17 @@ class T3SOM(AbsPhotoT3Unit):
                     if self.som_size[1] > 1
                     else axs[position[0]]
                 )
-                ax.plot(np.nanmean(data_test[mask], axis=0), c="k")
-                ax.fill_between(
-                    np.arange(n_steps),
-                    *np.nanquantile(data_test[mask], [0.05, 0.95], axis=0),
-                    color="gray",
-                    alpha=0.5,
-                )
+                for i in range(2):
+                    c = "dodgerblue" if i == 0 else "crimson"
+                    feature_indices = np.arange(i * n_features, (i + 1) * n_features)
+                    idata_test = data_test.loc[mask, feature_indices]
+                    ax.plot(np.nanmean(idata_test, axis=0), c=c)
+                    ax.fill_between(
+                        np.arange(n_steps),
+                        *np.nanquantile(idata_test, [0.05, 0.95], axis=0),
+                        color=c,
+                        alpha=0.2,
+                    )
                 ax.xaxis.set_ticklabels([])
                 ax.yaxis.set_ticklabels([])
             fig.savefig(individual_models_path / f"{i}_som_timeseries.pdf")
