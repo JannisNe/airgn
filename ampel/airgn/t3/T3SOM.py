@@ -25,6 +25,7 @@ class T3SOM(AbsPhotoT3Unit):
     # input data processing
     t2_lc_unit: Literal["T2StackVisits", "T2MaggyToFluxDensity"]
     drop_wise_agn: bool = False
+    replace_nan_with_zero: bool = False
     resample: Literal["agn", "non-agn", "none"] = "agn"
     n_sample_max: int | None = None
 
@@ -162,6 +163,12 @@ class T3SOM(AbsPhotoT3Unit):
         # remove columns that have no values
         missing_all = np.where(np.isnan(features).all(axis=0))[0]
         features = np.delete(features, missing_all, axis=1)
+
+        if self.replace_nan_with_zero:
+            features = np.nan_to_num(features)
+        else:
+            missing_any = np.where(np.isnan(features).any(axis=0))[0]
+            features = np.delete(features, missing_any, axis=1)
 
         # for all other epochs we assume that every object was observed. Thus, a missing
         # entry means a non-detection, so we set the observed flux to 0

@@ -206,13 +206,14 @@ task:
             config:
               t2_lc_unit: T2MaggyToFluxDensity
               drop_wise_agn: true
-              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/som_no_wise_agn
+              plot_dir: $AIRGNDATA/desi_value_added_catalog_targetphot/plots/feets_bright/som_no_wise_agn_delete_missing
               mplstyle: airgn.paper
               som_size:
                 - 10
                 - 10
               n_sample_max: 1000
               verbose_soms: true
+              replace_nan_with_zero: false
 
 - title: VisualizeFeatures
   unit: T3Processor
