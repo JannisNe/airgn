@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors as mcolors
 from pathlib import Path
+from scipy.stats import kstest
 
 
 def match_distributions(s1: pd.Series, s2: pd.Series):
@@ -76,6 +77,14 @@ def repeated_matching(
     else:
         sampled_s2_indices = s2.index.tolist()
     excluded_s2_indices = s2.index.difference(sampled_s2_indices)
+
+    # make sure the sampling produced two compatible distributions
+    pval = kstest(
+        s1.loc[concat_sampled_indices],
+        s2.loc[sampled_s2_indices],
+    ).pvalue
+    if pval <= 0.05:
+        raise RuntimeError("Rejection sampling failed!")
 
     # plot the sampling
     if plot_path is not None:

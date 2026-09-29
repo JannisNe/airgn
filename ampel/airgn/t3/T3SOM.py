@@ -99,13 +99,6 @@ class T3SOM(AbsPhotoT3Unit):
                 min_samples=int(0.01 * len(proposal)),
             )
 
-            # make sure the sampling produced two compatible distributions
-            pval = kstest(
-                valid_target.loc[valid_target.index.difference(sampled_target_index)],
-                proposal.loc[proposal.index.difference(sampled_proposal_index)],
-            ).pvalue
-            assert pval > 0.05
-
             res.loc[sampled_proposal_index, "sampled"] = False
             res.loc[
                 target_outside_proposal.index[target_outside_proposal], "sampled"
