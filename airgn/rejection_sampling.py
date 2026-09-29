@@ -33,8 +33,12 @@ def match_distributions(s1: pd.Series, s2: pd.Series):
 
 
 def repeated_matching(
-    s1: pd.Series, s2: pd.Series, min_samples: int = 10, plot_path: str | Path = None
-):
+    s1: pd.Series,
+    s2: pd.Series,
+    min_samples: int = 10,
+    plot_path: str | Path = None,
+    keep_ratio: bool = True,
+) -> tuple[pd.Index, pd.Index]:
     """
     Run rejection sampling multiple times to use as much of the
     proposal distribution as possible
@@ -43,6 +47,9 @@ def repeated_matching(
     # set up loop variables
     sampled_indices = [[]]
     n_sampled = np.inf
+
+    # store pre-sampling ratio
+    pre_sampling_ratio = len(s1) / len(s2)
 
     # run as long as enough objects get sampled
     while n_sampled > min_samples:
@@ -59,10 +66,31 @@ def repeated_matching(
 
     concat_sampled_indices = np.concat(sampled_indices).tolist()
 
+    # adjust sample ratio if required
+    post_sampling_ratio = len(concat_sampled_indices) / len(s2)
+    if keep_ratio:
+        n_s2 = post_sampling_ratio / pre_sampling_ratio
+        sampled_s2_indices = s2.sample(
+            frac=n_s2, replace=False, random_state=42
+        ).index.tolist()
+    else:
+        sampled_s2_indices = s2.index.tolist()
+    excluded_s2_indices = s2.index.difference(sampled_s2_indices)
+
     # plot the sampling
     if plot_path is not None:
         fig, ax = plt.subplots()
-        h, b, _ = ax.hist(s2, density=False, color="C0", ec="white", alpha=0.8)
+        h, b, _ = ax.hist(
+            s2.loc[sampled_s2_indices], density=False, color="C0", ec="white", alpha=0.8
+        )
+        ax.hist(
+            s2.loc[excluded_s2_indices],
+            density=False,
+            color="C0",
+            histtype="step",
+            ls=":",
+            alpha=0.8,
+        )
         cmap = plt.get_cmap("viridis")
         for i in range(len(sampled_indices) + 1):
             excl = np.concat(sampled_indices[: i + 1])
@@ -92,7 +120,7 @@ def repeated_matching(
         plt.close()
 
     # return all rejected indices
-    return s1.index.difference(concat_sampled_indices)
+    return s1.index.difference(concat_sampled_indices), excluded_s2_indices
 
 
 if __name__ == "__main__":
