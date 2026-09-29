@@ -26,7 +26,7 @@ class T3SOM(AbsPhotoT3Unit):
     t2_lc_unit: Literal["T2StackVisits", "T2MaggyToFluxDensity"]
     drop_wise_agn: bool = False
     replace_nan_with_zero: bool = False
-    resample: Literal["agn", "non-agn", "none"] = "agn"
+    resample: Literal["agn", "non-agn", "none"] = "non-agn"
     n_sample_max: int | None = None
 
     # output
@@ -92,15 +92,16 @@ class T3SOM(AbsPhotoT3Unit):
             target_outside_proposal = (target < proposal.min()) | (
                 target > proposal.max()
             )
-            sampled_proposal_index = repeated_matching(
+            valid_target = target[~target_outside_proposal]
+            sampled_proposal_index, sampled_target_index = repeated_matching(
                 proposal,
-                target[~target_outside_proposal],
+                valid_target,
                 min_samples=int(0.01 * len(proposal)),
             )
 
             # make sure the sampling produced two compatible distributions
             pval = kstest(
-                target[~target_outside_proposal],
+                valid_target.loc[valid_target.index.difference(sampled_target_index)],
                 proposal.loc[proposal.index.difference(sampled_proposal_index)],
             ).pvalue
             assert pval > 0.05
@@ -109,6 +110,7 @@ class T3SOM(AbsPhotoT3Unit):
             res.loc[
                 target_outside_proposal.index[target_outside_proposal], "sampled"
             ] = False
+            res.loc[sampled_target_index, "sampled"] = False
 
         # ------------------------------ collect features ------------------------------ #
         # The features in this case are just the w1 and w2 flux densities normed by the
