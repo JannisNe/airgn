@@ -10,7 +10,6 @@ from ampel.abstract.AbsT3Unit import T
 from ampel.struct.T3Store import T3Store
 from ampel.struct.UnitResult import UnitResult
 from ampel.types import T3Send, UBson
-from scipy.stats import kstest
 from sklearn.model_selection import StratifiedKFold
 from timewise.util.path import expand
 from tqdm import tqdm
@@ -48,6 +47,7 @@ class T3SOM(AbsPhotoT3Unit):
         raw_lcs = {}
         n_steps = 0
         for view in gen:
+            lc = None
             for t2 in view.get_t2_views(self.t2_lc_unit, code=0):
                 lc = t2.get_payload()
                 break
