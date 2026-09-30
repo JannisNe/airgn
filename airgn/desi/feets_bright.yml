@@ -136,6 +136,83 @@ task:
                 - Std
               n_cpu: 20
 
+- title: SOM
+  unit: T3Processor
+  config:
+    raise_exc: true
+    supply:
+      unit: T3DefaultBufferSupplier
+      config:
+        select:
+          unit: T3StockSelector
+          config:
+            channel: "wise"
+        load:
+          unit: T3SimpleDataLoader
+          config:
+            directives:
+              - T2DOC
+              - STOCK
+            channel: "wise"
+        complement:
+          - unit: T3InputComplementer
+            config:
+              db_name: "desi_agn_vac"
+              col_name: "input"
+        chunk_size: 10000
+    stage:
+      unit: T3SequentialStager
+      config:
+        execute:
+          - unit: T3SOM
+            config:
+              t2_lc_unit: T2StackVisits
+              drop_wise_agn: true
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_5x5
+              mplstyle: airgn.paper
+              som_size:
+                - 5
+                - 5
+              n_sample_max: 10000
+              verbose_soms: true
+              replace_nan_with_zero: true
+          - unit: T3SOM
+            config:
+              t2_lc_unit: T2StackVisits
+              drop_wise_agn: true
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_2x2
+              mplstyle: airgn.paper
+              som_size:
+                - 2
+                - 2
+              n_sample_max: 10000
+              verbose_soms: true
+              replace_nan_with_zero: true
+          - unit: T3SOM
+            config:
+              t2_lc_unit: T2StackVisits
+              drop_wise_agn: true
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_2x2
+              mplstyle: airgn.paper
+              som_size:
+                - 2
+                - 2
+              n_sample_max: 10000
+              verbose_soms: true
+              replace_nan_with_zero: true
+          - unit: T3SOM
+            config:
+              t2_lc_unit: T2StackVisits
+              drop_wise_agn: true
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_20x20
+              mplstyle: airgn.paper
+              som_size:
+                - 20
+                - 20
+              n_sample_max: 10000
+              verbose_soms: true
+              replace_nan_with_zero: true
+
 - title: VisualizeFeatures
   unit: T3Processor
   config:
