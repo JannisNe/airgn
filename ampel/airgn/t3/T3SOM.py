@@ -128,7 +128,7 @@ class T3SOM(AbsPhotoT3Unit):
 
             mask = mean_mjd >= neowise_start
 
-            epoch = np.rint((mean_mjd[mask] - neowise_start) / 180).astype(int)
+            epoch = np.rint((mean_mjd[mask] - mean_mjd[mask].min()) / 180).astype(int)
 
             if np.unique(epoch).size != epoch.size:
                 raise RuntimeError(f"Found ambiguous epochs!\n{epoch}")
