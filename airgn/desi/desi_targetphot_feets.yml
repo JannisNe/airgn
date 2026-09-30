@@ -211,7 +211,7 @@ task:
               som_size:
                 - 5
                 - 5
-              n_sample_max: 1000
+              n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: false
           - unit: T3SOM
@@ -223,7 +223,7 @@ task:
               som_size:
                 - 2
                 - 2
-              n_sample_max: 1000
+              n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: false
           - unit: T3SOM
@@ -235,7 +235,7 @@ task:
               som_size:
                 - 20
                 - 20
-              n_sample_max: 1000
+              n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: false
 
