@@ -168,7 +168,7 @@ task:
             config:
               t2_lc_unit: T2StackVisits
               drop_wise_agn: true
-              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_5x5
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_5x5
               mplstyle: airgn.paper
               som_size:
                 - 5
@@ -176,35 +176,25 @@ task:
               n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: true
+              n_pad: 3
           - unit: T3SOM
             config:
               t2_lc_unit: T2StackVisits
               drop_wise_agn: true
-              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_2x2
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_2x2
               mplstyle: airgn.paper
               som_size:
-                - 2
-                - 2
+                - 10
+                - 10
               n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: true
+              n_pad: 3
           - unit: T3SOM
             config:
               t2_lc_unit: T2StackVisits
               drop_wise_agn: true
-              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_2x2
-              mplstyle: airgn.paper
-              som_size:
-                - 2
-                - 2
-              n_sample_max: 10000
-              verbose_soms: true
-              replace_nan_with_zero: true
-          - unit: T3SOM
-            config:
-              t2_lc_unit: T2StackVisits
-              drop_wise_agn: true
-              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_delete_missing_20x20
+              plot_dir: $AIRGNDATA/desi_value_added_catalog/plots/feets_bright/som_no_wise_agn_20x20
               mplstyle: airgn.paper
               som_size:
                 - 20
@@ -212,6 +202,7 @@ task:
               n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: true
+              n_pad: 3
 
 - title: VisualizeFeatures
   unit: T3Processor

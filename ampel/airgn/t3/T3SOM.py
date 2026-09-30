@@ -27,6 +27,7 @@ class T3SOM(AbsPhotoT3Unit):
     replace_nan_with_zero: bool = False
     resample: Literal["agn", "non-agn", "none"] = "non-agn"
     n_sample_max: int | None = None
+    n_pad: int = 2
 
     # output
     plot_dir: str
@@ -146,9 +147,8 @@ class T3SOM(AbsPhotoT3Unit):
         missing_any_folded = np.where(
             nan_feature[:, :n_steps].all(axis=0) | nan_feature[:, n_steps:].all(axis=0)
         )[0]
-        n_pad = 2
         padded_epochs_folded = np.array(
-            [(j, n_steps - 1 - j) for j in range(n_pad)]
+            [(j, n_steps - 1 - j) for j in range(self.n_pad)]
         ).flatten()
         drop_folded = np.intersect1d(missing_any_folded, padded_epochs_folded)
         features = np.delete(
