@@ -145,7 +145,7 @@ class T3SOM(AbsPhotoT3Unit):
         # potentially no observations
         nan_feature = np.isnan(features)
         missing_any_folded = np.where(
-            nan_feature[:, :n_steps].all(axis=0) | nan_feature[:, n_steps:].all(axis=0)
+            nan_feature[:, :n_steps].any(axis=0) | nan_feature[:, n_steps:].any(axis=0)
         )[0]
         padded_epochs_folded = np.array(
             [(j, n_steps - 1 - j) for j in range(self.n_pad)]
