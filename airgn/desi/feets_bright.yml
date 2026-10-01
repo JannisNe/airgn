@@ -176,7 +176,7 @@ task:
               n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: true
-              n_pad: 3
+              n_pad: 4
           - unit: T3SOM
             config:
               t2_lc_unit: T2StackVisits
@@ -189,7 +189,7 @@ task:
               n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: true
-              n_pad: 3
+              n_pad: 4
           - unit: T3SOM
             config:
               t2_lc_unit: T2StackVisits
@@ -202,7 +202,7 @@ task:
               n_sample_max: 10000
               verbose_soms: true
               replace_nan_with_zero: true
-              n_pad: 3
+              n_pad: 4
 
 - title: VisualizeFeatures
   unit: T3Processor
